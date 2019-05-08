@@ -22,9 +22,11 @@ class UserModuleService
     {
         $uid = $request->uid ?? null;
         $ugid = $request->ugid ?? null;
+        $user_group_id = $request->user_group_id ?? null;
+
         return Curl::to($this->user_module_API . '/users/authorization')
             ->withHeaders(['Authorization: ' . $request->header('Authorization')])
-            ->withData(compact('uid', 'ugid'))
+            ->withData(compact('uid', 'ugid', 'user_group_id'))
             ->asJson(true)
             ->get();
     }
@@ -39,9 +41,11 @@ class UserModuleService
     {
         $uid = $request->uid ?? null;
         $ugid = $request->ugid ?? null;
+        $user_group_id = $request->user_group_id ?? null;
+        
         return Curl::to($this->user_module_API . '/users/self')
             ->withHeaders(['Authorization: ' . $request->header('Authorization')])
-            ->withData(compact('uid', 'ugid'))
+            ->withData(compact('uid', 'ugid', 'user_group_id'))
             ->asJson(true)
             ->get();
     }

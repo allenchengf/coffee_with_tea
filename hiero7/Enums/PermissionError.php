@@ -16,7 +16,7 @@ class PermissionError extends Enum
     const YOU_ARE_NOT_AN_ADMINISTRATOR = 3004;
     const TOKEN_EXPIRED = 3005;
     const TOKEN_INVALID = 3006;
-    const TOKEN_ABSENT = 3007;
+    const TOKEN_ERROR = 3007;
 
     /**
      * @var array
@@ -29,6 +29,6 @@ class PermissionError extends Enum
         self::YOU_ARE_NOT_AN_ADMINISTRATOR => "You Are Not An Administrator.",
         self::TOKEN_EXPIRED => "Token Expired.",
         self::TOKEN_INVALID => "Token invalid.",
-        self::TOKEN_ABSENT => "Token absent.",
+        self::TOKEN_ERROR => "Token error occurred.",
     ];
 }
