@@ -17,6 +17,7 @@ class CreateDomainsTable extends Migration
             $table->increments('id');
             $table->integer('user_group_id')->unsigned();
             $table->string('domain')->comment('domain');
+            $table->uuid('uuid')->nullable();
             $table->timestamps();
         });
     }
