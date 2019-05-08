@@ -1,23 +1,43 @@
-## Features Or Updates
+## Features
 
-`example : 更新 XXX 功能  || 新增 XXX`
+`新增「 」功能`
+`更新「 」功能`
 
+## APIs
+```
+# [GET]    /
+# [POST]   /
+# [PUT]    /
+# [DELETE] /
+```
 
-### API URL 
-`example : [GET] /api/v1/users/{id}`
+## Postman URL
+```
+https://documenter.getpostman.com/view/...
+```
 
+## PHPUnit 
+```
+# phpunit tests/Feature/xxxTest.php
+```
 
-
-### need to migrate：refresh?
+## php artisan migrate:fresh?
 - [ ] yes
 - [ ] no 
 
-## or execute other commands?
-
-```bash
+## Other Commands?
+```
 # command
 # composer install 
 # composer dump-autoload
-# php artisan migrate:refresh
-# php artisan db:seed
+# php artisan migrate:fresh --seed
+```
+
+## .env (Please sync to readme)
+```
+# 新增
+AAA=
+
+# 刪除
+BBB=
 ```
