@@ -34,8 +34,8 @@ class TokenCheck
         } catch (JWTException $e) {
 
             return response()->json([
-                'message' => PermissionError::getDescription(PermissionError::TOKEN_ABSENT),
-                'errorCode' => PermissionError::TOKEN_ABSENT,
+                'message' => PermissionError::getDescription(PermissionError::TOKEN_ERROR),
+                'errorCode' => PermissionError::TOKEN_ERROR,
             ])->setStatusCode(403);
         }
     }

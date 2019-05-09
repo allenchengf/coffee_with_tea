@@ -29,6 +29,8 @@ class InputError extends Enum
     const THE_PRODUCT_EXIST = 4017;
     const USER_NOT_EXIST = 4018;
     const WRONG_PARAMETER_ERROR = 4019;
+    const DOMAIN_EXIST = 4020;
+    const CNAME_EXIST = 4021;
 
     /**
      * @var array
@@ -54,5 +56,8 @@ class InputError extends Enum
         self::THE_PRODUCT_EXIST => 'The Product Exist',
         self::USER_NOT_EXIST => 'User Not Exist',
         self::WRONG_PARAMETER_ERROR => 'Wrowg Parameter Error',
+        self::DOMAIN_EXIST => 'Domain Exist',
+        self::CNAME_EXIST => 'CNAME Exist',
+        
     ];
 }
