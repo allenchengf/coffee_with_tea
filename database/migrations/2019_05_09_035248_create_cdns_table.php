@@ -21,6 +21,7 @@ class CreateCdnsTable extends Migration
             $table->integer('ttl');
             $table->integer('edited_by')->unsigned();
             $table->timestamps();
+            $table->softDeletes();
             $table->unique([
                 'domain_id',
                 'cname',
