@@ -2,7 +2,7 @@
 
 namespace App\Http\Requests;
 
-use Illuminate\Foundation\Http\FormRequest;
+//use Illuminate\Foundation\Http\FormRequest;
 
 class CdnRequest extends FormRequest
 {
@@ -24,9 +24,9 @@ class CdnRequest extends FormRequest
     public function rules()
     {
         return [
-            'name'  => 'required',
-            'cname' => 'required',
-            'ttl'   => 'required|int',
+            'name'  => 'required|unique:cdns,name',
+            'cname' => 'required|unique:cdns,cname',
+            'ttl'   => 'required|integer',
         ];
     }
 }
