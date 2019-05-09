@@ -14,22 +14,28 @@ class DomainTableSeeder extends Seeder
         $data = [
             [
                 'user_group_id' => 1,
-                'domain' => 'hiero7.test1',
-            ],[
+                'name' => 'hiero7.test1',
+                'cname' => 'hiero7.test1',
+            ], [
                 'user_group_id' => 1,
-                'domain' => 'hiero7.test2',
-            ],[
+                'name' => 'hiero7.test2',
+                'cname' => 'hiero7.test2',
+            ], [
                 'user_group_id' => 2,
-                'domain' => 'rd.test1',
-            ],[
+                'name' => 'rd.test1',
+                'cname' => 'rd.test1',
+            ], [
                 'user_group_id' => 2,
-                'domain' => 'rd.test2',
-            ],[
+                'name' => 'rd.test2',
+                'cname' => 'rd.test2',
+            ], [
                 'user_group_id' => 3,
-                'domain' => 'ops.test2',
-            ],[
+                'name' => 'ops.test1',
+                'cname' => 'ops.test1',
+            ], [
                 'user_group_id' => 3,
-                'domain' => 'ops.test2',
+                'name' => 'ops.test2',
+                'cname' => 'ops.test2',
             ],
         ];
 

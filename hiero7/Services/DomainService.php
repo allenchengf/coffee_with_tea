@@ -24,9 +24,12 @@ class DomainService
     {
         $errorCode = null;
         $domain = [];
-        if ($this->domainRepository->checkDomain($data['domain'])) {
+        if ($this->domainRepository->checkDomain($data['name'])) {
 
             $errorCode = InputError::DOMAIN_EXIST;
+        }else if($this->domainRepository->checkCNAME($data['cname'])){
+
+            $errorCode = InputError::CNAME_EXIST;
         } else {
 
             $domain = $this->domainRepository->createDomain($data);

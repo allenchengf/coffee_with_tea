@@ -26,8 +26,9 @@ class DomainRequest extends FormRequest
         switch ($routeName) {
             case ($routeName == "$prefix.create"):
                 return [
-                    "domain" => 'required|string',
                     "user_group_id" => 'required|integer',
+                    "name" => 'required|string',
+                    "cname" => 'nullable|string',
                 ];
                 break;
             default:

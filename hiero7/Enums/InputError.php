@@ -30,6 +30,7 @@ class InputError extends Enum
     const USER_NOT_EXIST = 4018;
     const WRONG_PARAMETER_ERROR = 4019;
     const DOMAIN_EXIST = 4020;
+    const CNAME_EXIST = 4021;
 
     /**
      * @var array
@@ -56,5 +57,7 @@ class InputError extends Enum
         self::USER_NOT_EXIST => 'User Not Exist',
         self::WRONG_PARAMETER_ERROR => 'Wrowg Parameter Error',
         self::DOMAIN_EXIST => 'Domain Exist',
+        self::CNAME_EXIST => 'CNAME Exist',
+        
     ];
 }

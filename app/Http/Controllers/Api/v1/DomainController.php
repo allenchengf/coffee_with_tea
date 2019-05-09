@@ -19,8 +19,9 @@ class DomainController extends Controller
     public function create(Request $request)
     {
         $data = $request->all();
-        $data['uuid'] = $this->getJWTPayload()['uuid'];
-        
+        $data['cname'] = $request->get('cname') ?? $request->get('name');
+        $data['edited_by'] = $this->getJWTPayload()['uuid'];
+
         extract($this->domainService->create($data));
 
         return $this->setStatusCode($errorCode ? 400 : 200)->response(

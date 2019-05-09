@@ -26,7 +26,13 @@ class DomainRepository
 
     public function checkDomain(string $domain)
     {
-        return $this->domain->where('domain', $domain)->exists();
+        return $this->domain->where('name', $domain)->exists();
     }
 
+    public function checkCNAME(string $cname)
+    {
+        return $this->domain->where('cname', $cname)->exists();
+    }
+
+    
 }

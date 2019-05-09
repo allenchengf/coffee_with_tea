@@ -16,8 +16,9 @@ class CreateDomainsTable extends Migration
         Schema::create('domains', function (Blueprint $table) {
             $table->increments('id');
             $table->integer('user_group_id')->unsigned();
-            $table->string('domain')->comment('domain');
-            $table->uuid('uuid')->nullable();
+            $table->string('name')->comment('domain')->unique();
+            $table->string('cname')->unique();
+            $table->uuid('edited_by')->nullable();
             $table->timestamps();
         });
     }
