@@ -40,7 +40,7 @@ class DomainTest extends TestCase
 
         $request->merge([
             'user_group_id' => 3,
-            'domain' => 'leo.test',
+            'name' => 'leo.test',
         ]);
 
         $this->addUuidforPayload()
@@ -63,7 +63,34 @@ class DomainTest extends TestCase
 
         $request->merge([
             'user_group_id' => 3,
-            'domain' => 'rd.test1',
+            'name' => 'rd.test1',
+        ]);
+
+        $this->addUuidforPayload()
+            ->setJwtTokenPayload($loginUid, $this->jwtPayload);
+
+        $response = $this->controller->create($request);
+        $this->assertEquals(400, $response->status());
+
+        $data = json_decode($response->getContent(), true);
+        $this->assertEquals($errorCode, $data['errorCode']);
+    }
+
+    /**
+     * Create Exist CNAME
+     *
+     * @test
+     */
+    public function create_Exist_CNAME()
+    {
+        $loginUid = 1;
+        $errorCode = 4021;
+        $request = new Request;
+
+        $request->merge([
+            'user_group_id' => 3,
+            'name' => 'rd.test99',
+            'cname' => 'rd.test1',
         ]);
 
         $this->addUuidforPayload()
