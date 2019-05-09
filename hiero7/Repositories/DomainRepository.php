@@ -19,6 +19,16 @@ class DomainRepository
         $this->domain = $domain;
     }
 
+    public function getAll()
+    {
+        return $this->domain->all();
+    }
+
+    public function getByUgid(int $user_group_id)
+    {
+        return $this->domain->where(compact('user_group_id'))->get();
+    }
+
     public function createDomain($data)
     {
         return $this->domain->create($data);

@@ -20,6 +20,16 @@ class DomainService
         $this->domainRepository = $domainRepository;
     }
 
+    public function getAllDomain()
+    {
+        return $this->domainRepository->getAll();
+    }
+
+    public function getDomain(int $ugid)
+    {
+        return $this->domainRepository->getByUgid($ugid);
+    }
+    
     public function create(array $data): array
     {
         $errorCode = null;

@@ -16,6 +16,20 @@ class DomainController extends Controller
         $this->domainService = $domainService;
     }
 
+    public function getAllDomain()
+    {
+        $domain = $this->domainService->getAllDomain();
+
+        return $this->response('', null, $domain);
+    }
+
+    public function getDomain(int $ugid)
+    {
+        $domain = $this->domainService->getDomain($ugid);
+
+        return $this->response('', null, $domain);
+    }
+
     public function create(Request $request)
     {
         $data = $request->all();

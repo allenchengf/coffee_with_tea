@@ -2,9 +2,17 @@
 
 Route::group(['middleware' => ['api'], 'namespace' => 'Api\v1', 'prefix' => 'v1'], function () {
 
-    Route::group(['middleware' => ['auth.user.module'],  'prefix' => 'domain'], function () {
-        
-        Route::post('', 'DomainController@create')->middleware('auth.user.module')->name('domain.create');
+    Route::group(['prefix' => 'domain'], function () {
+        Route::middleware(['internal.group'])->group(function () {
+            Route::get('all', 'DomainController@getAllDomain');
+        });
+
+        Route::middleware(['auth.user.module'])->group(function () {
+            Route::get('{ugid}', 'DomainController@getDomain');
+            Route::post('', 'DomainController@create')->name('domain.create');
+        });
+
+
     });
 
 });
