@@ -24,6 +24,11 @@ class DomainRepository
         return $this->domain->all();
     }
 
+    public function getByid(int $domain_id)
+    {
+        return $this->domain->find($domain_id);
+    }
+
     public function getByUgid(int $user_group_id)
     {
         return $this->domain->where(compact('user_group_id'))->get();

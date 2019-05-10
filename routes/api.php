@@ -12,6 +12,8 @@ Route::group(['middleware' => ['api'], 'namespace' => 'Api\v1', 'prefix' => 'v1'
             Route::post('', 'DomainController@create')->name('domain.create');
         });
 
+        Route::put('{domain_id}', 'DomainController@editDomian')->name('domain.edit');
+        Route::delete('{domain_id}', 'DomainController@destroy');
 
     });
 
