@@ -51,9 +51,9 @@ class CdnController extends Controller
     }
 
 
-    public function destroy(Domain $domain, $cdn)
+    public function destroy(Domain $domain, Cdn $cdn)
     {
-        $domain->cdns()->getById($cdn)->delete();
+        $domain->cdns()->getById($cdn->id)->delete();
 
         return $this->setStatusCode(200)->response('success', null, []);
     }
