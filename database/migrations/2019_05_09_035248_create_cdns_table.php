@@ -20,6 +20,7 @@ class CreateCdnsTable extends Migration
             $table->string('cname');
             $table->integer('ttl');
             $table->uuid('edited_by')->nullable();
+            $table->boolean('default')->default(false);
             $table->timestamps();
             $table->softDeletes();
             $table->unique([
