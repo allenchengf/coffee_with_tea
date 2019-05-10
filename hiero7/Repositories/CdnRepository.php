@@ -1,47 +1,38 @@
 <?php
-/**
- * Created by PhpStorm.
- * User: hanhanhu
- * Date: 2019-05-09
- * Time: 14:17
- */
 
 namespace Hiero7\Repositories;
-
 use Hiero7\Models\Cdn;
+use Hiero7\Enums\DbError;
+use Hiero7\Enums\InputError;
+use Illuminate\Support\Arr;
 
 class CdnRepository
 {
-    protected $model;
+    protected $cdn;
 
-    /**
-     * CdnRepository constructor.
-     *
-     * @param $model
-     */
-    public function __construct(Cdn $model)
+    public function __construct(Cdn $cdn)
     {
-        $this->model = $model;
+        $this->cdn = $cdn;
     }
 
-    public function get($domain)
+    public function store($info, int $id, $user)
     {
-        return $this->model::getByDomainId($domain)->get();
+        try {
+            return $this->cdn::insertGetId(
+                [
+                    "domain_id"=>$id,
+                    "name"=>$info["name"],
+                    "cname"=>$info["cname"],
+                    "edited_by"=>$user["uuid"],
+                    "ttl"=>$info["ttl"]??env("CDN_TTL"),
+                    "created_at" =>  \Carbon\Carbon::now(),
+                    "updated_at" => \Carbon\Carbon::now(),                      
+                ]
+            );
+        } catch (\Exception $e) {
+            if ($e->getCode() == '23000')
+                return new \Exception(DbError::getDescription(DbError::DUPLICATE_ENTRY)." for ".$info["name"], DbError::DUPLICATE_ENTRY);  
+            return $e;
+        }
     }
-
-    public function store($domain, $data)
-    {
-        $this->model::getByDomainId($domain)->create($data);
-    }
-
-    public function update($domain)
-    {
-
-    }
-
-    public function destroy($domain)
-    {
-
-    }
-
 }

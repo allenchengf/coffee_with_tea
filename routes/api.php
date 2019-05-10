@@ -12,8 +12,11 @@ Route::group(['middleware' => ['api'], 'namespace' => 'Api\v1', 'prefix' => 'v1'
             Route::post('', 'DomainController@create')->name('domain.create');
             
             Route::group(['prefix' => '/{domain}'], function () {
-
                 Route::resource('/cdn', 'CdnController', ['except' => ['create', 'show', 'edit']]);
+            });
+
+            Route::group(['prefix' => '{user_group_id}'], function () {
+                Route::post('batch', 'BatchController@store');
             });
         });
 
@@ -21,5 +24,4 @@ Route::group(['middleware' => ['api'], 'namespace' => 'Api\v1', 'prefix' => 'v1'
         Route::delete('{domain_id}', 'DomainController@destroy');
 
     });
-
 });

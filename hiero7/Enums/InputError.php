@@ -31,6 +31,8 @@ class InputError extends Enum
     const WRONG_PARAMETER_ERROR = 4019;
     const DOMAIN_EXIST = 4020;
     const CNAME_EXIST = 4021;
+    const DOMAIN_FORMAT_ERROR = 4022;
+    const BATCH_INPUT_FORMAT_ERROR = 4023;
 
     /**
      * @var array
@@ -58,6 +60,7 @@ class InputError extends Enum
         self::WRONG_PARAMETER_ERROR => 'Wrowg Parameter Error',
         self::DOMAIN_EXIST => 'Domain Exist',
         self::CNAME_EXIST => 'CNAME Exist',
-        
+        self::DOMAIN_FORMAT_ERROR => 'Domain format error.',
+        self::BATCH_INPUT_FORMAT_ERROR=> 'Batch input format error.',
     ];
 }

@@ -1,14 +1,9 @@
 <?php
-/**
- * Created by PhpStorm.
- * User: hanhanhu
- * Date: 2019-05-07
- * Time: 14:55
- */
-
 namespace Hiero7\Repositories;
-
 use Hiero7\Models\Domain;
+use Hiero7\Enums\DbError;
+use Hiero7\Enums\InputError;
+use Illuminate\Support\Arr;
 
 class DomainRepository
 {
@@ -17,6 +12,27 @@ class DomainRepository
     public function __construct(Domain $domain)
     {
         $this->domain = $domain;
+    }
+
+    public function store($info, $user)
+    {
+        try {
+            return $this->domain::insertGetId(
+                [
+                    "user_group_id"=>$user["user_group_id"],
+                    "name"=>$info["name"],
+                    "cname"=>$info["name"],
+                    "edited_by"=>$user["uuid"],
+                    "created_at" =>  \Carbon\Carbon::now(),
+                    "updated_at" => \Carbon\Carbon::now(),   
+                ]
+            );
+            return;
+        } catch (\Exception $e) {
+            if ($e->getCode() == '23000')
+                return new \Exception(DbError::getDescription(DbError::DUPLICATE_ENTRY)." for ".$info["name"], DbError::DUPLICATE_ENTRY);  
+            return $e;
+        }
     }
 
     public function getAll()
@@ -47,7 +63,5 @@ class DomainRepository
     public function checkCNAME(string $cname)
     {
         return $this->domain->where('cname', $cname)->exists();
-    }
-
-    
+    }    
 }
