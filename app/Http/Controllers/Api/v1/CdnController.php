@@ -9,8 +9,6 @@ use App\Http\Controllers\Controller;
 
 class CdnController extends Controller
 {
-    protected $cdnRepository;
-
 
     public function index(Domain $domain)
     {
@@ -36,7 +34,16 @@ class CdnController extends Controller
     {
         $request->merge(['edited_by' => $this->getJWTPayload()['uuid']]);
 
-        $domain->cdns()->where('id', $cdn)->update($request->only(['name', 'cname', 'ttl', 'edited_by', 'default']));
+        $data = $request->only(['name', 'cname', 'ttl', 'edited_by', 'default']);
+
+        if ($getDefaultRecord = $domain->cdns()->where('default',
+                true)->first() and $getDefaultRecord->id != $cdn
+                                   and $request->get('default') == true) {
+
+            $data['default'] = false;
+        }
+
+        $domain->cdns()->getById($cdn)->update($data);
 
         return $this->setStatusCode(200)->response('success', null, []);
 
@@ -45,7 +52,7 @@ class CdnController extends Controller
 
     public function destroy(Domain $domain, $cdn)
     {
-        $domain->cdns()->where('id', $cdn)->delete();
+        $domain->cdns()->getById($cdn)->delete();
 
         return $this->setStatusCode(200)->response('success', null, []);
     }
