@@ -20,22 +20,24 @@ class DomainController extends Controller
 
     public function getAllDomain()
     {
-        $domain = $this->domainService->getAllDomain();
+        $domain = $this->domainService->getAllDomain()->toArray();
+        $dnsPodDomain = env('DNS_POD_DOMAIN');
 
-        return $this->response('', null, $domain);
+        return $this->response('', null, compact('domain', 'dnsPodDomain'));
     }
 
     public function getDomain(int $ugid)
     {
-        $domain = $this->domainService->getDomain($ugid);
+        $domain = $this->domainService->getDomain($ugid)->toArray();
+        $dnsPodDomain = env('DNS_POD_DOMAIN');
 
-        return $this->response('', null, $domain);
+        return $this->response('', null, compact('domain', 'dnsPodDomain'));
     }
 
     public function create(Request $request, Domain $domain)
     {
-        $request->merge(['edited_by' => $this->getJWTPayload()['uuid']]);
-        $request->merge(['user_group_id' => $this->getJWTPayload()['user_group_id']]);
+        $request->merge(['edited_by' => $this->getJWTPayload()['uuid'],
+            'user_group_id' => $this->getJWTPayload()['user_group_id']]);
         $data = $request->all();
         $data['cname'] = $request->get('cname') ?? $request->get('name');
 

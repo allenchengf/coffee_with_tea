@@ -205,6 +205,27 @@ class DomainTest extends TestCase
         $this->assertEquals($errorCode, $data['errorCode']);
     }
 
+    /**
+     * Delete Domain
+     *
+     * @test
+     */
+    public function delete_domain()
+    {
+        $loginUid = 4;
+        $user_group_id = 2;
+        $domain_id = 3;
+        $request = new Request;
+        $domain = $this->domain->find($domain_id);
+
+        $this->addUuidforPayload()
+            ->addUserGroupId($user_group_id)
+            ->setJwtTokenPayload($loginUid, $this->jwtPayload);
+
+        $response = $this->controller->destroy($domain);
+        $this->assertEquals(200, $response->status());
+    }
+
     private function addUuidforPayload()
     {
         $this->jwtPayload['uuid'] = \Illuminate\Support\Str::uuid();

@@ -35,18 +35,6 @@ class DomainService
         return $this->domainRepository->getByid($domain_id);
     }
 
-    public function create(array $data): array
-    {
-        $domain = [];
-        $errorCode = $this->checkDomainAndCnameUnique($data);
-
-        if (!$errorCode) {
-            $domain = $this->domainRepository->createDomain($data);
-        }
-
-        return compact('errorCode', 'domain');
-    }
-
     public function checkDomainAndCnameUnique(array $data): int
     {
         $checkDomain = $this->checkDomainName($data['name']);
