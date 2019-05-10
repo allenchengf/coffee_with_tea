@@ -4,6 +4,7 @@ namespace Tests\Unit\Controller;
 
 use App\Http\Controllers\Api\v1\DomainController;
 use App\Http\Requests\DomainRequest as Request;
+use Hiero7\Models\Domain;
 use Hiero7\Services\DomainService;
 use Illuminate\Foundation\Testing\DatabaseMigrations;
 use Tests\TestCase;
@@ -12,6 +13,7 @@ class DomainTest extends TestCase
 {
     use DatabaseMigrations;
     protected $domainService;
+    protected $domain;
     protected $jwtPayload = [];
 
     protected function setUp()
@@ -20,6 +22,7 @@ class DomainTest extends TestCase
         $this->seed();
         app()->call([$this, 'service']);
         $this->controller = new DomainController($this->domainService);
+        $this->domain = new Domain();
 
     }
 
@@ -36,17 +39,18 @@ class DomainTest extends TestCase
     public function createDomain()
     {
         $loginUid = 1;
+        $user_group_id = 1;
         $request = new Request;
 
         $request->merge([
-            'user_group_id' => 3,
             'name' => 'leo.test',
         ]);
 
         $this->addUuidforPayload()
+            ->addUserGroupId($user_group_id)
             ->setJwtTokenPayload($loginUid, $this->jwtPayload);
 
-        $response = $this->controller->create($request);
+        $response = $this->controller->create($request, $this->domain);
         $this->assertEquals(200, $response->status());
     }
 
@@ -58,6 +62,7 @@ class DomainTest extends TestCase
     public function create_Exist_Domain()
     {
         $loginUid = 1;
+        $user_group_id = 1;
         $errorCode = 4020;
         $request = new Request;
 
@@ -67,9 +72,10 @@ class DomainTest extends TestCase
         ]);
 
         $this->addUuidforPayload()
+            ->addUserGroupId($user_group_id)
             ->setJwtTokenPayload($loginUid, $this->jwtPayload);
 
-        $response = $this->controller->create($request);
+        $response = $this->controller->create($request, $this->domain);
         $this->assertEquals(400, $response->status());
 
         $data = json_decode($response->getContent(), true);
@@ -84,19 +90,21 @@ class DomainTest extends TestCase
     public function create_Exist_CNAME()
     {
         $loginUid = 1;
+        $user_group_id = 1;
         $errorCode = 4021;
         $request = new Request;
 
         $request->merge([
-            'user_group_id' => 3,
+            'user_group_id' => $user_group_id,
             'name' => 'rd.test99',
             'cname' => 'rd.test1',
         ]);
 
         $this->addUuidforPayload()
+            ->addUserGroupId($user_group_id)
             ->setJwtTokenPayload($loginUid, $this->jwtPayload);
 
-        $response = $this->controller->create($request);
+        $response = $this->controller->create($request, $this->domain);
         $this->assertEquals(400, $response->status());
 
         $data = json_decode($response->getContent(), true);
@@ -110,9 +118,13 @@ class DomainTest extends TestCase
      */
     public function edit_Domian()
     {
-        $loginUid = 1;
+        $loginUid = 4;
+        $user_group_id = 2;
         $domain_id = 3;
+        $domain = $this->domain->find($domain_id);
+
         $inputData = [
+            'domain' => $domain_id,
             'name' => 'rd.test99',
             'cname' => 'rd.test99',
         ];
@@ -121,10 +133,10 @@ class DomainTest extends TestCase
         $request->merge($inputData);
 
         $this->addUuidforPayload()
-            ->addUserGroupId()
+            ->addUserGroupId($user_group_id)
             ->setJwtTokenPayload($loginUid, $this->jwtPayload);
 
-        $response = $this->controller->editDomian($request, $domain_id);
+        $response = $this->controller->editDomian($request, $domain);
         $this->assertEquals(200, $response->status());
 
         $data = json_decode($response->getContent(), true);
@@ -139,21 +151,24 @@ class DomainTest extends TestCase
      */
     public function edit_Domian_Exist_Domain()
     {
-        $loginUid = 1;
+        $loginUid = 4;
+        $user_group_id = 2;
         $errorCode = 4020;
         $domain_id = 3;
         $request = new Request;
+        $domain = $this->domain->find($domain_id);
 
         $request->merge([
-            'name' => 'rd.test1',
+            'domain' => $domain_id,
+            'name' => 'rd.test2',
             'cname' => 'rd.test99',
         ]);
 
         $this->addUuidforPayload()
-            ->addUserGroupId()
+            ->addUserGroupId($user_group_id)
             ->setJwtTokenPayload($loginUid, $this->jwtPayload);
 
-        $response = $this->controller->editDomian($request, $domain_id);
+        $response = $this->controller->editDomian($request, $domain);
         $this->assertEquals(400, $response->status());
 
         $data = json_decode($response->getContent(), true);
@@ -168,20 +183,22 @@ class DomainTest extends TestCase
     public function edit_Domian_Exist_Cname()
     {
         $loginUid = 1;
+        $user_group_id = 2;
         $errorCode = 4021;
         $domain_id = 3;
         $request = new Request;
+        $domain = $this->domain->find($domain_id);
 
         $request->merge([
             'name' => 'rd.test99',
-            'cname' => 'rd.test1',
+            'cname' => 'rd.test2',
         ]);
 
         $this->addUuidforPayload()
-            ->addUserGroupId()
+            ->addUserGroupId($user_group_id)
             ->setJwtTokenPayload($loginUid, $this->jwtPayload);
 
-        $response = $this->controller->editDomian($request, $domain_id);
+        $response = $this->controller->editDomian($request, $domain);
         $this->assertEquals(400, $response->status());
 
         $data = json_decode($response->getContent(), true);

@@ -18,8 +18,8 @@ Route::group(['middleware' => ['api'], 'namespace' => 'Api\v1', 'prefix' => 'v1'
             Route::post('batch', 'BatchController@store');
         });
 
-        Route::put('{domain_id}', 'DomainController@editDomian')->name('domain.edit');
-        Route::delete('{domain_id}', 'DomainController@destroy');
+        Route::put('{domain}', 'DomainController@editDomian')->name('domain.edit');
+        Route::delete('{domain}', 'DomainController@destroy');
 
     });
 });

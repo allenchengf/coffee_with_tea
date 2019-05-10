@@ -56,18 +56,18 @@ class DomainService
         return (int) $errorCode;
     }
 
-    public function checkDomainName(string $name)
+    public function checkDomainName(string $name, int $domain_id = 0)
     {
-        if ($this->domainRepository->checkDomain($name)) {
+        if ($this->domainRepository->checkDomain($name,$domain_id)) {
             return InputError::DOMAIN_EXIST;
         }
 
         return null;
     }
 
-    public function checkCname(string $cname)
+    public function checkCname(string $cname, int $domain_id = 0)
     {
-        if ($this->domainRepository->checkCNAME($cname)) {
+        if ($this->domainRepository->checkCNAME($cname,$domain_id)) {
             return InputError::CNAME_EXIST;
         }
 
