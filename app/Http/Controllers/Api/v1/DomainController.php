@@ -33,9 +33,9 @@ class DomainController extends Controller
 
     public function create(Request $request)
     {
+        $request->merge(['edited_by' => $this->getJWTPayload()['uuid']]);
         $data = $request->all();
         $data['cname'] = $request->get('cname') ?? $request->get('name');
-        $data['edited_by'] = $this->getJWTPayload()['uuid'];
 
         extract($this->domainService->create($data));
 
@@ -49,21 +49,20 @@ class DomainController extends Controller
     public function editDomian(Request $request, $domain_id)
     {
         $domain = $this->domainService->getDomainbyId($domain_id);
+        $request->merge(['edited_by' => $this->getJWTPayload()['uuid']]);
 
         $errorCode = null;
-        $payload = $this->getJWTPayload();
 
-        $catEdit = (($payload['user_group_id'] == 1) || ($payload['user_group_id'] == $domain->user_group_id));
-        $checkDomain = $this->domainService->checkDomainName($request->get('name',''));
-        $checkCname = $this->domainService->checkCname($request->get('cname',''));
+        $checkDomain = $this->domainService->checkDomainName($request->get('name', ''));
+        $checkCname = $this->domainService->checkCname($request->get('cname', ''));
 
-        if ($catEdit && !$checkDomain && !$checkCname) {
-            $domain->name = $request->get('name') ?? $domain->name;
-            $domain->cname = $request->get('cname') ?? $domain->cname;
-            $domain->save();
+        if ($this->checkCanEditDomain($domain) && !$checkDomain && !$checkCname) {
+
+            extract($request->all());
+            $domain->update(compact('name', 'cname', 'edited_by'));
         } else {
-            $errorCode = !$catEdit ? PermissionError::YOU_DONT_HAVE_PERMISSION:$checkDomain;
-            $errorCode = $errorCode ?? $checkCname;
+            $errorCode = $checkDomain ?? $checkCname;
+            $errorCode = $errorCode ?? PermissionError::YOU_DONT_HAVE_PERMISSION;
             $domain = [];
         }
 
@@ -78,13 +77,11 @@ class DomainController extends Controller
     {
         $domain = $this->domainService->getDomainbyId($domain_id);
 
-        $payload = $this->getJWTPayload();
         $errorCode = null;
 
-        $catEdit = (($payload['user_group_id'] == 1) || ($payload['user_group_id'] == $domain->user_group_id));
-        if ($catEdit){
+        if ($this->checkCanEditDomain($domain)) {
             $domain->delete();
-        }else{
+        } else {
             $errorCode = PermissionError::YOU_DONT_HAVE_PERMISSION;
         }
 
@@ -92,6 +89,13 @@ class DomainController extends Controller
             '',
             $errorCode
         );
+    }
+
+    private function checkCanEditDomain($domain)
+    {
+        $payload = $this->getJWTPayload();
+
+        return (($payload['user_group_id'] == 1) || ($payload['user_group_id'] == $domain->user_group_id));
     }
 
 }

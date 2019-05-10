@@ -41,7 +41,6 @@ class DomainService
         $errorCode = $this->checkDomainAndCnameUnique($data);
 
         if (!$errorCode) {
-
             $domain = $this->domainRepository->createDomain($data);
         }
 
@@ -57,21 +56,21 @@ class DomainService
         return (int) $errorCode;
     }
 
-    public function checkDomainName(string $name): int
+    public function checkDomainName(string $name)
     {
         if ($this->domainRepository->checkDomain($name)) {
             return InputError::DOMAIN_EXIST;
         }
 
-        return 0;
+        return null;
     }
 
-    public function checkCname(string $cname): int
+    public function checkCname(string $cname)
     {
         if ($this->domainRepository->checkCNAME($cname)) {
             return InputError::CNAME_EXIST;
         }
 
-        return 0;
+        return null;
     }
 }
