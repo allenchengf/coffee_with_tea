@@ -5,22 +5,12 @@ namespace App\Http\Controllers\Api\v1;
 use App\Http\Requests\CdnRequest;
 use Hiero7\Models\Domain;
 use Illuminate\Http\Request;
-use Hiero7\Repositories\CdnRepository;
 use App\Http\Controllers\Controller;
 
 class CdnController extends Controller
 {
     protected $cdnRepository;
 
-    /**
-     * CdnController constructor.
-     *
-     * @param $cdnRepository
-     */
-    public function __construct(CdnRepository $cdnRepository)
-    {
-        $this->cdnRepository = $cdnRepository;
-    }
 
     public function index(Domain $domain)
     {
@@ -33,7 +23,11 @@ class CdnController extends Controller
     {
         $request->merge(['edited_by' => $this->getJWTPayload()['uuid']]);
 
-        $domain->cdns()->create($request->only(['name', 'cname', 'ttl', 'edited_by']));
+        if ( ! $domain->cdns()->exists()) {
+            $request->merge(['default' => true]);
+        }
+
+        $domain->cdns()->create($request->only(['name', 'cname', 'ttl', 'edited_by', 'default']));
 
         return $this->setStatusCode(200)->response('success', null, []);
     }
@@ -42,7 +36,7 @@ class CdnController extends Controller
     {
         $request->merge(['edited_by' => $this->getJWTPayload()['uuid']]);
 
-        $domain->cdns()->where('id', $cdn)->update($request->only(['name', 'cname', 'ttl', 'edited_by']));
+        $domain->cdns()->where('id', $cdn)->update($request->only(['name', 'cname', 'ttl', 'edited_by', 'default']));
 
         return $this->setStatusCode(200)->response('success', null, []);
 

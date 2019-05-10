@@ -33,4 +33,8 @@ class Cdn extends Model
         return $this->belongsTo(Domain::class);
     }
 
+    public function scopeGetById($query, $id)
+    {
+        return $query->where('id', $id);
+    }
 }
