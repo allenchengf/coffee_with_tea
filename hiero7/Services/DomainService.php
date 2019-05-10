@@ -20,21 +20,58 @@ class DomainService
         $this->domainRepository = $domainRepository;
     }
 
+    public function getAllDomain()
+    {
+        return $this->domainRepository->getAll();
+    }
+
+    public function getDomain(int $ugid)
+    {
+        return $this->domainRepository->getByUgid($ugid);
+    }
+
+    public function getDomainbyId(int $domain_id)
+    {
+        return $this->domainRepository->getByid($domain_id);
+    }
+
     public function create(array $data): array
     {
-        $errorCode = null;
         $domain = [];
-        if ($this->domainRepository->checkDomain($data['name'])) {
+        $errorCode = $this->checkDomainAndCnameUnique($data);
 
-            $errorCode = InputError::DOMAIN_EXIST;
-        }else if($this->domainRepository->checkCNAME($data['cname'])){
-
-            $errorCode = InputError::CNAME_EXIST;
-        } else {
+        if (!$errorCode) {
 
             $domain = $this->domainRepository->createDomain($data);
         }
 
         return compact('errorCode', 'domain');
+    }
+
+    public function checkDomainAndCnameUnique(array $data): int
+    {
+        $checkDomain = $this->checkDomainName($data['name']);
+        $checkCname = $this->checkCname($data['cname']);
+
+        $errorCode = $checkDomain ?? $checkCname;
+        return (int) $errorCode;
+    }
+
+    public function checkDomainName(string $name): int
+    {
+        if ($this->domainRepository->checkDomain($name)) {
+            return InputError::DOMAIN_EXIST;
+        }
+
+        return 0;
+    }
+
+    public function checkCname(string $cname): int
+    {
+        if ($this->domainRepository->checkCNAME($cname)) {
+            return InputError::CNAME_EXIST;
+        }
+
+        return 0;
     }
 }

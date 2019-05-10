@@ -31,6 +31,12 @@ class DomainRequest extends FormRequest
                     "cname" => 'nullable|string',
                 ];
                 break;
+            case ($routeName == "$prefix.edit"):
+                return [
+                    "name" => 'nullable|string',
+                    "cname" => 'nullable|string',
+                ];
+                break;
             default:
                 return [];
                 break;
