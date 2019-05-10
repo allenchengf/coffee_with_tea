@@ -37,4 +37,9 @@ class Cdn extends Model
     {
         return $query->where('id', $id);
     }
+
+    public function scopeDefault($query)
+    {
+        return $query->where('default', true);
+    }
 }
