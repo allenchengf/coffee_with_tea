@@ -10,4 +10,10 @@ class Domain extends Model
     protected $primaryKey = 'id';
     protected $fillable = ['user_group_id', 'name', 'cname', 'edited_by'];
 
+
+    public function cdns()
+    {
+        return $this->hasMany(Cdn::class);
+    }
+
 }
