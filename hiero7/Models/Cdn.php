@@ -15,6 +15,7 @@ class Cdn extends Model
             'name',
             'cname',
             'ttl',
+            'default',
             'edited_by'
         ];
 
@@ -25,13 +26,15 @@ class Cdn extends Model
             'deleted_at'
         ];
 
+    protected $casts = ['default' => 'boolean'];
+
     public function domain()
     {
         return $this->belongsTo(Domain::class);
     }
 
-    public function scopeGetByDomainId($query, $domainId)
+    public function scopeGetById($query, $id)
     {
-        return $query->where('domain_id', $domainId);
+        return $query->where('id', $id);
     }
 }

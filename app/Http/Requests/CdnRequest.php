@@ -23,6 +23,17 @@ class CdnRequest extends FormRequest
      */
     public function rules()
     {
+        if ($this->method() == 'PUT') {
+
+            return [
+                'name'    => 'required|unique:cdns,name,' . $this->cdn,
+                'cname'   => 'required|unique:cdns,cname,' . $this->cdn,
+                'ttl'     => 'required|integer',
+                'default' => 'required|integer|boolean'
+            ];
+
+        }
+
         return [
             'name'  => 'required|unique:cdns,name',
             'cname' => 'required|unique:cdns,cname',
