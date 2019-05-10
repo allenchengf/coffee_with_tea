@@ -20,7 +20,6 @@ class BatchTest extends TestCase
         $this->domains[] = $this->addDomain("hello.com", $this->addCdn("cdn1", "cdn1.com", 90));
         $this->user = array("uuid" => \Illuminate\Support\Str::uuid(), "user_group_id" => 3);
         $this->batchService = $this->app->make('Hiero7\Services\BatchService');
-
     }
 
     public function tearDown()

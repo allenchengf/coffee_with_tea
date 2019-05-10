@@ -17,7 +17,6 @@ class BatchService{
     }
 
     public function store($domains, $user){
-
         $errors = [];
         foreach($domains as $domain){
             $domain_added = true;
@@ -30,9 +29,9 @@ class BatchService{
                 $domain_added = false;
             }
             if($domain_added){
-                foreach($domain["cdns"] as $cdn){
+                foreach($domain["cdns"] as $key => $cdn){
                     try {
-                        $add_cdn_result = $this->cdnRepository->store($cdn, $add_domain_result, $user);
+                        $add_cdn_result = $this->cdnRepository->store($cdn, $add_domain_result, $user, $key);
                         if(!is_int($add_cdn_result))
                             throw $add_cdn_result;
                     } catch (\Exception $e) {
