@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Api\v1;
 
 use App\Http\Requests\CdnRequest;
-use Hiero7\Models\Cdn;
 use Hiero7\Models\Domain;
 use Illuminate\Http\Request;
 use Hiero7\Repositories\CdnRepository;
@@ -25,29 +24,25 @@ class CdnController extends Controller
 
     public function index(Domain $domain)
     {
-        $result = $domain->cdns()->get();
+        $result = $domain->cdns()->orderBy('created_at', 'asc')->get();
 
         return $this->setStatusCode($result ? 200 : 404)->response('success', null, $result);
     }
 
     public function store(CdnRequest $request, Domain $domain)
     {
-        $data = $request->only(['name', 'cname', 'ttl']);
+        $request->merge(['edited_by' => $this->getJWTPayload()['uuid']]);
 
-        $data['edited_by'] = '1'; //just a temporary thing
+        $domain->cdns()->create($request->only(['name', 'cname', 'ttl', 'edited_by']));
 
-        $result = $domain->cdns()->create($data);
-
-        return $this->setStatusCode(200)->response('success', null, $result);
+        return $this->setStatusCode(200)->response('success', null, []);
     }
 
     public function update(CdnRequest $request, Domain $domain, $cdn)
     {
-        $data = $request->only(['name', 'cname', 'ttl']);
+        $request->merge(['edited_by' => $this->getJWTPayload()['uuid']]);
 
-        $data['edited_by'] = '1'; //just a temporary thing
-
-        $domain->cdns()->where('id', $cdn)->update($data);
+        $domain->cdns()->where('id', $cdn)->update($request->only(['name', 'cname', 'ttl', 'edited_by']));
 
         return $this->setStatusCode(200)->response('success', null, []);
 
@@ -56,7 +51,7 @@ class CdnController extends Controller
 
     public function destroy(Domain $domain, $cdn)
     {
-        $domain->cdns()->where('id',$cdn)->delete();
+        $domain->cdns()->where('id', $cdn)->delete();
 
         return $this->setStatusCode(200)->response('success', null, []);
     }
