@@ -22,10 +22,10 @@ class DomainPermission
         $token = JWTAuth::getToken();
         $payload = JWTAuth::getPayload($token)->toArray();
 
-        if (gettype($request->domain) != 'object'){
-            $domain = $this->domainService->getDomainbyId($request->domain);
-        }else{
-            $domain = (int) $request->domain;
+        if (gettype($request->domain) === 'object') {
+            $domain = $request->domain;
+        } else {
+            $domain = $this->domainService->getDomainbyId((int) $request->domain);
         }
 
         if (($payload['user_group_id'] == 1) || empty($domain) || ($payload['user_group_id'] == $domain->user_group_id)) {
