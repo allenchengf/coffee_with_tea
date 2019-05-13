@@ -20,7 +20,6 @@ class BatchTest extends TestCase
         $this->domains[] = $this->addDomain("hello.com", $this->addCdn("cdn1", "cdn1.com", 90));
         $this->user = array("uuid" => \Illuminate\Support\Str::uuid(), "user_group_id" => 3);
         $this->batchService = $this->app->make('Hiero7\Services\BatchService');
-
     }
 
     public function tearDown()
@@ -32,9 +31,19 @@ class BatchTest extends TestCase
     }
 
     public function testDuplicateDomain() {
-        $this->domains[] = $this->domains;
+        $this->domains[] = $this->domains[0];
         $result = $this->batchService->store($this->domains, $this->user);
         $this->assertEquals(count($result), 1);
+    }
+
+    public function testAppendCdn(){
+        $result = $this->batchService->store($this->domains, $this->user);
+        $this->assertEquals(count($result), 0);
+
+        $this->domains = [];
+        $this->domains[] = $this->addDomain("hello.com", $this->addCdn("cdn10", "cdn10.com", 90));  
+        $result = $this->batchService->store($this->domains, $this->user);
+        $this->assertEquals(count($result), 0);
     }
 
     public function testDuplicateCdn() {

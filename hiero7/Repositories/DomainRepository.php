@@ -36,6 +36,11 @@ class DomainRepository
         }
     }
 
+    public function getDomainIdIfExist(string $domain, int $user_group_id)
+    {
+        return $this->domain->where('name', $domain)->where('user_group_id', $user_group_id)->first();
+    }
+
     public function getAll()
     {
         return $this->domain->all();

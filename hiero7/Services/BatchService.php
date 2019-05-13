@@ -17,22 +17,27 @@ class BatchService{
     }
 
     public function store($domains, $user){
-
         $errors = [];
         foreach($domains as $domain){
             $domain_added = true;
             try {
-                $add_domain_result = $this->domainRepository->store($domain, $user);
-                if(!is_int($add_domain_result))
-                    throw $add_domain_result;
+                $domain_id = $this->domainRepository->store($domain, $user);
+                if(!is_int($domain_id))
+                    throw $domain_id;
             } catch (\Exception $e) {
-                array_push($errors, $e->getMessage());
-                $domain_added = false;
+                $record = $this->domainRepository->getDomainIdIfExist($domain["name"], $user["user_group_id"]);
+                if(count($record) == 1){
+                    $domain_id = $record->id;                    
+                }else{
+                    array_push($errors, $e->getMessage());
+                    $domain_added = false;
+                }
             }
+
             if($domain_added){
-                foreach($domain["cdns"] as $cdn){
+                foreach($domain["cdns"] as $key => $cdn){
                     try {
-                        $add_cdn_result = $this->cdnRepository->store($cdn, $add_domain_result, $user);
+                        $add_cdn_result = $this->cdnRepository->store($cdn, $domain_id, $user, $key);
                         if(!is_int($add_cdn_result))
                             throw $add_cdn_result;
                     } catch (\Exception $e) {

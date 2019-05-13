@@ -22,9 +22,8 @@ class BatchController extends Controller
         config(['database.connections.mysql.options' => [
             \PDO::ATTR_PERSISTENT => true
         ]]);
-
-        DB::purge('mysql');
-        DB::reconnect('mysql');        
+        DB::purge(env('DB_CONNECTION'));
+        DB::reconnect(env('DB_CONNECTION'));        
         DB::connection()->disableQueryLog();
         $errors = $this->batchService->store($request->domains, $request->get('user'));
 
