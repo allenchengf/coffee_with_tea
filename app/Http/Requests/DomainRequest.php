@@ -26,18 +26,18 @@ class DomainRequest extends FormRequest
         switch ($routeName) {
             case ($routeName == "$prefix.get"):
                 return [
-                    'user_group_id'    => 'nullable|integer',
+                    'user_group_id' => 'nullable|integer',
                 ];
                 break;
             case ($routeName == "$prefix.create"):
                 return [
-                    'name'    => 'required|string',
+                    'name' => 'required|string',
                     'cname' => 'nullable|string',
                 ];
                 break;
             case ($routeName == "$prefix.edit"):
                 return [
-                    'name'    => 'nullable|string',
+                    'name' => 'nullable|string',
                     "cname" => 'nullable|string',
                 ];
                 break;

@@ -21,7 +21,10 @@ class DomainController extends Controller
     public function getDomain(Request $request)
     {
         $getPayload = $this->getJWTPayload();
-        $ugid = (($getPayload['user_group_id'] == $request->get('user_group_id')) || ($getPayload['user_group_id'] == 1)) ? $request->get('user_group_id') : $getPayload['user_group_id'];
+        $ugid = (($getPayload['user_group_id'] == $request->get('user_group_id')) ||
+            ($getPayload['user_group_id'] == 1)) ?
+        $request->get('user_group_id', $getPayload['user_group_id']) : $getPayload['user_group_id'];
+        
         $domain = $this->domainService->getDomain($ugid)->toArray();
         $dnsPodDomain = env('DNS_POD_DOMAIN');
 
