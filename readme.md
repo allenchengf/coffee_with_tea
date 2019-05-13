@@ -9,7 +9,10 @@ JWT_SECRET=s07mAuXcJUWZq3LZAiXrqjec6EEg2ZR5N97or1WytTONkjJwhfowVrK8eQzI1S5o
 KONG_OPERATION_LOG=http://10.88.55.124/operation_log
 USER_MODULE=http://10.88.55.122:35320/api/v1
 
+DNS_PROVIDER_API=http://10.88.55.122:35341/api/v1
 DNS_POD_DOMAIN=shiftcdn.com
+DNS_POD_LOGIN_TOKEN=ID,Token
+DNS_POD_DOMAIN_ID=
 
 DOMAIN_REGULAR='regex:/^(?!:\/\/)([a-zA-Z0-9-_]+\.)*[a-zA-Z0-9][a-zA-Z0-9-_]+\.[a-zA-Z]{2,11}?$/'
 CDN_TTL=600
