@@ -10,5 +10,5 @@ class LocationNetwork extends Model
 
     protected $primaryKey = 'id';
 
-    protected $fillable = ['continent_id', 'country_id', 'group', 'location', 'isp'];
+    protected $fillable = ['continent_id', 'country_id', 'location', 'network_id', 'edited_by'];
 }

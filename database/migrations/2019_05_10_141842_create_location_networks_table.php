@@ -17,13 +17,13 @@ class CreateLocationNetworksTable extends Migration
             $table->increments('id');
             $table->unsignedInteger('continent_id')->nullable();
             $table->unsignedInteger('country_id')->nullable();
-            $table->string('group')->nullable();
             $table->string('location');
-            $table->string('isp');
+            $table->unsignedInteger('network_id')->nullable();
+            $table->string('edited_by');
             $table->timestamps();
-            $table->softDeletes();
             $table->foreign('continent_id')->references('id')->on('continents');
             $table->foreign('country_id')->references('id')->on('countries');
+            $table->foreign('network_id')->references('id')->on('networks');
         });
     }
 
