@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\v1;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\DomainRequest as Request;
 use Hiero7\Enums\PermissionError;
+use Hiero7\Models\Domain;
 use Hiero7\Services\DomainService;
 
 class DomainController extends Controller
@@ -17,49 +18,47 @@ class DomainController extends Controller
         $this->domainService = $domainService;
     }
 
-    public function getAllDomain()
+    public function getDomain(Request $request)
     {
-        $domain = $this->domainService->getAllDomain();
+        $getPayload = $this->getJWTPayload();
+        $ugid = (($getPayload['user_group_id'] == $request->get('user_group_id')) || ($getPayload['user_group_id'] == 1)) ? $request->get('user_group_id') : $getPayload['user_group_id'];
+        $domain = $this->domainService->getDomain($ugid)->toArray();
+        $dnsPodDomain = env('DNS_POD_DOMAIN');
 
-        return $this->response('', null, $domain);
+        return $this->response('', null, compact('domain', 'dnsPodDomain'));
     }
 
-    public function getDomain(int $ugid)
+    public function create(Request $request, Domain $domain)
     {
-        $domain = $this->domainService->getDomain($ugid);
-
-        return $this->response('', null, $domain);
-    }
-
-    public function create(Request $request)
-    {
-        $request->merge(['edited_by' => $this->getJWTPayload()['uuid']]);
+        $request->merge(['edited_by' => $this->getJWTPayload()['uuid'],
+            'user_group_id' => $this->getJWTPayload()['user_group_id']]);
         $data = $request->all();
         $data['cname'] = $request->get('cname') ?? $request->get('name');
 
-        extract($this->domainService->create($data));
+        $errorCode = $this->domainService->checkDomainAndCnameUnique($data);
+        if (!$errorCode) {
+            $domainInfo = $domain->create($data);
+        }
 
         return $this->setStatusCode($errorCode ? 400 : 200)->response(
             '',
             $errorCode,
-            $domain
+            isset($domainInfo) ? $domainInfo : []
         );
     }
 
-    public function editDomian(Request $request, $domain_id)
+    public function editDomian(Request $request, Domain $domain)
     {
-        $domain = $this->domainService->getDomainbyId($domain_id);
         $request->merge(['edited_by' => $this->getJWTPayload()['uuid']]);
-
         $errorCode = null;
 
-        $checkDomain = $this->domainService->checkDomainName($request->get('name', ''));
-        $checkCname = $this->domainService->checkCname($request->get('cname', ''));
+        $checkDomain = $this->domainService->checkDomainName($request->get('name', ''), $domain->id);
+        $checkCname = $this->domainService->checkCname($request->get('cname', ''), $domain->id);
 
         if ($this->checkCanEditDomain($domain) && !$checkDomain && !$checkCname) {
 
-            extract($request->all());
-            $domain->update(compact('name', 'cname', 'edited_by'));
+            $domain->update($request->only('name', 'cname', 'edited_by'));
+
         } else {
             $errorCode = $checkDomain ?? $checkCname;
             $errorCode = $errorCode ?? PermissionError::YOU_DONT_HAVE_PERMISSION;
@@ -69,13 +68,12 @@ class DomainController extends Controller
         return $this->setStatusCode($errorCode ? 400 : 200)->response(
             '',
             $errorCode,
-            $domain
+            isset($domain) ? $domain : []
         );
     }
 
-    public function destroy(int $domain_id)
+    public function destroy(Domain $domain)
     {
-        $domain = $this->domainService->getDomainbyId($domain_id);
 
         $errorCode = null;
 

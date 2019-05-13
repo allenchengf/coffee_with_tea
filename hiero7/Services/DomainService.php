@@ -35,18 +35,6 @@ class DomainService
         return $this->domainRepository->getByid($domain_id);
     }
 
-    public function create(array $data): array
-    {
-        $domain = [];
-        $errorCode = $this->checkDomainAndCnameUnique($data);
-
-        if (!$errorCode) {
-            $domain = $this->domainRepository->createDomain($data);
-        }
-
-        return compact('errorCode', 'domain');
-    }
-
     public function checkDomainAndCnameUnique(array $data): int
     {
         $checkDomain = $this->checkDomainName($data['name']);
@@ -56,18 +44,18 @@ class DomainService
         return (int) $errorCode;
     }
 
-    public function checkDomainName(string $name)
+    public function checkDomainName(string $name, int $domain_id = 0)
     {
-        if ($this->domainRepository->checkDomain($name)) {
+        if ($this->domainRepository->checkDomain($name,$domain_id)) {
             return InputError::DOMAIN_EXIST;
         }
 
         return null;
     }
 
-    public function checkCname(string $cname)
+    public function checkCname(string $cname, int $domain_id = 0)
     {
-        if ($this->domainRepository->checkCNAME($cname)) {
+        if ($this->domainRepository->checkCNAME($cname,$domain_id)) {
             return InputError::CNAME_EXIST;
         }
 
