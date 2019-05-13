@@ -18,16 +18,10 @@ class DomainController extends Controller
         $this->domainService = $domainService;
     }
 
-    public function getAllDomain()
+    public function getDomain(Request $request)
     {
-        $domain = $this->domainService->getAllDomain()->toArray();
-        $dnsPodDomain = env('DNS_POD_DOMAIN');
-
-        return $this->response('', null, compact('domain', 'dnsPodDomain'));
-    }
-
-    public function getDomain(int $ugid)
-    {
+        $getPayload = $this->getJWTPayload();
+        $ugid = (($getPayload['user_group_id'] == $request->get('user_group_id')) || ($getPayload['user_group_id'] == 1)) ? $request->get('user_group_id') : $getPayload['user_group_id'];
         $domain = $this->domainService->getDomain($ugid)->toArray();
         $dnsPodDomain = env('DNS_POD_DOMAIN');
 
