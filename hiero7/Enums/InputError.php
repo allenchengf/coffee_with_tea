@@ -33,7 +33,8 @@ class InputError extends Enum
     const CNAME_EXIST = 4021;
     const DOMAIN_FORMAT_ERROR = 4022;
     const BATCH_INPUT_FORMAT_ERROR = 4023;
-
+    const DOMAIN_VERIFICATION_ERROR = 4024;
+    
     /**
      * @var array
      */
@@ -61,6 +62,7 @@ class InputError extends Enum
         self::DOMAIN_EXIST => 'Domain Exist',
         self::CNAME_EXIST => 'CNAME Exist',
         self::DOMAIN_FORMAT_ERROR => 'Domain format error.',
-        self::BATCH_INPUT_FORMAT_ERROR=> 'Batch input format error.',
+        self::BATCH_INPUT_FORMAT_ERROR => 'Batch input format error.',
+        self::DOMAIN_VERIFICATION_ERROR => 'Domain verification Error.',
     ];
 }

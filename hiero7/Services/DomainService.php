@@ -10,9 +10,11 @@ namespace Hiero7\Services;
 
 use Hiero7\Enums\InputError;
 use Hiero7\Repositories\DomainRepository;
+use Hiero7\Traits\DomainHelperTrait;
 
 class DomainService
 {
+    use DomainHelperTrait;
     protected $domainRepository;
 
     public function __construct(DomainRepository $domainRepository)
@@ -48,6 +50,8 @@ class DomainService
     {
         if ($this->domainRepository->checkDomain($name,$domain_id)) {
             return InputError::DOMAIN_EXIST;
+        }else if (!$this->validateDoamin($name)){
+            return InputError::DOMAIN_VERIFICATION_ERROR;
         }
 
         return null;
