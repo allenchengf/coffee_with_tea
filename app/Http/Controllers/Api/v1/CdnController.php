@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\v1;
 
 use App\Http\Requests\CdnRequest;
+use Hiero7\Models\Cdn;
 use Hiero7\Models\Domain;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
@@ -30,29 +31,29 @@ class CdnController extends Controller
         return $this->setStatusCode(200)->response('success', null, []);
     }
 
-    public function update(CdnRequest $request, Domain $domain, $cdn)
+    public function update(CdnRequest $request, Domain $domain, Cdn $cdn)
     {
         $request->merge(['edited_by' => $this->getJWTPayload()['uuid']]);
 
         $data = $request->only(['name', 'cname', 'ttl', 'edited_by', 'default']);
 
-        if ($getDefaultRecord = $domain->cdns()->where('default',
-                true)->first() and $getDefaultRecord->id != $cdn
-                                   and $request->get('default') == true) {
+        $getDefaultRecord = $domain->cdns()->default()->first();
+
+        if ($getDefaultRecord and $getDefaultRecord->id != $cdn->id and $request->get('default')) {
 
             $data['default'] = false;
         }
 
-        $domain->cdns()->getById($cdn)->update($data);
+        $domain->cdns()->getById($cdn->id)->update($data);
 
         return $this->setStatusCode(200)->response('success', null, []);
 
     }
 
 
-    public function destroy(Domain $domain, $cdn)
+    public function destroy(Domain $domain, Cdn $cdn)
     {
-        $domain->cdns()->getById($cdn)->delete();
+        $domain->cdns()->getById($cdn->id)->delete();
 
         return $this->setStatusCode(200)->response('success', null, []);
     }
