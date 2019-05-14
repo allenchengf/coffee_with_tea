@@ -1,7 +1,7 @@
 <?php
 namespace Hiero7\Services;
 
-use Hiero7\Enums\InputError;
+use Hiero7\Enums\DbError;
 use Hiero7\Repositories\LocationDnsSettingRepository;
 
 class LocationDnsSettingService
@@ -13,20 +13,39 @@ class LocationDnsSettingService
         $this->locationDnsSettingRepository = $locationDnsSettingRepository;
     }
 
-    public function getAll()
+    public function getAll($domain)
     {
-        return $this->locationDnsSettingRepository->getAll();
+
+        return $this->locationDnsSettingRepository->getAll($domain);
+    }
+
+    public function getById($domain,$rid)
+    {
+        return $this->locationDnsSettingRepository->getById($domain,$rid);
     }
 
     public function updateBySettingId($data,$setting)
     {
         return $this->locationDnsSettingRepository->update($data,$setting);
+    } 
+
+    public function createSetting($data,$domainId,$rid)
+    {
+        try{
+            $result = $this->locationDnsSettingRepository->createSetting($data,$domainId);
+        } catch (\Exception $e)
+        {
+            return false;
+        }
+        return $result;
+        // 要打 pod api 獲得 podid 放入 DB
+        // $this->locationDnsSettingRepository->updatePodId($podId);
+        // return 
     }
 
-    public function createSetting($data)
+    public function checkPodId($domian, $rid)
     {
-        $this->locationDnsSettingRepository->createSetting($data);
-        // 要打 pod api 獲得 podid 放入 DB
-        return $this->locationDnsSettingRepository->updatePodId($podId);
+        $result = $this->locationDnsSettingRepository->getPodId($domian,$rid);
+        return $result == null ? $result : false;
     }
 }

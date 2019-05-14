@@ -16,4 +16,19 @@ class LocationNetwork extends Model
     {
         return $this->belongsTo(Network::class)->withDefault();
     }
+
+    public function continent()
+    {
+        return $this->belongsTo(Continent::class)->withDefault();
+    }
+
+    public function country()
+    {
+        return $this->belongsTo(Country::class)->withDefault();
+    }
+
+    public function dnsSetting()
+    {
+        return $this->hasMany(LocationDnsSetting::class);
+    }
 }
