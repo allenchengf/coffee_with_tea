@@ -64,5 +64,6 @@ class Kernel extends HttpKernel
         'verified' => \Illuminate\Auth\Middleware\EnsureEmailIsVerified::class,
         'internal.group' => \App\Http\Middleware\InternalGroup::class,
         'auth.user.module' => \App\Http\Middleware\AuthUserModule::class,
+        'domain.permission' => \App\Http\Middleware\DomainPermission::class,
     ];
 }
