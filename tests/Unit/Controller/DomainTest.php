@@ -363,16 +363,4 @@ class DomainTest extends TestCase
         $response = $this->controller->destroy($domain);
         $this->assertEquals(200, $response->status());
     }
-
-    private function addUuidforPayload()
-    {
-        $this->jwtPayload['uuid'] = \Illuminate\Support\Str::uuid();
-        return $this;
-    }
-
-    private function addUserGroupId(int $id = 1)
-    {
-        $this->jwtPayload['user_group_id'] = $id;
-        return $this;
-    }
 }
