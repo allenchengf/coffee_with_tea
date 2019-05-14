@@ -11,4 +11,9 @@ class LocationNetwork extends Model
     protected $primaryKey = 'id';
 
     protected $fillable = ['continent_id', 'country_id', 'location', 'network_id', 'edited_by'];
+
+    public function network()
+    {
+        return $this->belongsTo(Network::class)->withDefault();
+    }
 }

@@ -15,11 +15,11 @@ class CreateLocationNetworksTable extends Migration
     {
         Schema::create('location_networks', function (Blueprint $table) {
             $table->increments('id');
-            $table->unsignedInteger('continent_id')->nullable();
-            $table->unsignedInteger('country_id')->nullable();
+            $table->unsignedInteger('continent_id');
+            $table->unsignedInteger('country_id');
             $table->string('location');
-            $table->unsignedInteger('network_id')->nullable();
-            $table->string('edited_by');
+            $table->unsignedInteger('network_id');
+            $table->string('edited_by')->nullable();
             $table->timestamps();
             $table->foreign('continent_id')->references('id')->on('continents');
             $table->foreign('country_id')->references('id')->on('countries');
