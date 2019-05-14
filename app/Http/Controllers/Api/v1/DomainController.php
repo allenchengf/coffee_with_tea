@@ -35,6 +35,7 @@ class DomainController extends Controller
         $data = $request->all();
 
         $errorCode = $this->domainService->checkDomainAndCnameUnique($data);
+
         if (!$errorCode) {
             $domainInfo = $domain->create($data);
         }
@@ -42,7 +43,7 @@ class DomainController extends Controller
         return $this->setStatusCode($errorCode ? 400 : 200)->response(
             '',
             $errorCode,
-            isset($domainInfo) ? $domainInfo : []
+            $domainInfo ?? []
         );
     }
 
@@ -55,18 +56,15 @@ class DomainController extends Controller
         $checkCname = $this->domainService->checkCname($request->get('cname', ''), $domain->id);
 
         if (!$checkDomain && !$checkCname) {
-
             $domain->update($request->only('name', 'cname', 'edited_by'));
-
         } else {
             $errorCode = $checkDomain ?? $checkCname;
-            $domain = [];
         }
 
         return $this->setStatusCode($errorCode ? 400 : 200)->response(
             '',
             $errorCode,
-            isset($domain) ? $domain : []
+            $errorCode ? [] : $domain
         );
     }
 

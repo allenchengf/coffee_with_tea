@@ -32,6 +32,85 @@ class DomainTest extends TestCase
     }
 
     /**
+     * Get Domain
+     * by Admin
+     * @test
+     */
+    public function getDomain()
+    {
+        $loginUid = 1;
+        $user_group_id = 1;
+        $target_user_group_id = 3;
+        $request = new Request;
+
+        $request->merge([
+            'user_group_id' => $target_user_group_id,
+        ]);
+
+        $this->addUuidforPayload()
+            ->addUserGroupId($user_group_id)
+            ->setJwtTokenPayload($loginUid, $this->jwtPayload);
+
+        $response = $this->controller->getDomain($request);
+        $this->assertEquals(200, $response->status());
+
+        $data = json_decode($response->getContent(), true);
+        $this->assertEquals($target_user_group_id, $data['data']['domain'][0]['user_group_id']);
+    }
+
+    /**
+     * Get Domain
+     * login by user
+     * @test
+     */
+    public function getDomain_login_by_user()
+    {
+        $loginUid = 4;
+        $user_group_id = 2;
+        $target_user_group_id = 2;
+        $request = new Request;
+
+        $request->merge(compact('user_group_id'));
+
+        $this->addUuidforPayload()
+            ->addUserGroupId($user_group_id)
+            ->setJwtTokenPayload($loginUid, $this->jwtPayload);
+
+        $response = $this->controller->getDomain($request);
+        $this->assertEquals(200, $response->status());
+
+        $data = json_decode($response->getContent(), true);
+        $this->assertEquals($user_group_id, $data['data']['domain'][0]['user_group_id']);
+    }
+
+
+    /**
+     * Get Domain
+     * login by user
+     * target other user_group_id
+     * @test
+     */
+    public function getDomain_login_by_user_other_user_group_id()
+    {
+        $loginUid = 4;
+        $user_group_id = 2;
+        $target_user_group_id = 3;
+        $request = new Request;
+
+        $request->merge(compact('user_group_id'));
+
+        $this->addUuidforPayload()
+            ->addUserGroupId($user_group_id)
+            ->setJwtTokenPayload($loginUid, $this->jwtPayload);
+
+        $response = $this->controller->getDomain($request);
+        $this->assertEquals(200, $response->status());
+
+        $data = json_decode($response->getContent(), true);
+        $this->assertEquals($user_group_id, $data['data']['domain'][0]['user_group_id']);
+    }
+
+    /**
      * Create Domain
      *
      * @test
