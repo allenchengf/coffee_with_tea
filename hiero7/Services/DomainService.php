@@ -59,7 +59,7 @@ class DomainService
 
     public function checkCname(string $cname, int $domain_id = 0)
     {
-        if ($this->domainRepository->checkCNAME($cname,$domain_id)) {
+        if ($this->domainRepository->checkCname($cname,$domain_id)) {
             return InputError::CNAME_EXIST;
         }
 
