@@ -31,6 +31,7 @@ class DomainRequest extends FormRequest
                 break;
             case ($routeName == "$prefix.create"):
                 return [
+                    'user_group_id' => 'nullable|integer',
                     'name' => 'required|string',
                     'cname' => 'nullable|string',
                 ];
@@ -38,7 +39,7 @@ class DomainRequest extends FormRequest
             case ($routeName == "$prefix.edit"):
                 return [
                     'name' => 'nullable|string',
-                    "cname" => 'nullable|string',
+                    'cname' => 'nullable|string',
                 ];
                 break;
             default:

@@ -4,7 +4,6 @@ namespace App\Http\Controllers\Api\v1;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\DomainRequest as Request;
-use Hiero7\Enums\PermissionError;
 use Hiero7\Models\Domain;
 use Hiero7\Services\DomainService;
 
@@ -20,23 +19,20 @@ class DomainController extends Controller
 
     public function getDomain(Request $request)
     {
-        $getPayload = $this->getJWTPayload();
-        $ugid = (($getPayload['user_group_id'] == $request->get('user_group_id')) ||
-            ($getPayload['user_group_id'] == 1)) ?
-        $request->get('user_group_id', $getPayload['user_group_id']) : $getPayload['user_group_id'];
-        
+        $ugid = $this->getUgid($request);
         $domain = $this->domainService->getDomain($ugid)->toArray();
         $dnsPodDomain = env('DNS_POD_DOMAIN');
-
         return $this->response('', null, compact('domain', 'dnsPodDomain'));
     }
 
     public function create(Request $request, Domain $domain)
     {
-        $request->merge(['edited_by' => $this->getJWTPayload()['uuid'],
-            'user_group_id' => $this->getJWTPayload()['user_group_id']]);
+        $request->merge([
+            'edited_by' => $this->getJWTPayload()['uuid'],
+            'user_group_id' => $this->getUgid($request),
+            'cname' => $request->get('cname') ?? $request->get('name'),
+        ]);
         $data = $request->all();
-        $data['cname'] = $request->get('cname') ?? $request->get('name');
 
         $errorCode = $this->domainService->checkDomainAndCnameUnique($data);
         if (!$errorCode) {
@@ -80,4 +76,14 @@ class DomainController extends Controller
         return $this->response();
     }
 
+    private function getUgid($request)
+    {
+        $getPayload = $this->getJWTPayload();
+
+        $ugid = (($getPayload['user_group_id'] == $request->get('user_group_id')) ||
+            ($getPayload['user_group_id'] == 1)) ?
+        $request->get('user_group_id', $getPayload['user_group_id']) : $getPayload['user_group_id'];
+
+        return $ugid;
+    }
 }

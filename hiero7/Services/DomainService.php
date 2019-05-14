@@ -48,9 +48,9 @@ class DomainService
 
     public function checkDomainName(string $name, int $domain_id = 0)
     {
-        if ($this->domainRepository->checkDomain($name,$domain_id)) {
+        if ($this->domainRepository->checkDomain($name, $domain_id)) {
             return InputError::DOMAIN_EXIST;
-        }else if (!$this->validateDoamin($name)){
+        } else if (!$this->validateDoamin($name)) {
             return InputError::DOMAIN_VERIFICATION_ERROR;
         }
 
@@ -59,7 +59,7 @@ class DomainService
 
     public function checkCname(string $cname, int $domain_id = 0)
     {
-        if ($this->domainRepository->checkCNAME($cname,$domain_id)) {
+        if ($this->domainRepository->checkCname($cname, $domain_id)) {
             return InputError::CNAME_EXIST;
         }
 
