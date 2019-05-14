@@ -4,6 +4,11 @@ Route::group(['middleware' => ['api'], 'namespace' => 'Api\v1', 'prefix' => 'v1'
 
     Route::group(['prefix' => 'domains'], function () {
         Route::get('', 'DomainController@getDomain')->name('domain.get');
+        
+        Route::group(['prefix' => '/iRouteCDN'], function () {
+            Route::get('', 'LocationDnsSettingController@getAll')->name('iRoute.get');
+            Route::put('/{recordId}', 'LocationDnsSettingController@editSetting')->name('iRoute.edit');
+        });
 
         Route::middleware(['auth.user.module'])->group(function () {
             Route::post('', 'DomainController@create')->name('domain.create');
