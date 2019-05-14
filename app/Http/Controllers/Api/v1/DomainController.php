@@ -58,13 +58,12 @@ class DomainController extends Controller
         $checkDomain = $this->domainService->checkDomainName($request->get('name', ''), $domain->id);
         $checkCname = $this->domainService->checkCname($request->get('cname', ''), $domain->id);
 
-        if ($this->checkCanEditDomain($domain) && !$checkDomain && !$checkCname) {
+        if (!$checkDomain && !$checkCname) {
 
             $domain->update($request->only('name', 'cname', 'edited_by'));
 
         } else {
             $errorCode = $checkDomain ?? $checkCname;
-            $errorCode = $errorCode ?? PermissionError::YOU_DONT_HAVE_PERMISSION;
             $domain = [];
         }
 
@@ -77,26 +76,8 @@ class DomainController extends Controller
 
     public function destroy(Domain $domain)
     {
-
-        $errorCode = null;
-
-        if ($this->checkCanEditDomain($domain)) {
-            $domain->delete();
-        } else {
-            $errorCode = PermissionError::YOU_DONT_HAVE_PERMISSION;
-        }
-
-        return $this->setStatusCode($errorCode ? 400 : 200)->response(
-            '',
-            $errorCode
-        );
-    }
-
-    private function checkCanEditDomain($domain)
-    {
-        $payload = $this->getJWTPayload();
-
-        return (($payload['user_group_id'] == 1) || ($payload['user_group_id'] == $domain->user_group_id));
+        $domain->delete();
+        return $this->response();
     }
 
 }
