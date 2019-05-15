@@ -17,12 +17,25 @@ class DomainController extends Controller
         $this->domainService = $domainService;
     }
 
-    public function getDomain(Request $request)
+    /**
+     * Get Domain function
+     *
+     * $request->id (可選)
+     * $request->user_group_id，預設為 login user_group_id (可選)
+     * 
+     * @param Request $request
+     * @param Domain $domain
+     * @return void
+     */
+    public function getDomain(Request $request, Domain $domain)
     {
-        $ugid = $this->getUgid($request);
-        $domain = $this->domainService->getDomain($ugid)->toArray();
+        $request->merge([
+            'user_group_id' => $this->getUgid($request),
+        ]);
+
+        $domains = $domain->where($request->only('user_group_id', 'id'))->get()->toArray();
         $dnsPodDomain = env('DNS_POD_DOMAIN');
-        return $this->response('', null, compact('domain', 'dnsPodDomain'));
+        return $this->response('', null, compact('domains', 'dnsPodDomain'));
     }
 
     public function create(Request $request, Domain $domain)
@@ -35,6 +48,7 @@ class DomainController extends Controller
         $data = $request->all();
 
         $errorCode = $this->domainService->checkDomainAndCnameUnique($data);
+
         if (!$errorCode) {
             $domainInfo = $domain->create($data);
         }
@@ -42,7 +56,7 @@ class DomainController extends Controller
         return $this->setStatusCode($errorCode ? 400 : 200)->response(
             '',
             $errorCode,
-            isset($domainInfo) ? $domainInfo : []
+            $domainInfo ?? []
         );
     }
 
@@ -55,18 +69,15 @@ class DomainController extends Controller
         $checkCname = $this->domainService->checkCname($request->get('cname', ''), $domain->id);
 
         if (!$checkDomain && !$checkCname) {
-
             $domain->update($request->only('name', 'cname', 'edited_by'));
-
         } else {
             $errorCode = $checkDomain ?? $checkCname;
-            $domain = [];
         }
 
         return $this->setStatusCode($errorCode ? 400 : 200)->response(
             '',
             $errorCode,
-            isset($domain) ? $domain : []
+            $errorCode ? [] : $domain
         );
     }
 
@@ -76,7 +87,19 @@ class DomainController extends Controller
         return $this->response();
     }
 
-    private function getUgid($request)
+    /**
+     * get User Group ID function
+     *
+     * 判斷是否能夠取得 $request->user_group_id
+     *
+     * $request->user_group_id == null ，給予 login User_group_id
+     * 權限符合，給予 $request->user_group_id
+     * 權限不符合，給予 login User_group_id
+     *
+     * @param Request $request
+     * @return int
+     */
+    private function getUgid(Request $request)
     {
         $getPayload = $this->getJWTPayload();
 

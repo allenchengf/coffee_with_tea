@@ -16,4 +16,8 @@ class Domain extends Model
         return $this->hasMany(Cdn::class);
     }
 
+    public function getCdnById($id)
+    {
+        return $this->cdns()->getById($id);
+    }
 }

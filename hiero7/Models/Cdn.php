@@ -12,6 +12,7 @@ class Cdn extends Model
     protected $fillable
         = [
             'domain_id',
+            'dns_provider_id',
             'name',
             'cname',
             'ttl',

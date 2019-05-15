@@ -2,7 +2,7 @@
 
 namespace App\Http\Requests;
 
-class DomainRequest extends FormRequest
+class LineRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -21,32 +21,30 @@ class DomainRequest extends FormRequest
      */
     public function rules()
     {
-        $prefix = 'domain';
+        $prefix = 'lines';
         $routeName = $this->route()->getName();
+
         switch ($routeName) {
-            case ($routeName == "$prefix.get"):
-                return [
-                    'id' => 'nullable|integer',
-                    'user_group_id' => 'nullable|integer',
-                ];
-                break;
             case ($routeName == "$prefix.create"):
                 return [
-                    'user_group_id' => 'nullable|integer',
-                    'name' => 'required|string',
-                    'cname' => 'nullable|string',
+                    "continent_id" => "required|integer",
+                    "country_id" => "required|integer",
+                    "location" => "required|string",
+                    "network_id" => "required|integer",
+                    "isp" => "required|string",
                 ];
                 break;
             case ($routeName == "$prefix.edit"):
                 return [
-                    'name' => 'nullable|string',
-                    'cname' => 'nullable|string',
+                    "continent_id" => "required|integer",
+                    "country_id" => "required|integer",
+                    "location" => "required|string",
+                    "isp" => "required|string",
                 ];
                 break;
-            default:
+            default :
                 return [];
                 break;
-
         }
     }
 }

@@ -27,4 +27,17 @@ Route::group(['middleware' => ['api'], 'namespace' => 'Api\v1', 'prefix' => 'v1'
         });
 
     });
+
+    Route::group(['middleware' => ['auth.user.module','internal.group'],  'prefix' => 'lines'], function () {
+        Route::get('', 'lineController@index')->name('lines.index');
+        Route::post('', 'lineController@create')->name('lines.create');
+        Route::put('{line}', 'lineController@edit')->name('lines.edit');
+        Route::delete('{line}', 'lineController@destroy')->name('lines.destroy');
+    });
+
+    Route::middleware(['auth.user.module'])->group(function(){
+        Route::get('continents', 'ContinentController@index')->name('continents.index');
+        Route::get('countries', 'CountryController@index')->name('countries.index');
+        Route::get('networks', 'NetworkController@index')->name('networks.index');
+    });
 });
