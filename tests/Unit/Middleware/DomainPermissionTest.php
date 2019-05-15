@@ -187,16 +187,4 @@ class DomainPermissionTest extends TestCase
         $data = json_decode($response->getContent(), true);
         $this->assertEquals(3002, $data['errorCode']);
     }
-
-    private function addUuidforPayload()
-    {
-        $this->jwtPayload['uuid'] = \Illuminate\Support\Str::uuid();
-        return $this;
-    }
-
-    private function addUserGroupId(int $id = 1)
-    {
-        $this->jwtPayload['user_group_id'] = $id;
-        return $this;
-    }
 }
