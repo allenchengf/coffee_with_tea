@@ -148,9 +148,4 @@ class LineTest extends TestCase
         $this->assertEquals(200, $response->status());
     }
 
-    private function addUuidforPayload()
-    {
-        $this->jwtPayload['uuid'] = \Illuminate\Support\Str::uuid();
-        return $this;
-    }
 }
