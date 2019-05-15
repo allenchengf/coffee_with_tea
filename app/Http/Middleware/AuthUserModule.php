@@ -20,8 +20,9 @@ class AuthUserModule
     {
         $response = $this->userModuleService->authorization($request);
 
-        if(is_null($response) && $response['errorCode'])
+        if($response['errorCode']){
             return response()->json($response);
+        }
             
         $token = JWTAuth::getToken();
         $user = array_only(JWTAuth::getPayload($token)->toArray(), ['uuid','user_group_id']);

@@ -9,7 +9,7 @@ use Tymon\JWTAuth\Facades\JWTFactory;
 abstract class TestCase extends BaseTestCase
 {
     use CreatesApplication;
-
+    protected $jwtPayload = [];
 
     /**
      * 設定 JWT Token Payload
@@ -32,5 +32,17 @@ abstract class TestCase extends BaseTestCase
         $token = JWTAuth::encode($payload);
         JWTAuth::setToken($token);
         return JWTAuth::getPayload($token)->toArray();
+    }
+
+    public function addUuidforPayload()
+    {
+        $this->jwtPayload['uuid'] = \Illuminate\Support\Str::uuid();
+        return $this;
+    }
+
+    public function addUserGroupId(int $id = 1)
+    {
+        $this->jwtPayload['user_group_id'] = $id;
+        return $this;
     }
 }

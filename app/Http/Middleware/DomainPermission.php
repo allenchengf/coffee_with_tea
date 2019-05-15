@@ -17,6 +17,22 @@ class DomainPermission
         $this->domainService = $domainService;
     }
 
+    /**
+     * 驗證 Domain 基本權限
+     * 
+     * input URI {domain}
+     * 
+     * 參考
+     * Route::delete('{domain}', 'DomainController@destroy');
+     * 
+     * @param $domain domains_id
+     * 
+     * 驗證 login Token 是否為最高管理人員 (user_group_id = 1)
+     * 是，通過
+     * 驗證，domain->user_group_id == login->user_group_id
+     * 是，通過
+     * Domain Data 不存在時會直接通過
+     */
     public function handle($request, Closure $next)
     {
         $token = JWTAuth::getToken();
