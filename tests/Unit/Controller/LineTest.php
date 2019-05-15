@@ -45,7 +45,7 @@ class LineTest extends TestCase
             'continent_id' => '1',
             'country_id' => '1',
             'location' => 'beijing',
-            'network_id' => '1',
+            'network_id' => '5',
             'isp' => 'yidong',
         ]);
 
@@ -66,7 +66,7 @@ class LineTest extends TestCase
             'continent_id' => '1',
             'country_id' => '1',
             'location' => 'beijing',
-            'network_id' => '1',
+            'network_id' => '5',
             'isp' => 'yidong',
         ]);
 
@@ -92,7 +92,7 @@ class LineTest extends TestCase
             'continent_id' => '1',
             'country_id' => '1',
             'location' => 'beijing',
-            'network_id' => '1',
+            'network_id' => '5',
             'isp' => 'yidong',
         ]);
 
@@ -133,7 +133,7 @@ class LineTest extends TestCase
             'continent_id' => '1',
             'country_id' => '1',
             'location' => 'beijing',
-            'network_id' => '1',
+            'network_id' => '5',
             'isp' => 'yidong',
         ]);
 
