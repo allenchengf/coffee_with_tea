@@ -51,11 +51,11 @@ class DomainTest extends TestCase
             ->addUserGroupId($user_group_id)
             ->setJwtTokenPayload($loginUid, $this->jwtPayload);
 
-        $response = $this->controller->getDomain($request);
+        $response = $this->controller->getDomain($request, $this->domain);
         $this->assertEquals(200, $response->status());
 
         $data = json_decode($response->getContent(), true);
-        $this->assertEquals($target_user_group_id, $data['data']['domain'][0]['user_group_id']);
+        $this->assertEquals($target_user_group_id, $data['data']['domains'][0]['user_group_id']);
     }
 
     /**
@@ -76,11 +76,11 @@ class DomainTest extends TestCase
             ->addUserGroupId($user_group_id)
             ->setJwtTokenPayload($loginUid, $this->jwtPayload);
 
-        $response = $this->controller->getDomain($request);
+        $response = $this->controller->getDomain($request, $this->domain);
         $this->assertEquals(200, $response->status());
 
         $data = json_decode($response->getContent(), true);
-        $this->assertEquals($user_group_id, $data['data']['domain'][0]['user_group_id']);
+        $this->assertEquals($user_group_id, $data['data']['domains'][0]['user_group_id']);
     }
 
 
@@ -103,11 +103,11 @@ class DomainTest extends TestCase
             ->addUserGroupId($user_group_id)
             ->setJwtTokenPayload($loginUid, $this->jwtPayload);
 
-        $response = $this->controller->getDomain($request);
+        $response = $this->controller->getDomain($request, $this->domain);
         $this->assertEquals(200, $response->status());
 
         $data = json_decode($response->getContent(), true);
-        $this->assertEquals($user_group_id, $data['data']['domain'][0]['user_group_id']);
+        $this->assertEquals($user_group_id, $data['data']['domains'][0]['user_group_id']);
     }
 
     /**
