@@ -20,20 +20,21 @@ class DomainController extends Controller
     /**
      * Get Domain function
      *
-     * $request->id (可選)
+     * $request->domain_id (可選)
      * $request->user_group_id，預設為 login user_group_id (可選)
-     * 
+     *
      * @param Request $request
      * @param Domain $domain
      * @return void
      */
     public function getDomain(Request $request, Domain $domain)
     {
-        $request->merge([
-            'user_group_id' => $this->getUgid($request),
-        ]);
+        $user_group_id = $this->getUgid($request);
+        if ($request->get('domain_id')) {
+            $id = $request->get('domain_id');
+        }
 
-        $domains = $domain->where($request->only('user_group_id', 'id'))->get()->toArray();
+        $domains = $domain->where(compact('user_group_id', 'id'))->get()->toArray();
         $dnsPodDomain = env('DNS_POD_DOMAIN');
         return $this->response('', null, compact('domains', 'dnsPodDomain'));
     }
