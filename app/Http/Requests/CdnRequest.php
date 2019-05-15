@@ -4,19 +4,20 @@ namespace App\Http\Requests;
 
 //use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
+use Hiero7\Services\CdnService;
 
 class CdnRequest extends FormRequest
 {
     /**
+     * @param \Hiero7\Services\CdnService $cdnService
+     *
      * @return bool
      */
-    public function authorize()
+    public function authorize(CdnService $cdnService)
     {
         if ($this->method() == 'PUT') {
 
-            $getDefaultRecord = $this->domain->cdns()->default()->first();
-
-            if ($getDefaultRecord and $getDefaultRecord->id == $this->cdn->id and ! $this->request->get('default')) {
+            if ($cdnService->checkCurrentCdnIsDefault($this->domain, $this->cdn) and ! $this->request->get('default')) {
 
                 return false;
             }
@@ -48,7 +49,7 @@ class CdnRequest extends FormRequest
                         $query->where('domain_id', $this->domain->id);
                     }),
                 ],
-                'ttl'     => 'required|integer',
+                'ttl'     => 'integer' . '|min:' . env('CDN_TTL') . '|max:604800',
                 'default' => 'required|integer|boolean'
             ];
 
@@ -67,7 +68,7 @@ class CdnRequest extends FormRequest
                     $query->where('domain_id', $this->domain->id);
                 }),
             ],
-            'ttl'   => 'required|integer',
+            'ttl'   => 'integer' . '|min:' . env('CDN_TTL') . '|max:604800',
         ];
     }
 }
