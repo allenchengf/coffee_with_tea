@@ -28,4 +28,9 @@ class ContinentService
     {
         return $this->continentRepository->getAll();
     }
+
+    public function getContinentName($continentId)
+    {
+        return $this->continentRepository->getContinentName($continentId);
+    }
 }

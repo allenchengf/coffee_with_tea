@@ -27,4 +27,9 @@ class ContinentRepository
     {
         return $this->continent->all();
     }
+
+    public function getContinentName($continentId)
+    {
+        return $this->continent::where('id', $continentId)->pluck('name')->first();
+    }
 }

@@ -27,4 +27,9 @@ class CountryService
     {
         return $this->countryRepository->getAll();
     }
+
+    public function getCountryName($countryId)
+    {
+        return $this->countryRepository->getCountryName($countryId);
+    }
 }

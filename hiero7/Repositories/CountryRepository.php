@@ -27,4 +27,9 @@ class CountryRepository
     {
         return $this->country->all();
     }
+
+    public function getCountryName($countryId)
+    {
+        return $this->country::where('id', $countryId)->pluck('name')->first();
+    }
 }
