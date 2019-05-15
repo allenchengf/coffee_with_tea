@@ -26,7 +26,7 @@ class BatchService{
                     throw $domain_id;
             } catch (\Exception $e) {
                 $record = $this->domainRepository->getDomainIdIfExist($domain["name"], $user["user_group_id"]);
-                if(count($record) == 1){
+                if($record->count() == 1){
                     $domain_id = $record->id;                    
                 }else{
                     array_push($errors, $e->getMessage());

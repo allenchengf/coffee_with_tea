@@ -68,7 +68,7 @@ class DomainRepository
             ->exists();
     }
 
-    public function checkCNAME(string $cname, int $id = 0)
+    public function checkCname(string $cname, int $id = 0)
     {
         return $this->domain->where('cname', $cname)
             ->whereNotIn('id', [$id])
