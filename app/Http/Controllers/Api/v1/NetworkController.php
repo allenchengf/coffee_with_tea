@@ -3,13 +3,24 @@
 namespace App\Http\Controllers\Api\v1;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
+use Hiero7\Services\NetworkService;
+use App\Http\Requests\NetworkRequest as Request;
 
 class NetworkController extends Controller
 {
-    public function index(Request $request)
+    protected $networkService;
+
+    /**
+     * NetworkController constructor.
+     */
+    public function __construct(NetworkService $networkService)
     {
-        $content = $this->NetWorkService->getDomainList($request->all());
-        return $this->dnsPodAPIOutPut($content);
+        $this->networkService = $networkService;
+    }
+
+    public function index()
+    {
+        $data = $this->networkService->getAll();
+        return $this->response("Success", null, $data);
     }
 }
