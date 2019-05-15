@@ -15,28 +15,54 @@ class LocationDnsSettingService
 
     public function getAll($domain)
     {
+        $this->locationDnsSettingRepository->getDnsSetting($domain);
 
-        return $this->locationDnsSettingRepository->getAll($domain);
     }
 
-    public function getById($domain,$rid)
+    public function getByRid($domain,$rid)
     {
-        return $this->locationDnsSettingRepository->getById($domain,$rid);
+        $result = $this->locationDnsSettingRepository->getByRid($domain,$rid);
+
+        try{
+            $result = $result[0];
+        } catch(\Exception $e)
+        {
+            return false;
+        }
+        return true;
     }
 
-    public function updateBySettingId($data,$setting)
+    public function updateSetting($data,$domain,$rid)
     {
-        return $this->locationDnsSettingRepository->update($data,$setting);
+        $checkCdnSetting = $this->checkCdnSetting($domain,$data['cdn_id']);
+            
+        if ($checkCdnSetting)
+        {
+            $result = $this->locationDnsSettingRepository->updateByRid($data,$domain,$rid);
+        }else{
+            return false;
+        }
+
+        return $result;
     } 
 
-    public function createSetting($data,$domainId,$rid)
+    public function createSetting($data,$domain)
     {
         try{
-            $result = $this->locationDnsSettingRepository->createSetting($data,$domainId);
+            $checkCdnSetting = $this->checkCdnSetting($domain,$data['cdn_id']);
+            
+            if ($checkCdnSetting)
+            {
+                $result = $this->locationDnsSettingRepository->createSetting($data,$domain);
+            }else{
+                return false;
+            }
+
         } catch (\Exception $e)
         {
             return false;
         }
+
         return $result;
         // 要打 pod api 獲得 podid 放入 DB
         // $this->locationDnsSettingRepository->updatePodId($podId);
@@ -46,6 +72,24 @@ class LocationDnsSettingService
     public function checkPodId($domian, $rid)
     {
         $result = $this->locationDnsSettingRepository->getPodId($domian,$rid);
-        return $result == null ? $result : false;
+        try{
+            $result = $result[0];
+        } catch(\Exception $e)
+        {
+            return false;
+        }
+        return $result->pod_record_id;
+    }
+
+    public function checkCdnSetting($domian, $cdnId)
+    {
+        $result = $this->locationDnsSettingRepository->checkCdnSetting($domian,$cdnId);
+        try{
+            $result = $result[0];
+        } catch(\Exception $e)
+        {
+            return false;
+        }
+        return true;
     }
 }

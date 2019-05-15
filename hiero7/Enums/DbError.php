@@ -13,7 +13,7 @@ class DbError extends Enum
     const UNAFFECTED = 9871;
     const DELETE_ON_NUll = 9872;
     const DUPLICATE_ENTRY = 9873;
-    const FOREIGN_CONSTRAINT = 9874;
+    const FOREIGN_CONSTRAINT_OR_CDN_SETTING = 9874;
 
 
     /**
@@ -23,6 +23,6 @@ class DbError extends Enum
         self::UNAFFECTED      => '0 rows affected.',
         self::DELETE_ON_NUll      => 'Target doesn\'t exist',
         self::DUPLICATE_ENTRY      => 'Duplicate entry',
-        self::FOREIGN_CONSTRAINT      => 'Constraint foreign',
+        self::FOREIGN_CONSTRAINT_OR_CDN_SETTING      => 'Constraint foreign key or CDN Setting wrong',
     ];
 }
