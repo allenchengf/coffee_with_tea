@@ -34,7 +34,7 @@ class InputError extends Enum
     const DOMAIN_FORMAT_ERROR = 4022;
     const BATCH_INPUT_FORMAT_ERROR = 4023;
     const DOMAIN_VERIFICATION_ERROR = 4024;
-    
+    const THE_NETWORK_ID_EXIST = 4025;
     /**
      * @var array
      */
@@ -64,5 +64,7 @@ class InputError extends Enum
         self::DOMAIN_FORMAT_ERROR => 'Domain format error.',
         self::BATCH_INPUT_FORMAT_ERROR => 'Batch input format error.',
         self::DOMAIN_VERIFICATION_ERROR => 'Domain verification Error.',
+        self::BATCH_INPUT_FORMAT_ERROR=> 'Batch input format error.',
+        self::THE_NETWORK_ID_EXIST => 'The network id exist',
     ];
 }
