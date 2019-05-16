@@ -68,6 +68,7 @@ class LocationDnsSettingService
 
     public function updateSetting($data,$domain,$locationDnsRid)
     {
+        $data['cdn_id']= $this->locationDnsSettingRepository->getCdnIdByCdnName($domain,$data['cdn_name']);
         $checkCdnSetting = $this->checkCdnSetting($domain,$data['cdn_id']);
         if ($checkCdnSetting)
         {
@@ -82,6 +83,7 @@ class LocationDnsSettingService
     public function createSetting($data,$domain)
     {
         try{
+            $data['cdn_id']= $this->locationDnsSettingRepository->getCdnIdByCdnName($domain,$data['cdn_name']);
             $checkCdnSetting = $this->checkCdnSetting($domain,$data['cdn_id']);
             $data = $this->changedata($data,$domain);
             if ($checkCdnSetting)
