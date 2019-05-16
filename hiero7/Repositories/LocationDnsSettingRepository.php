@@ -36,6 +36,11 @@ class LocationDnsSettingRepository
         return $this->locationDnsSetting->where('domain_id',$domainId)->where('location_networks_id',$locationId)->pluck('cdn_id')->first();
     }
 
+    public function getCdnIdByCdnName($domainId,$cdnName)
+    {
+        return $this->cdn->where('domain_id',$domainId)->where('name',$cdnName)->pluck('id')->first();
+    }
+
     public function getDefaultCdnProvider($domainId)
     {
         $result = $this->cdn->select('name','id')->where('domain_id',$domainId)->where('default',1)->first();

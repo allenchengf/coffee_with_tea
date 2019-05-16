@@ -31,7 +31,7 @@ class LocationDnsSettingController extends Controller
         $request->merge([
             'edited_by' => $this->getJWTPayload()['uuid']
         ]);
-        
+        // dd($this->locationDnsSettingService->checkExit($domain,$rid));
         if($this->locationDnsSettingService->checkExit($domain,$rid)) 
         { //修改設定資料 
             $result =  $this->locationDnsSettingService->updateSetting($request->all(),$domain,$rid);
