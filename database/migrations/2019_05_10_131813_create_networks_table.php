@@ -15,14 +15,14 @@ class CreateNetworksTable extends Migration
     {
         Schema::create('networks', function (Blueprint $table) {
             $table->increments('id');
-            $table->unsignedInteger('schemes_id');
+            $table->unsignedInteger('scheme_id');
             $table->string('name');
             $table->timestamps();
             $table->softDeletes();
         });
 
         Schema::table('networks', function (Blueprint $table) {
-            $table->foreign('schemes_id')->references('id')->on('schemes')->onDelete('cascade');
+            $table->foreign('scheme_id')->references('id')->on('schemes')->onDelete('cascade');
         });
     }
 
