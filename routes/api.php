@@ -29,15 +29,22 @@ Route::group(['middleware' => ['api'], 'namespace' => 'Api\v1', 'prefix' => 'v1'
     });
 
     Route::group(['middleware' => ['auth.user.module','internal.group'],  'prefix' => 'lines'], function () {
-        Route::get('', 'lineController@index')->name('lines.index');
-        Route::post('', 'lineController@create')->name('lines.create');
-        Route::put('{line}', 'lineController@edit')->name('lines.edit');
-        Route::delete('{line}', 'lineController@destroy')->name('lines.destroy');
+        Route::get('', 'LineController@index')->name('lines.index');
+        Route::post('', 'LineController@create')->name('lines.create');
+        Route::put('{line}', 'LineController@edit')->name('lines.edit');
+        Route::delete('{line}', 'LineController@destroy')->name('lines.destroy');
     });
 
     Route::middleware(['auth.user.module'])->group(function(){
         Route::get('continents', 'ContinentController@index')->name('continents.index');
         Route::get('countries', 'CountryController@index')->name('countries.index');
-        Route::get('networks', 'NetworkController@index')->name('networks.index');
+        Route::get('networks/{network}', 'NetworkController@index')->name('networks.index');
+    });
+
+    Route::group(['middleware' => ['auth.user.module','internal.group'],  'prefix' => 'schemes'], function () {
+        Route::get('', 'SchemeController@index')->name('schemes.index');
+        Route::post('', 'SchemeController@create')->name('schemes.create');
+        Route::put('{scheme}', 'SchemeController@edit')->name('schemes.edit');
+        Route::delete('{scheme}', 'SchemeController@destroy')->name('schemes.destroy');
     });
 });

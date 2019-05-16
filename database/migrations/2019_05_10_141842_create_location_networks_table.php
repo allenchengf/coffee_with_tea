@@ -25,7 +25,7 @@ class CreateLocationNetworksTable extends Migration
             $table->softDeletes();
             $table->foreign('continent_id')->references('id')->on('continents');
             $table->foreign('country_id')->references('id')->on('countries');
-            $table->foreign('network_id')->references('id')->on('networks');
+            $table->foreign('network_id')->references('id')->on('networks')->onDelete('cascade');
         });
     }
 

@@ -23,9 +23,9 @@ class NetworkController extends Controller
         $this->countryService = $countryService;
     }
 
-    public function index()
+    public function index($id)
     {
-        $data = $this->networkService->getAll();
+        $data = $this->networkService->getNetworksById($id);
 
         $data->map(function ($item) {
             if($item['locationNetwork']){
