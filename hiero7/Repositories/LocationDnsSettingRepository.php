@@ -44,7 +44,7 @@ class LocationDnsSettingRepository
 
     public function getCdnProvider($domainId,$cdnId)
     {
-        return $this->cdn->where('domain_id',$domainId)->where('id',$cdnId)->where('default',0)->pluck('name')->first();
+        return $this->cdn->where('domain_id',$domainId)->where('id',$cdnId)->pluck('name')->first();
     }
 
     public function getLocationNetworkId($continentId,$countryId,$networkId)
