@@ -23,7 +23,7 @@ class CdnRepository
                 "name"=>$info["name"],
                 "cname"=>$info["cname"],
                 "edited_by"=>$user["uuid"],
-                "ttl"=>$info["ttl"]??env("CDN_TTL"),
+                "ttl"=>$info["ttl"],
                 "created_at" =>  \Carbon\Carbon::now(),
                 "updated_at" => \Carbon\Carbon::now(),                      
             ];
