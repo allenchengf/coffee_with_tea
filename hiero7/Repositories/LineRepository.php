@@ -37,4 +37,18 @@ class LineRepository
     {
         return $this->locationNetwork->withTrashed()->where('network_id', $networkId)->exists();
     }
+
+    public function getLinesById($schemeId)
+    {
+        $result = [];
+        $data = $this->locationNetwork::with('network')->get();
+
+        foreach ($data as $k => $v){
+            if($v['network']['scheme_id'] == $schemeId){
+                $result[] = $v;
+            }
+        }
+
+        return $result;
+    }
 }
