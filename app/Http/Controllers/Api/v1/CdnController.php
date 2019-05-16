@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers\Api\v1;
 
+use App\Events\CdnWasCreated;
+use App\Events\CdnWasEdited;
 use App\Http\Requests\CdnRequest;
 use App\Http\Requests\DeleteCdnRequest;
 use Hiero7\Models\Cdn;
@@ -10,6 +12,7 @@ use Hiero7\Services\CdnService;
 use Hiero7\Services\DnsProviderService;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
+use DB;
 
 class CdnController extends Controller
 {
@@ -44,25 +47,38 @@ class CdnController extends Controller
             $request->merge(['default' => true]);
         }
 
-        if ($cdn = $domain->cdns()->create($this->cdnService->formatRequest($request,
-                $this->getJWTPayload()['uuid'])) and $request->input('default')) {
+        DB::beginTransaction();
 
-            $dnsProviderRecord = $this->dnsProviderService->createRecord([
-                'sub_domain' => $domain->cname,
-                'value'      => $cdn->cname,
-                'ttl'        => $cdn->ttl,
-                'status'     => true
-            ]);
+        $cdn = $domain->cdns()->create($this->cdnService->formatRequest($request, $this->getJWTPayload()['uuid']));
 
-            $cdn->update(['dns_provider_id' => $dnsProviderRecord['data']['record']['id']]);
-        };
+        if ($cdn and $request->input('default')) {
+
+            $createdDnsProviderRecordResult = event(new CdnWasCreated($domain, $cdn));
+
+            if ( ! is_null($createdDnsProviderRecordResult[0]['errorCode']) or array_key_exists('errors',
+                    $createdDnsProviderRecordResult[0])) {
+
+                DB::rollback();
+
+                return $this->setStatusCode(500)->response('something went wrong', null, []);
+            }
+
+            DB::commit();
+
+            $cdn->update(['dns_provider_id' => $createdDnsProviderRecordResult[0]['data']['record']['id']]);
+        }
+
+        DB::commit();
 
         return $this->setStatusCode(200)->response('success', null, []);
+
     }
 
     public function update(CdnRequest $request, Domain $domain, Cdn $cdn)
     {
         $data = $this->cdnService->formatRequest($request, $this->getJWTPayload()['uuid']);
+
+        DB::beginTransaction();
 
         if ( ! $this->cdnService->checkCurrentCdnIsDefault($domain, $cdn) and $request->get('default')) {
 
@@ -73,20 +89,24 @@ class CdnController extends Controller
             $domain->getCdnById($cdn->id)->update(['dns_provider_id' => $getDefaultRecord->dns_provider_id]);
         }
 
-        if ($domain->getCdnById($cdn->id)->update($data) and $data['default']) {
+        $updateResult = $domain->getCdnById($cdn->id)->update($data);
+
+        if ($updateResult and $data['default']) {
 
             $cdn = $domain->getCdnById($cdn->id)->first();
 
-            $result = $this->dnsProviderService->editRecord([
-                'record_id'   => $cdn->dns_provider_id,
-                'sub_domain'  => $domain->cname,
-                'record_type' => "CNAME",
-                'record_line' => "默认",
-                'value'       => $cdn->cname,
-                'ttl'         => $cdn->ttl,
-                'status'      => $cdn->default
-            ]);
+            $editedDnsProviderRecordResult = event(new CdnWasEdited($domain, $cdn));
+
+            if ( ! is_null($editedDnsProviderRecordResult[0]['errorCode']) or array_key_exists('errors',
+                    $editedDnsProviderRecordResult[0])) {
+
+                DB::rollback();
+
+                return $this->setStatusCode(400)->response('something went wrong', null, []);
+            }
         }
+
+        DB::commit();
 
         return $this->setStatusCode(200)->response('success', null, []);
 
