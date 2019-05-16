@@ -19,19 +19,27 @@ class LocationDnsSettingRepository
         $this->cdn = $cdn;
     }
 
-    public function getDnsSetting($domainId,$locationId)
-    {
-        return $this->locationDnsSetting->where('domain_id',$domainId)->where('location_networks_id',$locationId)->pluck('cdn_id')->first();
-    }
-
     public function getLocationSetting()
     {
         return $this->locationNetwork->all(); //取 Default 設定好的
     }
 
+    public function checkCdnIdExit($domainId,$locationId)
+    {
+        $result = $this->locationDnsSetting->where('domain_id',$domainId)->where('location_networks_id',$locationId)->pluck('cdn_id')->first();
+
+        return $result ? true : false;
+    }
+
+    public function getCdnId($domainId,$locationId)
+    {
+        return $this->locationDnsSetting->where('domain_id',$domainId)->where('location_networks_id',$locationId)->pluck('cdn_id')->first();
+    }
+
     public function getDefaultCdnProvider($domainId)
     {
-        return $this->cdn->where('domain_id',$domainId)->where('default',1)->pluck('name')->first();
+        $result = $this->cdn->select('name','id')->where('domain_id',$domainId)->where('default',1)->first();
+        return $result;
     }
 
     public function getCdnProvider($domainId,$cdnId)
@@ -39,20 +47,15 @@ class LocationDnsSettingRepository
         return $this->cdn->where('domain_id',$domainId)->where('id',$cdnId)->where('default',0)->pluck('name')->first();
     }
 
-    public function getLocationId($continentId,$countryId,$networkId)
+    public function getLocationNetworkId($continentId,$countryId,$networkId)
     {
         return $this->locationNetwork->where('continent_id',$continentId)->where('country_id',$countryId)
                                     ->where('network_id',$networkId)->pluck('id')->first();
     }
 
-    public function getByRid($domainId,$rid)
+    public function getByLocationeNetworkRid($domainId,$rid)
     {
-        return $this->locationDnsSetting->where('location_networks_id',$rid)->where('domain_id',$domainId)->get();
-    }
-
-    public function getPodId($domainId, $rid)
-    {
-        return $this->locationDnsSetting->select('pod_record_id')->where('id',$rid)->where('domain_id',$domainId)->get();
+        return $this->locationDnsSetting->where('location_networks_id',$rid)->where('domain_id',$domainId)->first();
     }
 
     public function createSetting($data,$domainId)
@@ -67,15 +70,18 @@ class LocationDnsSettingRepository
         ]);
     }
 
-    public function updateByRid($data,$domainId,$rid)
+    public function updateLocationDnsSetting($data,$domainId,$rid)
     {
-        $result = $this->locationDnsSetting->where('location_networks_id',$rid)->where('domain_id',$domainId)->update($data);
+        $result = $this->locationDnsSetting->where('location_networks_id',$rid)->where('domain_id',$domainId)->update([
+            'cdn_id' => $data['cdn_id'],
+            'edited_by' =>$data['edited_by']
+        ]);
 
         return $result ? true : false;
     }
 
     public function checkCdnSetting($domainId,$cdnId)
     {
-        return $this->cdn->where('id',$cdnId)->where('domain_id',$domainId)->get();
+        return $this->cdn->where('id',$cdnId)->where('domain_id',$domainId)->first();
     }
 }
