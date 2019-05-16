@@ -20,7 +20,7 @@ class LocationDnsSettingController extends Controller
     public function getAll($domain)
     {
         $result = $this->locationDnsSettingService->getAll($domain);
-        return $this->setStatusCode($result ? 400 : 200)->response(
+        return $this->setStatusCode($result ? 200 : 400)->response(
             '',
             '',$result
         );
@@ -28,8 +28,12 @@ class LocationDnsSettingController extends Controller
 
     public function editSetting(Request $request,$domain,$rid)
     {
+        $request->merge([
+            'edited_by' => $this->getJWTPayload()['uuid']
+        ]);
+            // dd($request->all());
         if($this->locationDnsSettingService->getByRid($domain,$rid)) 
-        { //修改設定資料
+        { //修改設定資料 
             $result =  $this->locationDnsSettingService->updateSetting($request->all(),$domain,$rid);
             if ($result)
             {
@@ -42,6 +46,7 @@ class LocationDnsSettingController extends Controller
                 $data = $result;
             }
         }else{
+            // dd('create');
             $result = $this->locationDnsSettingService->createSetting($request->all(),$domain); //新增設定資料
             if ($result)
             {

@@ -19,26 +19,30 @@ class LocationDnsSettingRepository
         $this->cdn = $cdn;
     }
 
-    public function getAllSetting($domainId)
-    { //取 Allen 表格 和自己設定的
-        $origin = $this->getLocationSetting; 
-        $custom = $this->getDnsSetting($domainId);
-
-    }
-
-    public function getDnsSetting($domainId)
+    public function getDnsSetting($domainId,$locationId)
     {
-        return $this->locationDnsSetting->with(['cdns','locations'])->where('domain_id',$domainId)->get();
+        return $this->locationDnsSetting->where('domain_id',$domainId)->where('location_networks_id',$locationId)->pluck('cdn_id')->first();
     }
 
     public function getLocationSetting()
     {
-        return $this->locationNetwork->with(['network','continent','country'])->get(); //取 Default 設定好的
+        return $this->locationNetwork->all(); //取 Default 設定好的
     }
 
-    public function getCdnProvider($domainId,$default)
+    public function getDefaultCdnProvider($domainId)
     {
-        return $this->cdn->where('domain_id',$domainId)->where('default',$default)->get();
+        return $this->cdn->where('domain_id',$domainId)->where('default',1)->pluck('name')->first();
+    }
+
+    public function getCdnProvider($domainId,$cdnId)
+    {
+        return $this->cdn->where('domain_id',$domainId)->where('id',$cdnId)->where('default',0)->pluck('name')->first();
+    }
+
+    public function getLocationId($continentId,$countryId,$networkId)
+    {
+        return $this->locationNetwork->where('continent_id',$continentId)->where('country_id',$countryId)
+                                    ->where('network_id',$networkId)->pluck('id')->first();
     }
 
     public function getByRid($domainId,$rid)
@@ -58,13 +62,14 @@ class LocationDnsSettingRepository
             'location_networks_id' => $data['location_networks_id'],
             'cdn_id' => $data['cdn_id'],
             'domain_id' => $domainId,
+            'edited_by' =>$data['edited_by'],
             'created_at' => \Carbon\Carbon::now()
         ]);
     }
 
     public function updateByRid($data,$domainId,$rid)
     {
-        $result = $this->locationDnsSetting->where('id',$rid)->where('domain_id',$domainId)->update($data);
+        $result = $this->locationDnsSetting->where('location_networks_id',$rid)->where('domain_id',$domainId)->update($data);
 
         return $result ? true : false;
     }
