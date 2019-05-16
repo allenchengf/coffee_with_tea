@@ -43,18 +43,20 @@ class BatchService{
                     DB::beginTransaction();
                     try {
                         $cdn["ttl"] = $cdn["ttl"]??env("CDN_TTL");
-                        $dnsPosResponse = $this->dnsProviderService->createRecord(
-                            [
-                                'sub_domain' => $domain["name"],
-                                'value'      => $cdn["cname"],
-                                'ttl'        => $cdn["ttl"],
-                                'status'     => true
-                            ]);
-                        if (!is_null($dnsPosResponse['errorCode']) || array_key_exists('errors',
-                                $dnsPosResponse))
-                            throw new \Exception($dnsPosResponse['message']." for ".$cdn["cname"], $dnsPosResponse['errorCode']);  
-                                          
-                        $cdn["dns_provider_id"] = $dnsPosResponse['data']['record']['id'];
+                        if($key === 0){
+                            $dnsPosResponse = $this->dnsProviderService->createRecord(
+                                [
+                                    'sub_domain' => $domain["name"],
+                                    'value'      => $cdn["cname"],
+                                    'ttl'        => $cdn["ttl"],
+                                    'status'     => true
+                                ]);
+                            if (!is_null($dnsPosResponse['errorCode']) || array_key_exists('errors',
+                                    $dnsPosResponse))
+                                throw new \Exception($dnsPosResponse['message']." for ".$cdn["cname"], $dnsPosResponse['errorCode']);
+                            $cdn["dns_provider_id"] = $dnsPosResponse['data']['record']['id'];
+                        }
+                        
                         $add_cdn_result = $this->cdnRepository->store($cdn, $domain_id, $user, $key);
                         if(!is_int($add_cdn_result))
                             throw $add_cdn_result;
