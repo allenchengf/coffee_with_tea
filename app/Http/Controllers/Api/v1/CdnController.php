@@ -60,7 +60,7 @@ class CdnController extends Controller
 
                 DB::rollback();
 
-                return $this->setStatusCode(500)->response('something went wrong', null, []);
+                return $this->setStatusCode(409)->response('please contact the admin', null, []);
             }
 
             DB::commit();
@@ -102,7 +102,7 @@ class CdnController extends Controller
 
                 DB::rollback();
 
-                return $this->setStatusCode(400)->response('something went wrong', null, []);
+                return $this->setStatusCode(409)->response('please contact the admin', null, []);
             }
         }
 
