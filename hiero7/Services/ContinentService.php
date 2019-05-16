@@ -9,7 +9,7 @@
 namespace Hiero7\Services;
 
 
-use Hiero7\Repositories\continentRepository;
+use Hiero7\Repositories\ContinentRepository;
 
 class ContinentService
 {
