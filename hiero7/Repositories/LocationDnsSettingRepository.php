@@ -66,7 +66,7 @@ class LocationDnsSettingRepository
     public function createSetting($data,$domainId)
     {
         return $this->locationDnsSetting->insert([
-            'pod_record_id' => 123244,
+            'pod_record_id' => $data['pod_id'],
             'location_networks_id' => $data['location_networks_id'],
             'cdn_id' => $data['cdn_id'],
             'domain_id' => $domainId,
@@ -88,5 +88,10 @@ class LocationDnsSettingRepository
     public function checkCdnSetting($domainId,$cdnId)
     {
         return $this->cdn->where('id',$cdnId)->where('domain_id',$domainId)->first();
+    }
+
+    public function getPodId($domainId,$rid)
+    {
+        return $this->locationDnsSetting->where('location_networks_id',$rid)->where('domain_id',$domainId)->pluck('pod_record_id')->first();
     }
 }
