@@ -27,8 +27,15 @@ class NetworkRepository
         return $this->network::with('locationNetwork')->get();
     }
 
+
+    public function getNetworksById($id)
+    {
+        return $this->network::with('locationNetwork')->where('scheme_id', $id)->get();
+    }
+    
     public function getNetworkName($networkId)
     {
         return $this->network->where('id', $networkId)->pluck('name')->first();
+
     }
 }
