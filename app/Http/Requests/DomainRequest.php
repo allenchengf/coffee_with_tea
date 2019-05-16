@@ -26,7 +26,7 @@ class DomainRequest extends FormRequest
         switch ($routeName) {
             case ($routeName == "$prefix.get"):
                 return [
-                    'id' => 'nullable|integer',
+                    'domain_id' => 'nullable|integer',
                     'user_group_id' => 'nullable|integer',
                 ];
                 break;

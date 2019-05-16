@@ -45,4 +45,11 @@ abstract class TestCase extends BaseTestCase
         $this->jwtPayload['user_group_id'] = $id;
         return $this;
     }
+
+    protected function initMock($class)
+    {
+        $mock = \Mockery::mock($class);
+        $this->app->instance($class, $mock);
+        return $mock;
+    }    
 }

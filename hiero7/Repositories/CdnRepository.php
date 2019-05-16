@@ -23,12 +23,12 @@ class CdnRepository
                 "name"=>$info["name"],
                 "cname"=>$info["cname"],
                 "edited_by"=>$user["uuid"],
-                "ttl"=>$info["ttl"]??env("CDN_TTL"),
+                "ttl"=>$info["ttl"],
+                "dns_provider_id"=>$info["dns_provider_id"],
                 "created_at" =>  \Carbon\Carbon::now(),
-                "updated_at" => \Carbon\Carbon::now(),                      
+                "updated_at" => \Carbon\Carbon::now(),
+                "default" => $info["default"],
             ];
-            if($defult == 0)
-                $row["default"] = 1;
             return $this->cdn::insertGetId($row);
         } catch (\Exception $e) {
             if ($e->getCode() == '23000')

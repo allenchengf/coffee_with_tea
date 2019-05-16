@@ -19,20 +19,19 @@ class TokenCheck
             JWTAuth::getPayload($token)->toArray();
             return $next($request);
         } catch (TokenExpiredException $e) {
-            return response()->json([
-                'message' => PermissionError::getDescription(PermissionError::TOKEN_EXPIRED),
-                'errorCode' => PermissionError::TOKEN_EXPIRED,
-            ])->setStatusCode(403);
+
+            $errorCode = PermissionError::TOKEN_EXPIRED;
         } catch (TokenInvalidException $e) {
-            return response()->json([
-                'message' => PermissionError::getDescription(PermissionError::TOKEN_INVALID),
-                'errorCode' => PermissionError::TOKEN_INVALID,
-            ])->setStatusCode(403);
+
+            $errorCode = PermissionError::TOKEN_INVALID;
         } catch (JWTException $e) {
-            return response()->json([
-                'message' => PermissionError::getDescription(PermissionError::TOKEN_ERROR),
-                'errorCode' => PermissionError::TOKEN_ERROR,
-            ])->setStatusCode(403);
+
+            $errorCode = PermissionError::TOKEN_ERROR;
         }
+
+        return response()->json([
+            'message' => PermissionError::getDescription($errorCode),
+            'errorCode' => $errorCode,
+        ])->setStatusCode(403);
     }
 }
