@@ -3,9 +3,11 @@
 namespace Hiero7\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Network extends Model
 {
+    use SoftDeletes;
     protected $table = 'networks';
 
     protected $primaryKey = 'id';

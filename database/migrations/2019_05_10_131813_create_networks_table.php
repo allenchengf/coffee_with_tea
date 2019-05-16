@@ -18,7 +18,11 @@ class CreateNetworksTable extends Migration
             $table->unsignedInteger('schemes_id');
             $table->string('name');
             $table->timestamps();
-            $table->foreign('schemes_id')->references('id')->on('schemes');
+            $table->softDeletes();
+        });
+
+        Schema::table('networks', function (Blueprint $table) {
+            $table->foreign('schemes_id')->references('id')->on('schemes')->onDelete('cascade');
         });
     }
 
