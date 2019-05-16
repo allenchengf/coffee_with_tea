@@ -10,6 +10,12 @@ Route::group(['middleware' => ['api'], 'namespace' => 'Api\v1', 'prefix' => 'v1'
 
             Route::group(['prefix' => '/{domain}'], function () {
                 Route::resource('/cdn', 'CdnController', ['except' => ['create', 'show', 'edit']]);
+                
+                //yuan
+                Route::group(['prefix' => '/iRouteCDN'], function () {
+                    Route::get('', 'LocationDnsSettingController@getAll')->name('iRoute.get');
+                    Route::put('/{rid}', 'LocationDnsSettingController@editSetting')->name('iRoute.edit');
+                });
             });
 
             Route::post('batch', 'BatchController@store');

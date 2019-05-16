@@ -43,4 +43,9 @@ class Cdn extends Model
     {
         return $query->where('default', true);
     }
+
+    public function dnsSetting()
+    {
+        return $this->hasMany(LocationDnsSetting::class);
+    }
 }
