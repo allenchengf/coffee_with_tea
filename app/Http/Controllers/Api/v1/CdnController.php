@@ -16,20 +16,15 @@ use DB;
 
 class CdnController extends Controller
 {
-    protected $dnsProviderService;
-
     protected $cdnService;
 
     /**
      * CdnController constructor.
      *
-     * @param \Hiero7\Services\DnsProviderService $dnsProviderService
-     * @param \Hiero7\Services\CdnService         $cdnService
+     * @param \Hiero7\Services\CdnService $cdnService
      */
-    public function __construct(DnsProviderService $dnsProviderService, CdnService $cdnService)
+    public function __construct(CdnService $cdnService)
     {
-        $this->dnsProviderService = $dnsProviderService;
-
         $this->cdnService = $cdnService;
     }
 
