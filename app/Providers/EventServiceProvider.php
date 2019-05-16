@@ -14,11 +14,18 @@ class EventServiceProvider extends ServiceProvider
      *
      * @var array
      */
-    protected $listen = [
-        Registered::class => [
-            SendEmailVerificationNotification::class,
-        ],
-    ];
+    protected $listen
+        = [
+            Registered::class                => [
+                SendEmailVerificationNotification::class,
+            ],
+            \App\Events\CdnWasCreated::class => [
+                \App\Listeners\CreateDnsPodRecord::class,
+            ],
+            \App\Events\CdnWasEdited::class  => [
+                \App\Listeners\EditDnsPodRecord::class,
+            ]
+        ];
 
     /**
      * Register any events for your application.
