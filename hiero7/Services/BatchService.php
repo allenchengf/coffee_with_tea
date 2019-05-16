@@ -44,17 +44,17 @@ class BatchService{
                     try {
                         $cdn["ttl"] = $cdn["ttl"]??env("CDN_TTL");
                         if($key === 0){
-                            $dnsPosResponse = $this->dnsProviderService->createRecord(
+                            $dnsPodResponse = $this->dnsProviderService->createRecord(
                                 [
                                     'sub_domain' => $domain["name"],
                                     'value'      => $cdn["cname"],
                                     'ttl'        => $cdn["ttl"],
                                     'status'     => true
                                 ]);
-                            if (!is_null($dnsPosResponse['errorCode']) || array_key_exists('errors',
-                                    $dnsPosResponse))
-                                throw new \Exception($dnsPosResponse['message']." for ".$cdn["cname"], $dnsPosResponse['errorCode']);
-                            $cdn["dns_provider_id"] = $dnsPosResponse['data']['record']['id'];
+                            if (!is_null($dnsPodResponse['errorCode']) || array_key_exists('errors',
+                                    $dnsPodResponse))
+                                throw new \Exception($dnsPodResponse['message']." for ".$cdn["cname"], $dnsPodResponse['errorCode']);
+                            $cdn["dns_provider_id"] = $dnsPodResponse['data']['record']['id'];
                         }
                         
                         $add_cdn_result = $this->cdnRepository->store($cdn, $domain_id, $user, $key);
