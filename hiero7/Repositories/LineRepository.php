@@ -35,7 +35,7 @@ class LineRepository
 
     public function checkNetworkId(int $networkId)
     {
-        return $this->locationNetwork->withTrashed()->where('network_id', $networkId)->exists();
+        return $this->locationNetwork->where('network_id', $networkId)->exists();
     }
 
     public function getLinesById()
