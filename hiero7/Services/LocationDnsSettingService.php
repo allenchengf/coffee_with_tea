@@ -38,8 +38,13 @@ class LocationDnsSettingService
                 $locationNetworkData[$i]->cdn_id = $this->locationDnsSettingRepository->getCdnId($domain,$locationNetworkData[$i]->id);
                 $locationNetworkData[$i]->cdn_name = $this->locationDnsSettingRepository->getCdnProvider($domain,$locationNetworkData[$i]->cdn_id);
             }else{
-                $locationNetworkData[$i]->cdn_id = $this->locationDnsSettingRepository->getDefaultCdnProvider($domain)->id;
-                $locationNetworkData[$i]->cdn_name = $this->locationDnsSettingRepository->getDefaultCdnProvider($domain)->name;
+                if($this->locationDnsSettingRepository->getDefaultCdnProvider($domain)){
+                    $locationNetworkData[$i]->cdn_id = $this->locationDnsSettingRepository->getDefaultCdnProvider($domain)->id;
+                    $locationNetworkData[$i]->cdn_name = $this->locationDnsSettingRepository->getDefaultCdnProvider($domain)->name;
+                }else{
+                    $locationNetworkData[$i]->cdn_id = null;
+                    $locationNetworkData[$i]->cdn_name = null;
+                }
             }
         }
 
