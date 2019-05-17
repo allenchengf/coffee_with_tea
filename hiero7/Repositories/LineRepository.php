@@ -41,7 +41,7 @@ class LineRepository
     public function getLinesById($schemeId)
     {
         $result = [];
-        $data = $this->locationNetwork::with('network')->get();
+        $data = $this->locationNetwork::all();
 
         foreach ($data as $k => $v){
             if($v['network']['scheme_id'] == $schemeId){

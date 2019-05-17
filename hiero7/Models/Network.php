@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Network extends Model
 {
-    use SoftDeletes,CascadeSoftDeletes;
+    use SoftDeletes;
     protected $table = 'networks';
 
     protected $primaryKey = 'id';
