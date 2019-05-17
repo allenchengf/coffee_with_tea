@@ -76,7 +76,6 @@ class LocationDnsSettingService
 
     public function updateSetting($data,$domain,$locationDnsRid)
     {
-        $data['cdn_id']= $this->locationDnsSettingRepository->getCdnIdByCdnName($domain,$data['cdn_name']);
         $checkCdnSetting = $this->checkCdnSetting($domain,$data['cdn_id']);
 
         if ($checkCdnSetting){
@@ -105,8 +104,6 @@ class LocationDnsSettingService
     public function createSetting($data,$domain,$locationDnsRid)
     {
         try{
-            $data['cdn_id']= $this->locationDnsSettingRepository->getCdnIdByCdnName($domain,$data['cdn_name']);
-
             $checkCdnSetting = $this->checkCdnSetting($domain,$data['cdn_id']);
             $data = $this->formatData($data,$domain,$locationDnsRid,'create');
 
@@ -116,6 +113,7 @@ class LocationDnsSettingService
                     'value'      => $data['cdn_cname'],
                     'record_line' => $data['network_name']
                 ]);
+                dd($podResult);
 
                 if($podResult['message'] == 'Success'){
                     $data['pod_id'] = $podResult['data']['record']['id'];
@@ -148,7 +146,7 @@ class LocationDnsSettingService
                 $newdata['domain_cname'] = $domainModle->where('id',$domain)->pluck('cname')->first();
                 $newdata['cdn_id'] = $data['cdn_id'];
                 $newdata['cdn_cname'] = $cdn->where('id',$data['cdn_id'])->pluck('cname')->first();
-                $newdata['network_name'] = $data['network_name'];
+                $newdata['network_name'] = $this->networkRepository->getNetworkName($data['network_id']);
                 $newdata['location_networks_id'] = $this->getLocationNetworkId($data);
                 $newdata['edited_by'] = $data['edited_by'];
             }
@@ -157,7 +155,7 @@ class LocationDnsSettingService
             {
                 $newdata['domain_cname'] = $domainModle->where('id',$domain)->pluck('cname')->first();
                 $newdata['cdn_cname'] = $cdn->where('id',$data['cdn_id'])->pluck('cname')->first();
-                $newdata['network_name'] = $data['network_name'];
+                $newdata['network_name'] = $this->networkRepository->getNetworkName($data['network_id']);
                 $newdata['record_id'] = $this->getPodId($locationDnsRid,$domain);
             }
         }
