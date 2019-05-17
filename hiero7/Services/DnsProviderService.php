@@ -86,7 +86,7 @@ class DnsProviderService
      * @param string login_token DNS Pod LoginToken
      * @param int domain_id 對應域名ID
      * @param int record_id 記錄ID，必選
-     * @param string sub_domain 主機記錄
+     * @param string sub_domain 主機記錄，必選
      * @param string record_type 記錄類型，大寫英文，比如：A，必選
      * @param string record_line 記錄線路，中文，比如：默認，必選
      * @param string value 記錄值， 如 IP:200.200.200.200， CNAME: cname.dnspod.com.， MX: mail.dnspod.com.，必選
@@ -99,6 +99,8 @@ class DnsProviderService
 
         $data['login_token'] = $data['login_token'] ?? $this->dnsPodLoginToken;
         $data['domain_id'] = $data['domain_id'] ?? env('DNS_POD_DOMAIN_ID');
+        $data['record_type'] = $data['record_type'] ?? "CNAME";
+
 
         return Curl::to($url)
             ->withData($data)
