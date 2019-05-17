@@ -25,7 +25,7 @@ class LineController extends Controller
 
     public function index()
     {
-        $data = $this->lineService->getLinesById();
+        $data = $this->lineService->getAll();
         return $this->response("Success", null, $data);
     }
 
