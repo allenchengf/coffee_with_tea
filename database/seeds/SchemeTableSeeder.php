@@ -14,12 +14,12 @@ class SchemeTableSeeder extends Seeder
         $data = [
             [
                 'id' => 1,
-                'name' => 'DNSPod free',
+                'name' => 'dnspod_free',
                 'created_at' => \Carbon\Carbon::now(),
                 'updated_at' => \Carbon\Carbon::now()
             ], [
                 'id' => 2,
-                'name' => 'DNSPod enterprise',
+                'name' => 'dnspod_enterprise',
                 'created_at' => \Carbon\Carbon::now(),
                 'updated_at' => \Carbon\Carbon::now()
             ]

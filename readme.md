@@ -16,4 +16,5 @@ DNS_POD_DOMAIN_ID=
 
 DOMAIN_REGULAR='regex:/^(?!:\/\/)([a-zA-Z0-9-_]+\.)*[a-zA-Z0-9][a-zA-Z0-9-_]+\.[a-zA-Z]{2,11}?$/'
 CDN_TTL=600
+SCHEME=1
 ```

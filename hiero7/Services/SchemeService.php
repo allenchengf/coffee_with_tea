@@ -35,4 +35,9 @@ class SchemeService
     {
         return $this->schemeRepository->checkSchemeName($schemeName);
     }
+
+    public function getSchemeIdByName($schemeName)
+    {
+        return $this->schemeRepository->getSchemeIdByName($schemeName);
+    }
 }

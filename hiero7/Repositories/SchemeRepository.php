@@ -37,4 +37,9 @@ class SchemeRepository
     {
         return $this->scheme->withTrashed()->where('name', $schemeName)->exists();
     }
+
+    public function getSchemeIdByName($schemeName)
+    {
+        return $this->scheme->withTrashed()->where('name', $schemeName)->pluck('id')->first();
+    }
 }
