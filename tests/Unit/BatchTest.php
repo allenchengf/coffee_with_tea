@@ -6,6 +6,7 @@ use Hiero7\Services\BatchService;
 use Illuminate\Foundation\Testing\DatabaseMigrations;
 use Tests\TestCase;
 use Hiero7\Services\DnsProviderService;
+use Faker\Factory as Faker;
 
 class BatchTest extends TestCase
 {
@@ -19,11 +20,13 @@ class BatchTest extends TestCase
     protected function setUp()
     {
         parent::setUp();
+
         $this->dnsprovider = $this->initMock(DnsProviderService::class);
         if($this->getName() !== "testDnsPodError")
             $this->dnsprovider->shouldReceive('createRecord')
                 ->withAnyArgs()
-                ->andReturn(["errorCode"=>null,"data"=>["record"=>["id"=>1]]]);        
+                ->andReturn(["errorCode"=>null,"data"=>["record"=>["id"=>1]]]);  
+      
         $this->domains[] = $this->addDomain("hello.com", $this->addCdn("cdn1", "cdn1.com", 90));
         $this->user = array("uuid" => \Illuminate\Support\Str::uuid(), "user_group_id" => 3);
         $this->batchService = $this->app->make('Hiero7\Services\BatchService');
@@ -34,6 +37,7 @@ class BatchTest extends TestCase
         $this->user = null;
         $this->domains = [];
         $this->batchService = null;
+        $this->dnsprovider = null;
         parent::tearDown();
     }
 
@@ -45,12 +49,13 @@ class BatchTest extends TestCase
 
     public function testAppendCdn(){
         $result = $this->batchService->store($this->domains, $this->user);
-        $this->assertEquals(count($result), 0);
+        $this->assertEquals($result["hello.com"], []);
 
         $this->domains = [];
         $this->domains[] = $this->addDomain("hello.com", $this->addCdn("cdn10", "cdn10.com", 90));  
         $result = $this->batchService->store($this->domains, $this->user);
-        $this->assertEquals(count($result), 0);
+
+        $this->assertEquals($result["hello.com"], []);
     }
 
     public function testDuplicateCdn() {
@@ -62,7 +67,8 @@ class BatchTest extends TestCase
     public function testBatchSuccess() {
         $this->domains[] = $this->addDomain("hello2.com", $this->addCdn("cdn1", "cdn1.com"), $this->addCdn("cdn2", "cdn2.com"));
         $result = $this->batchService->store($this->domains, $this->user);
-        $this->assertEquals(count($result), 0);        
+        $this->assertEquals($result["hello.com"], []);
+        $this->assertEquals($result["hello2.com"], []);
     }
 
     public function testDnsPodError() {
@@ -87,5 +93,5 @@ class BatchTest extends TestCase
             'cname'  => $cname,
             'ttl' => $ttl
         ];
-    }    
+    }
 }

@@ -22,7 +22,7 @@ class DbError extends Enum
     protected static $keys = [
         self::UNAFFECTED      => '0 rows affected.',
         self::DELETE_ON_NUll      => 'Target doesn\'t exist',
-        self::DUPLICATE_ENTRY      => 'Duplicate entry',
+        self::DUPLICATE_ENTRY      => 'has existed.',
         self::FOREIGN_CONSTRAINT_OR_CDN_SETTING      => 'Constraint foreign key or CDN Setting wrong',
     ];
 }
