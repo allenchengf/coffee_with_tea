@@ -76,8 +76,7 @@ class LocationDnsSettingService
 
         if ($checkCdnSetting){
 
-            $podData = $this->formatData($data,$domain,'update');
-
+            $podData = $this->formatData($data,$domain,$locationDnsRid,'update');
             $podResult = $this->dnsProviderService->editRecord([
                 'sub_domain' => $podData['domain_cname'],
                 'value'      => $podData['cdn_cname'],
@@ -85,11 +84,10 @@ class LocationDnsSettingService
                 'record_line' => $podData['network_name'],
                 'record_line' => $podData['network_name'],
             ]);
-
             if($podResult['message']=='Success'){
                 $result = $this->locationDnsSettingRepository->updateLocationDnsSetting($data,$domain,$locationDnsRid);
             }else{
-                return 'Pod API have some wrong.';
+                return 'error';
             }
 
         }else{
@@ -99,12 +97,13 @@ class LocationDnsSettingService
         return $result;
     } 
 
-    public function createSetting($data,$domain)
+    public function createSetting($data,$domain,$locationDnsRid)
     {
         try{
             $data['cdn_id']= $this->locationDnsSettingRepository->getCdnIdByCdnName($domain,$data['cdn_name']);
+
             $checkCdnSetting = $this->checkCdnSetting($domain,$data['cdn_id']);
-            $data = $this->formatData($data,$domain,'create');
+            $data = $this->formatData($data,$domain,$locationDnsRid,'create');
 
             if ($checkCdnSetting){
                 $podResult = $this->dnsProviderService->createRecord([
@@ -112,8 +111,16 @@ class LocationDnsSettingService
                     'value'      => $data['cdn_cname'],
                     'record_line' => $data['network_name']
                 ]);
-                $data['pod_id'] = $podResult['data']['record']['id'];
-                $result = $this->locationDnsSettingRepository->createSetting($data,$domain);
+
+                if($podResult['message'] == 'Success'){
+                    $data['pod_id'] = $podResult['data']['record']['id'];
+                    $result = $this->locationDnsSettingRepository->createSetting($data,$domain);
+                    
+                    return $result;
+
+                }else{
+                    return 'error';
+                }
             }else{
                 return false;
             }
@@ -121,10 +128,9 @@ class LocationDnsSettingService
             return false;
         }
 
-        return $result;
     }
 
-    public function formatData($data,$domain,$type)
+    public function formatData($data,$domain,$locationDnsRid,$type)
     {
         $domainModle = new Domain;
         $cdn = new Cdn;
@@ -147,7 +153,7 @@ class LocationDnsSettingService
                 $newdata['domain_cname'] = $domainModle->where('id',$domain)->pluck('cname')->first();
                 $newdata['cdn_cname'] = $cdn->where('id',$data['cdn_id'])->pluck('cname')->first();
                 $newdata['network_name'] = $data['network_name'];
-                $newdata['record_id'] = $this->getPodId($data['id'],$domain);
+                $newdata['record_id'] = $this->getPodId($locationDnsRid,$domain);
             }
         }
 
@@ -157,7 +163,6 @@ class LocationDnsSettingService
 
     private function getPodId($data,$domain)
     {
-        // dd($data);
         return $this->locationDnsSettingRepository->getPodId($domain,$data);
     }
 

@@ -31,30 +31,39 @@ class LocationDnsSettingController extends Controller
         $request->merge([
             'edited_by' => $this->getJWTPayload()['uuid']
         ]);
-        // dd($this->locationDnsSettingService->checkExit($domain,$rid));
+
         if($this->locationDnsSettingService->checkExit($domain,$rid)) 
-        { //修改設定資料 
+        { 
             $result =  $this->locationDnsSettingService->updateSetting($request->all(),$domain,$rid);
-            if ($result)
+
+            if ($result === 'error')
             {
-                $message = '';
-                $error = '';
-                $data = $result;
-            }else{
+                return $this->setStatusCode(409)->response('please contact the admin', null, []);
+
+            }elseif($result == false){
                 $message = InputError::getDescription(InputError::WRONG_PARAMETER_ERROR);
                 $error = InputError::WRONG_PARAMETER_ERROR;
                 $data = $result;
-            }
-        }else{
-            $result = $this->locationDnsSettingService->createSetting($request->all(),$domain); //新增設定資料
-            if ($result)
-            {
+            }else{
                 $message = '';
                 $error = '';
                 $data = $result;
-            }else{
+            }
+
+        }else{
+            $result = $this->locationDnsSettingService->createSetting($request->all(),$domain,$rid);
+
+            if ($result === 'error')
+            {
+                return $this->setStatusCode(409)->response('please contact the admin', null, []);
+
+            }elseif($result == false){
                 $message = DbError::getDescription(DbError::FOREIGN_CONSTRAINT_OR_CDN_SETTING);
                 $error = DbError::FOREIGN_CONSTRAINT_OR_CDN_SETTING;
+                $data = $result;
+            }else{
+                $message = '';
+                $error = '';
                 $data = $result;
             }
         }
