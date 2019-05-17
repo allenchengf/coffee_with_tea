@@ -25,8 +25,7 @@ class LineController extends Controller
 
     public function index()
     {
-        $schemeId = $this->schemeService->getSchemeIdByName(env('SCHEME'));
-        $data = $this->lineService->getLinesById($schemeId);
+        $data = $this->lineService->getLinesById();
         return $this->response("Success", null, $data);
     }
 

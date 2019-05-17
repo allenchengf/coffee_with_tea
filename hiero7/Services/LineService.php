@@ -38,8 +38,8 @@ class LineService
         return $this->lineRepository->checkNetworkId($networkId);
     }
 
-    public function getLinesById($schemeId)
+    public function getLinesById()
     {
-        return $this->lineRepository->getLinesById($schemeId);
+        return $this->lineRepository->getLinesById();
     }
 }

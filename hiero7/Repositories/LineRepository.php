@@ -38,13 +38,13 @@ class LineRepository
         return $this->locationNetwork->withTrashed()->where('network_id', $networkId)->exists();
     }
 
-    public function getLinesById($schemeId)
+    public function getLinesById()
     {
         $result = [];
         $data = $this->locationNetwork::all();
 
         foreach ($data as $k => $v){
-            if($v['network']['scheme_id'] == $schemeId){
+            if($v['network']['scheme_id'] == env('SCHEME')){
                 $result[] = $v;
             }
         }

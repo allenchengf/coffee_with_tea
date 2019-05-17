@@ -29,8 +29,7 @@ class NetworkController extends Controller
     public function index($schemeId)
     {
         $result = [];
-        $schemeIdByName = $this->schemeService->getSchemeIdByName(env('SCHEME'));
-        $data = $this->networkService->getNetworksById($schemeIdByName);
+        $data = $this->networkService->getNetworksById();
 
         $data->map(function ($item) use($schemeId) {
             if($item['locationNetwork']){
