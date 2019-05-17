@@ -26,7 +26,7 @@ class DnsProviderService
         return Curl::to($url)
             ->withData($data)
             ->asJson(true)
-            ->post();
+            ->get();
     }
 
     /**
@@ -50,7 +50,7 @@ class DnsProviderService
         return Curl::to($url)
             ->withData($data)
             ->asJson(true)
-            ->post();
+            ->get();
     }
 
     /**
