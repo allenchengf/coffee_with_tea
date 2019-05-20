@@ -12,6 +12,8 @@ class LocationNetwork extends Model
 
     protected $fillable = ['continent_id', 'country_id', 'location', 'network_id','isp', 'edited_by'];
 
+    protected $hidden = ['edited_by','created_at', 'updated_at', 'deleted_at'];
+
     public function network()
     {
         return $this->belongsTo(Network::class)->withDefault();

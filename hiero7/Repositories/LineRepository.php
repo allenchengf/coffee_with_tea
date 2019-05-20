@@ -8,7 +8,6 @@
 
 namespace Hiero7\Repositories;
 
-
 use Hiero7\Models\LocationNetwork;
 
 class LineRepository
@@ -41,7 +40,7 @@ class LineRepository
     public function getLinesById()
     {
         $result = [];
-        $data = $this->locationNetwork::all();
+        $data = $this->locationNetwork->with('continent','country')->get();
 
         foreach ($data as $k => $v){
             if($v['network']['scheme_id'] == env('SCHEME')){
