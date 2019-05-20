@@ -20,13 +20,13 @@ class DnsProviderService
      */
     public function getDomain(array $data = [])
     {
-        $url = $this->dnsProviderApi . "/domain";
+        $url = $this->dnsProviderApi . "/domains";
         $data['login_token'] = $data['login_token'] ?? $this->dnsPodLoginToken;
 
         return Curl::to($url)
             ->withData($data)
             ->asJson(true)
-            ->post();
+            ->get();
     }
 
     /**
@@ -50,7 +50,7 @@ class DnsProviderService
         return Curl::to($url)
             ->withData($data)
             ->asJson(true)
-            ->post();
+            ->get();
     }
 
     /**
