@@ -29,7 +29,7 @@ class DomainRepository
             return;
         } catch (\Exception $e) {
             if ($e->getCode() == '23000') {
-                return new \Exception(DbError::getDescription(DbError::DUPLICATE_ENTRY) . " for " . $info["name"], DbError::DUPLICATE_ENTRY);
+                return new \Exception(DbError::getDescription(DbError::DUPLICATE_ENTRY), DbError::DUPLICATE_ENTRY);  
             }
 
             return $e;
