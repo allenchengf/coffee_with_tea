@@ -10,6 +10,7 @@ namespace Tests\Unit\Controller;
 
 use App\Http\Controllers\Api\v1\SchemeController;
 use Hiero7\Models\Scheme;
+use Hiero7\Services\LineService;
 use Hiero7\Services\SchemeService;
 use Illuminate\Foundation\Testing\DatabaseMigrations;
 use Tests\TestCase;
@@ -17,7 +18,8 @@ use App\Http\Requests\SchemeRequest as Request;
 class SchemeTest extends TestCase
 {
     use DatabaseMigrations;
-    protected $SchemeService;
+    protected $schemeService;
+    protected $lineService;
     protected $scheme;
     protected $jwtPayload = [];
 
@@ -26,13 +28,14 @@ class SchemeTest extends TestCase
         parent::setUp();
         $this->seed();
         app()->call([$this, 'service']);
-        $this->controller = new SchemeController($this->SchemeService);
+        $this->controller = new SchemeController($this->schemeService, $this->lineService);
         $this->scheme = new Scheme();
     }
 
-    public function service(SchemeService $schemeService)
+    public function service(SchemeService $schemeService, LineService $lineService)
     {
-        $this->SchemeService = $schemeService;
+        $this->schemeService = $schemeService;
+        $this->lineService = $lineService;
     }
 
     /** @test */

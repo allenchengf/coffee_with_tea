@@ -50,4 +50,13 @@ class LineRepository
 
         return $result;
     }
+
+    public function deleteByScheme($schemeId)
+    {
+        $this->locationNetwork::all()->each(function ($item) use ($schemeId){
+            if($item['network']['scheme_id'] == $schemeId){
+                $item->delete();
+            }
+        });
+    }
 }

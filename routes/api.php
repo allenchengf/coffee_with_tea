@@ -45,6 +45,6 @@ Route::group(['middleware' => ['api'], 'namespace' => 'Api\v1', 'prefix' => 'v1'
         Route::get('', 'SchemeController@index')->name('schemes.index');
         Route::post('', 'SchemeController@create')->name('schemes.create');
         Route::put('{scheme}', 'SchemeController@edit')->name('schemes.edit');
-//        Route::delete('{scheme}', 'SchemeController@destroy')->name('schemes.destroy');
+        Route::delete('{scheme}', 'SchemeController@destroy')->name('schemes.destroy');
     });
 });
