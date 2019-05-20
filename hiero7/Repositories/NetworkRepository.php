@@ -32,10 +32,4 @@ class NetworkRepository
     {
         return $this->network::with('locationNetwork')->where('scheme_id', env('SCHEME'))->get();
     }
-    
-    public function getNetworkName($networkId)
-    {
-        return $this->network->where('id', $networkId)->pluck('name')->first();
-
-    }
 }

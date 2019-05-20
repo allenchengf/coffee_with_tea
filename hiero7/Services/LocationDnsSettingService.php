@@ -9,65 +9,50 @@ use League\Fractal;
 use League\Fractal\Manager;
 use Hiero7\Models\Domain;
 use Hiero7\Models\Cdn;
+use Hiero7\Models\Network;
 use Hiero7\Services\DnsProviderService;
+use Hiero7\Repositories\LineRepository;
 
 class LocationDnsSettingService
 {
     protected $locationDnsSettingRepository;
-    protected $continentRepository;
-    protected $countryRepository;
-    protected $networkRepository;
 
-    public function __construct(LocationDnsSettingRepository $locationDnsSettingRepository,
-                                ContinentRepository $continentRepository, CountryRepository $countryRepository,
-                                NetworkRepository $networkRepository,DnsProviderService $dnsProviderService)
+    public function __construct(LocationDnsSettingRepository $locationDnsSettingRepository,DnsProviderService $dnsProviderService,
+                                LineRepository $line)
     {
         $this->locationDnsSettingRepository = $locationDnsSettingRepository;
-        $this->continentRepository = $continentRepository;
-        $this->countryRepository = $countryRepository;
-        $this->networkRepository = $networkRepository;
         $this->dnsProviderService = $dnsProviderService;
+        $this->line = $line;
+
     }
 
     public function getAll($domain)
     {
-        $locationNetworkData = $this->getLocationNetworkSetting();
-        for ($i=0 ; $i < count($locationNetworkData) ; $i++)
+        $cdn = new Cdn;
+        $line = $this->line->getLinesById();
+        $lineCollection = collect($line);
+        foreach($lineCollection as $v)
         {
-            if($this->locationDnsSettingRepository->checkCdnIdExit($domain,$locationNetworkData[$i]->id)){
-                $locationNetworkData[$i]->cdn_id = $this->locationDnsSettingRepository->getCdnId($domain,$locationNetworkData[$i]->id);
-                $locationNetworkData[$i]->cdn_name = $this->locationDnsSettingRepository->getCdnProvider($domain,$locationNetworkData[$i]->cdn_id);
+            if($this->locationDnsSettingRepository->checkCdnIdExit($domain,$v['id'])){
+                $cdnId = $this->locationDnsSettingRepository->getCdnIdByLocationNetworksId($domain,$v['id']);
+                $cdn = $cdn->select('id','name')->where('domain_id',$domain)->where('id',$cdnId)->first();
+                $v->setAttribute('cdn_id', $cdn->id);
+                $v->setAttribute('cdn', $cdn);
             }else{
-                if($this->locationDnsSettingRepository->getDefaultCdnProvider($domain)){
-                    $locationNetworkData[$i]->cdn_id = $this->locationDnsSettingRepository->getDefaultCdnProvider($domain)->id;
-                    $locationNetworkData[$i]->cdn_name = $this->locationDnsSettingRepository->getDefaultCdnProvider($domain)->name;
+                if ($cdn->all()->isempty()){
+                    $v->setAttribute('cdn_id', null);
                 }else{
-                    $locationNetworkData[$i]->cdn_id = null;
-                    $locationNetworkData[$i]->cdn_name = null;
+                    $cdn = $cdn->select('id','name')->where('domain_id',$domain)->where('default',1)->first();
+                    $v->setAttribute('cdn_id', $cdn->id);
+                    $v->setAttribute('cdn', $cdn);
                 }
             }
         }
 
-        return $locationNetworkData;
+        return $lineCollection;
     }
 
-    public function getLocationNetworkSetting()
-    {
-        $data = $this->locationDnsSettingRepository->getLocationSetting();
-
-        $data->map(function ($item) {
-            if($item){
-                $item->continent_name = $this->continentRepository->getContinentName($item['continent_id']);
-                $item->country_name = $this->countryRepository->getCountryName($item['country_id']);
-                $item->network_name = $this->networkRepository->getNetworkName($item['network_id']);
-            }
-            return $item;
-        })->all();
-
-        return $data;
-    }
-
-    public function checkExit($domain,$locationNetworkRid)
+    public function checkExitDnsSetting($domain,$locationNetworkRid)
     {
         $result = $this->locationDnsSettingRepository->getByLocationeNetworkRid($domain,$locationNetworkRid);
 
@@ -101,19 +86,20 @@ class LocationDnsSettingService
         return $result;
     } 
 
-    public function createSetting($data,$domain,$locationDnsRid)
+    public function createSetting($data,$domain,$locationNetworkRid)
     {
         try{
             $checkCdnSetting = $this->checkCdnSetting($domain,$data['cdn_id']);
-            $data = $this->formatData($data,$domain,$locationDnsRid,'create');
+            $checkLocationNetwork = $this->checkLocationNetwork($data,$locationNetworkRid);
 
-            if ($checkCdnSetting){
+            if ($checkCdnSetting && $checkLocationNetwork){
+                $data = $this->formatData($data,$domain,$locationNetworkRid,'create');
+
                 $podResult = $this->dnsProviderService->createRecord([
                     'sub_domain' => $data['domain_cname'],
                     'value'      => $data['cdn_cname'],
                     'record_line' => $data['network_name']
                 ]);
-                dd($podResult);
 
                 if($podResult['message'] == 'Success'){
                     $data['pod_id'] = $podResult['data']['record']['id'];
@@ -133,33 +119,35 @@ class LocationDnsSettingService
 
     }
 
-    public function formatData($data,$domain,$locationDnsRid,$type)
+    public function formatData($data,$domain,$locationNetworkRid,$type)
     {
         $domainModle = new Domain;
-        $cdn = new Cdn;
+        $network = new Network;
         $newdata = [];
 
         if($type == 'create'){
+
             for ($i =0 ; $i < count($data) ; $i ++)
             {
                 $newdata['domain_id'] = $domain;
                 $newdata['domain_cname'] = $domainModle->where('id',$domain)->pluck('cname')->first();
                 $newdata['cdn_id'] = $data['cdn_id'];
-                $newdata['cdn_cname'] = $cdn->where('id',$data['cdn_id'])->pluck('cname')->first();
-                $newdata['network_name'] = $this->networkRepository->getNetworkName($data['network_id']);
-                $newdata['location_networks_id'] = $this->getLocationNetworkId($data);
+                $newdata['cdn_cname'] = $this->locationDnsSettingRepository->getCdnCname($domain,$data['cdn_id']);
+                $newdata['network_name'] = $network->where('id', $data['network_id'])->pluck('name')->first();
+                $newdata['location_networks_id'] = $locationNetworkRid;
                 $newdata['edited_by'] = $data['edited_by'];
             }
         }else{
+
             for ($i =0 ; $i < count($data) ; $i ++)
             {
                 $newdata['domain_cname'] = $domainModle->where('id',$domain)->pluck('cname')->first();
-                $newdata['cdn_cname'] = $cdn->where('id',$data['cdn_id'])->pluck('cname')->first();
-                $newdata['network_name'] = $this->networkRepository->getNetworkName($data['network_id']);
-                $newdata['record_id'] = $this->getPodId($locationDnsRid,$domain);
+                $newdata['cdn_cname'] = $this->locationDnsSettingRepository->getCdnCname($domain,$data['cdn_id']);
+                $newdata['network_name'] = $network->where('id', $data['network_id'])->pluck('name')->first();
+                $newdata['record_id'] = $this->getPodId($locationNetworkRid,$domain);
             }
+            
         }
-
 
         return $newdata;
     }
@@ -169,9 +157,11 @@ class LocationDnsSettingService
         return $this->locationDnsSettingRepository->getPodId($domain,$data);
     }
 
-    private function getLocationNetworkId($data)
+    private function checkLocationNetwork($data, $locationNetworkRid)
     {
-        return $this->locationDnsSettingRepository->getLocationNetworkId($data['continent_id'],$data['country_id'],$data['network_id']);
+        $result = $this->locationDnsSettingRepository->getLocationNetworkId($data['continent_id'],$data['country_id'],$data['network_id']);
+
+        return $result == $locationNetworkRid ? true : false;
     }
 
     private function checkCdnSetting($domian, $cdnId)

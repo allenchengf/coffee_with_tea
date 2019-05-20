@@ -31,8 +31,8 @@ class LocationDnsSettingController extends Controller
         $request->merge([
             'edited_by' => $this->getJWTPayload()['uuid']
         ]);
-            // dd($this->locationDnsSettingService->checkExit($domain,$rid));
-        if($this->locationDnsSettingService->checkExit($domain,$rid)) 
+        
+        if($this->locationDnsSettingService->checkExitDnsSetting($domain,$rid)) 
         { 
             $result =  $this->locationDnsSettingService->updateSetting($request->all(),$domain,$rid);
 
@@ -47,12 +47,12 @@ class LocationDnsSettingController extends Controller
             }else{
                 $message = '';
                 $error = '';
-                $data = $result;
+                $data = $this->locationDnsSettingService->getAll($domain);
             }
 
         }else{
             $result = $this->locationDnsSettingService->createSetting($request->all(),$domain,$rid);
-// dd($result);
+
             if ($result === 'error')
             {
                 return $this->setStatusCode(409)->response('please contact the admin', null, []);
@@ -64,7 +64,7 @@ class LocationDnsSettingController extends Controller
             }else{
                 $message = '';
                 $error = '';
-                $data = $result;
+                $data = $this->locationDnsSettingService->getAll($domain);                
             }
         }
 

@@ -19,11 +19,6 @@ class LocationDnsSettingRepository
         $this->cdn = $cdn;
     }
 
-    public function getLocationSetting()
-    {
-        return $this->locationNetwork->all(); //取 Default 設定好的
-    }
-
     public function checkCdnIdExit($domainId,$locationId)
     {
         $result = $this->locationDnsSetting->where('domain_id',$domainId)->where('location_networks_id',$locationId)->pluck('cdn_id')->first();
@@ -31,25 +26,9 @@ class LocationDnsSettingRepository
         return $result ? true : false;
     }
 
-    public function getCdnId($domainId,$locationId)
+    public function getCdnIdByLocationNetworksId($domainId,$locationId)
     {
         return $this->locationDnsSetting->where('domain_id',$domainId)->where('location_networks_id',$locationId)->pluck('cdn_id')->first();
-    }
-
-    public function getCdnIdByCdnName($domainId,$cdnName)
-    {
-        return $this->cdn->where('domain_id',$domainId)->where('name',$cdnName)->pluck('id')->first();
-    }
-
-    public function getDefaultCdnProvider($domainId)
-    {
-        $result = $this->cdn->select('name','id')->where('domain_id',$domainId)->where('default',1)->first();
-        return $result;
-    }
-
-    public function getCdnProvider($domainId,$cdnId)
-    {
-        return $this->cdn->where('domain_id',$domainId)->where('id',$cdnId)->pluck('name')->first();
     }
 
     public function getLocationNetworkId($continentId,$countryId,$networkId)
@@ -88,6 +67,11 @@ class LocationDnsSettingRepository
     public function checkCdnSetting($domainId,$cdnId)
     {
         return $this->cdn->where('id',$cdnId)->where('domain_id',$domainId)->first();
+    }
+
+    public function getCdnCname($domainId,$cdnId)
+    {
+        return $this->cdn->where('id',$cdnId)->pluck('cname')->first();
     }
 
     public function getPodId($domainId,$rid)
