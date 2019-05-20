@@ -22,10 +22,10 @@ class CreateLocationNetworksTable extends Migration
             $table->unsignedInteger('network_id');
             $table->string('edited_by')->nullable();
             $table->timestamps();
-            $table->softDeletes();
+//            $table->softDeletes();
             $table->foreign('continent_id')->references('id')->on('continents');
             $table->foreign('country_id')->references('id')->on('countries');
-            $table->foreign('network_id')->references('id')->on('networks');
+            $table->foreign('network_id')->references('id')->on('networks')->onDelete('cascade');
         });
     }
 

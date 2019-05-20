@@ -28,6 +28,7 @@ class DomainRequest extends FormRequest
                 return [
                     'domain_id' => 'nullable|integer',
                     'user_group_id' => 'nullable|integer',
+                    'all' => 'nullable|boolean',
                 ];
                 break;
             case ($routeName == "$prefix.create"):

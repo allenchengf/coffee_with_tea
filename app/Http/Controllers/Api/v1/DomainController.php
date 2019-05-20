@@ -34,7 +34,10 @@ class DomainController extends Controller
             $id = $request->get('domain_id');
         }
 
-        $domains = $domain->where(compact('user_group_id', 'id'))->get()->toArray();
+        $domains = ($user_group_id == 1 && $request->get('all', false)) ?
+        $domain->all()->toArray() :
+        $domain->where(compact('user_group_id', 'id'))->get()->toArray();
+
         $dnsPodDomain = env('DNS_POD_DOMAIN');
         return $this->response('', null, compact('domains', 'dnsPodDomain'));
     }

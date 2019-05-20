@@ -26,4 +26,9 @@ class NetworkService
     {
         return $this->networkRepository->getAll();
     }
+
+    public function getNetworksById()
+    {
+        return $this->networkRepository->getNetworksById();
+    }
 }

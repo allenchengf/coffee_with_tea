@@ -12,12 +12,14 @@ use App\Http\Controllers\Api\v1\LineController;
 use Illuminate\Foundation\Testing\DatabaseMigrations;
 use Tests\TestCase;
 use Hiero7\Services\LineService;
+use Hiero7\Services\SchemeService;
 use App\Http\Requests\LineRequest as Request;
 use Hiero7\Models\LocationNetwork as Line;
 class LineTest extends TestCase
 {
     use DatabaseMigrations;
     protected $lineService;
+    protected $schemeService;
     protected $line;
     protected $jwtPayload = [];
 
@@ -26,13 +28,14 @@ class LineTest extends TestCase
         parent::setUp();
         $this->seed();
         app()->call([$this, 'service']);
-        $this->controller = new LineController($this->lineService);
+        $this->controller = new LineController($this->lineService, $this->schemeService);
         $this->line = new Line();
     }
 
-    public function service(LineService $lineService)
+    public function service(LineService $lineService, SchemeService $schemeService)
     {
         $this->lineService = $lineService;
+        $this->schemeService = $schemeService;
     }
 
     /** @test */

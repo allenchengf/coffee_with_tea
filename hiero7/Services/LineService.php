@@ -37,4 +37,9 @@ class LineService
     {
         return $this->lineRepository->checkNetworkId($networkId);
     }
+
+    public function getLinesById()
+    {
+        return $this->lineRepository->getLinesById();
+    }
 }

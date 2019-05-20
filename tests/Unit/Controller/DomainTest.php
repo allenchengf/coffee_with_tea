@@ -111,7 +111,6 @@ class DomainTest extends TestCase
         $this->assertEquals($user_group_id, $data['data']['domains'][0]['user_group_id']);
     }
 
-
     /**
      * Get Domain
      * login by user
@@ -136,6 +135,62 @@ class DomainTest extends TestCase
 
         $data = json_decode($response->getContent(), true);
         $this->assertEquals($user_group_id, $data['data']['domains'][0]['user_group_id']);
+    }
+
+    /**
+     * Get Domain
+     * by Admin
+     * @test
+     */
+    public function getDomain_all()
+    {
+        $loginUid = 1;
+        $user_group_id = 1;
+        $all = true;
+        $expectedCount = $this->domain->count();
+        $request = new Request;
+
+        $request->merge([
+            'all' => $all,
+        ]);
+
+        $this->addUuidforPayload()
+            ->addUserGroupId($user_group_id)
+            ->setJwtTokenPayload($loginUid, $this->jwtPayload);
+
+        $response = $this->controller->getDomain($request, $this->domain);
+        $this->assertEquals(200, $response->status());
+
+        $data = json_decode($response->getContent(), true);
+        $this->assertCount($expectedCount, $data['data']['domains']);
+    }
+
+    /**
+     * Get Domain
+     * by User
+     * @test
+     */
+    public function getDomain_all_but_not_admin()
+    {
+        $loginUid = 1;
+        $user_group_id = 2;
+        $all = true;
+        $expectedCount = $this->domain->where(compact('user_group_id'))->count();
+        $request = new Request;
+
+        $request->merge([
+            'all' => $all,
+        ]);
+
+        $this->addUuidforPayload()
+            ->addUserGroupId($user_group_id)
+            ->setJwtTokenPayload($loginUid, $this->jwtPayload);
+
+        $response = $this->controller->getDomain($request, $this->domain);
+        $this->assertEquals(200, $response->status());
+
+        $data = json_decode($response->getContent(), true);
+        $this->assertCount($expectedCount, $data['data']['domains']);
     }
 
     /**

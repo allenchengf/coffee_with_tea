@@ -7,17 +7,20 @@ use Hiero7\Enums\InputError;
 use Hiero7\Models\LocationNetwork as Line;
 use Hiero7\Services\LineService;
 use App\Http\Requests\LineRequest as Request;
+use Hiero7\Services\SchemeService;
 
 class LineController extends Controller
 {
 
     protected $lineService;
+    protected $schemeService;
     /**
      * LineController constructor.
      */
-    public function __construct(LineService $lineService)
+    public function __construct(LineService $lineService, SchemeService $schemeService)
     {
         $this->lineService = $lineService;
+        $this->schemeService = $schemeService;
     }
 
     public function index()
