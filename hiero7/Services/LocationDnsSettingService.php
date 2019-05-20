@@ -2,9 +2,6 @@
 namespace Hiero7\Services;
 
 use Hiero7\Repositories\LocationDnsSettingRepository;
-use Hiero7\Repositories\ContinentRepository;
-use Hiero7\Repositories\CountryRepository;
-use Hiero7\Repositories\NetworkRepository;
 use League\Fractal;
 use League\Fractal\Manager;
 use Hiero7\Models\Domain;
@@ -78,7 +75,7 @@ class LocationDnsSettingService
             }else{
                 return 'error';
             }
-
+            
         }else{
             return false;
         }
@@ -89,6 +86,7 @@ class LocationDnsSettingService
     public function createSetting($data,$domain,$locationNetworkRid)
     {
         try{
+
             $checkCdnSetting = $this->checkCdnSetting($domain,$data['cdn_id']);
             $checkLocationNetwork = $this->checkLocationNetwork($data,$locationNetworkRid);
 
@@ -114,6 +112,7 @@ class LocationDnsSettingService
                 return false;
             }
         } catch (\Exception $e){
+
             return false;
         }
 
