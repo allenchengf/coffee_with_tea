@@ -21,6 +21,7 @@
     <filter>
         <whitelist processUncoveredFilesFromWhitelist="true">
             <directory suffix=".php">./app</directory>
+            <directory suffix=".php">./hiero7</directory>
         </whitelist>
     </filter>
     <php>
