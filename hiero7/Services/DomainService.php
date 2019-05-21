@@ -22,16 +22,6 @@ class DomainService
         $this->domainRepository = $domainRepository;
     }
 
-    public function getAllDomain()
-    {
-        return $this->domainRepository->getAll();
-    }
-
-    public function getDomain(int $ugid)
-    {
-        return $this->domainRepository->getByUgid($ugid);
-    }
-
     public function getDomainbyId(int $domain_id)
     {
         return $this->domainRepository->getByid($domain_id);

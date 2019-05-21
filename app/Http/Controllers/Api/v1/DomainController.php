@@ -64,7 +64,7 @@ class DomainController extends Controller
         );
     }
 
-    public function editDomian(Request $request, Domain $domain)
+    public function editDomain(Request $request, Domain $domain)
     {
         $request->merge(['edited_by' => $this->getJWTPayload()['uuid']]);
         $errorCode = null;

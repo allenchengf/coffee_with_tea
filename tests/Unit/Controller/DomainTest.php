@@ -61,7 +61,7 @@ class DomainTest extends TestCase
     /**
      * Get Domain
      * by user
-     * by domian_id
+     * by domain_id
      * @test
      */
     public function getDomain_by_domain_id()
@@ -307,7 +307,7 @@ class DomainTest extends TestCase
      *
      * @test
      */
-    public function edit_Domian()
+    public function edit_Domain()
     {
         $loginUid = 4;
         $user_group_id = 2;
@@ -327,7 +327,7 @@ class DomainTest extends TestCase
             ->addUserGroupId($user_group_id)
             ->setJwtTokenPayload($loginUid, $this->jwtPayload);
 
-        $response = $this->controller->editDomian($request, $domain);
+        $response = $this->controller->editDomain($request, $domain);
         $this->assertEquals(200, $response->status());
 
         $data = json_decode($response->getContent(), true);
@@ -340,7 +340,7 @@ class DomainTest extends TestCase
      *
      * @test
      */
-    public function edit_Domian_Exist_Domain()
+    public function edit_Domain_Exist_Domain()
     {
         $loginUid = 4;
         $user_group_id = 2;
@@ -359,7 +359,7 @@ class DomainTest extends TestCase
             ->addUserGroupId($user_group_id)
             ->setJwtTokenPayload($loginUid, $this->jwtPayload);
 
-        $response = $this->controller->editDomian($request, $domain);
+        $response = $this->controller->editDomain($request, $domain);
         $this->assertEquals(400, $response->status());
 
         $data = json_decode($response->getContent(), true);
@@ -371,7 +371,7 @@ class DomainTest extends TestCase
      *
      * @test
      */
-    public function edit_Domian_Exist_Cname()
+    public function edit_Domain_Exist_Cname()
     {
         $loginUid = 1;
         $user_group_id = 2;
@@ -389,7 +389,7 @@ class DomainTest extends TestCase
             ->addUserGroupId($user_group_id)
             ->setJwtTokenPayload($loginUid, $this->jwtPayload);
 
-        $response = $this->controller->editDomian($request, $domain);
+        $response = $this->controller->editDomain($request, $domain);
         $this->assertEquals(400, $response->status());
 
         $data = json_decode($response->getContent(), true);
@@ -401,7 +401,7 @@ class DomainTest extends TestCase
      *
      * @test
      */
-    public function edit_Domian_Error()
+    public function edit_Domain_Error()
     {
         $loginUid = 1;
         $user_group_id = 2;
@@ -419,7 +419,7 @@ class DomainTest extends TestCase
             ->addUserGroupId($user_group_id)
             ->setJwtTokenPayload($loginUid, $this->jwtPayload);
 
-        $response = $this->controller->editDomian($request, $domain);
+        $response = $this->controller->editDomain($request, $domain);
         $this->assertEquals(400, $response->status());
 
         $data = json_decode($response->getContent(), true);
