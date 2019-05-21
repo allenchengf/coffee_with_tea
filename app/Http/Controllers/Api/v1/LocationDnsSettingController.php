@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\v1;
 
 use Hiero7\Enums\DbError;
+use Hiero7\Enums\InputError;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Hiero7\Services\LocationDnsSettingService;
