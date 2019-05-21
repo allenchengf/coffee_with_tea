@@ -42,4 +42,9 @@ class LineService
     {
         return $this->lineRepository->getLinesById();
     }
+
+    public function deleteByScheme($schemeId)
+    {
+        return $this->lineRepository->deleteByScheme($schemeId);
+    }
 }

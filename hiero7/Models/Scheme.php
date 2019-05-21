@@ -2,13 +2,14 @@
 
 namespace Hiero7\Models;
 
+use Askedio\SoftCascade\Traits\SoftCascadeTrait;
 use Iatstuti\Database\Support\CascadeSoftDeletes;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Scheme extends Model
 {
-    use SoftDeletes,CascadeSoftDeletes;
+    use SoftDeletes,SoftCascadeTrait;
 
     protected $table = 'schemes';
 
@@ -18,7 +19,7 @@ class Scheme extends Model
 
     protected $fillable = ['name', 'edited_by'];
 
-    protected $cascadeDeletes = ['networks'];
+    protected $softCascade = ['networks'];
 
     public function networks()
     {
