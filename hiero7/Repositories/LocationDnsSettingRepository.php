@@ -19,7 +19,7 @@ class LocationDnsSettingRepository
         $this->cdn = $cdn;
     }
 
-    public function checkCdnIdExit($domainId,$locationId)
+    public function checkCdnIdExist($domainId,$locationId)
     {
         $result = $this->locationDnsSetting->where('domain_id',$domainId)->where('location_networks_id',$locationId)->pluck('cdn_id')->first();
 

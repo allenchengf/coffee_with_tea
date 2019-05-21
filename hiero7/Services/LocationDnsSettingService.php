@@ -30,7 +30,7 @@ class LocationDnsSettingService
         $lineCollection = collect($line);
         foreach($lineCollection as $v)
         {
-            if($this->locationDnsSettingRepository->checkCdnIdExit($domain,$v['id'])){
+            if($this->locationDnsSettingRepository->checkCdnIdExist($domain,$v['id'])){
                 $cdnId = $this->locationDnsSettingRepository->getCdnIdByLocationNetworksId($domain,$v['id']);
                 $cdn = $cdn->select('id','name')->where('domain_id',$domain)->where('id',$cdnId)->first();
                 $v->setAttribute('cdn_id', $cdn->id);
@@ -49,7 +49,7 @@ class LocationDnsSettingService
         return $lineCollection;
     }
 
-    public function checkExitDnsSetting($domain,$locationNetworkRid)
+    public function checkExistDnsSetting($domain,$locationNetworkRid)
     {
         $result = $this->locationDnsSettingRepository->getByLocationeNetworkRid($domain,$locationNetworkRid);
 
@@ -136,6 +136,7 @@ class LocationDnsSettingService
                 $newdata['location_networks_id'] = $locationNetworkRid;
                 $newdata['edited_by'] = $data['edited_by'];
             }
+
         }else{
 
             for ($i =0 ; $i < count($data) ; $i ++)
@@ -163,9 +164,9 @@ class LocationDnsSettingService
         return $result == $locationNetworkRid ? true : false;
     }
 
-    private function checkCdnSetting($domian, $cdnId)
+    private function checkCdnSetting($domain, $cdnId)
     {
-        $result = $this->locationDnsSettingRepository->checkCdnSetting($domian,$cdnId);
+        $result = $this->locationDnsSettingRepository->checkCdnSetting($domain,$cdnId);
 
         return $result ? true : false;
     }
