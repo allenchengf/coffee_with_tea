@@ -32,7 +32,7 @@ class LocationDnsSettingController extends Controller
             'edited_by' => $this->getJWTPayload()['uuid']
         ]);
         
-        if($this->locationDnsSettingService->checkExitDnsSetting($domain,$rid)) 
+        if($this->locationDnsSettingService->checkExistDnsSetting($domain,$rid)) 
         { 
             $result =  $this->locationDnsSettingService->updateSetting($request->all(),$domain,$rid);
 
