@@ -29,7 +29,7 @@ class DomainHelperTraitTest extends TestCase
             'www.domain.123.456.789.000.com'
         ];
         foreach ($correctType as $v) {
-            $this->assertEquals(true, $this->validateDoamin($v));
+            $this->assertEquals(true, $this->validateDomain($v));
         }
         
 
@@ -40,7 +40,7 @@ class DomainHelperTraitTest extends TestCase
             'example.com?anything'
         ];
         foreach ($errorType as $v) {
-            $this->assertEquals(false, $this->validateDoamin($v));
+            $this->assertEquals(false, $this->validateDomain($v));
         }
     }
 }

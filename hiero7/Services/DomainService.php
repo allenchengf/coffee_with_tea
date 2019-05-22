@@ -40,7 +40,7 @@ class DomainService
     {
         if ($this->domainRepository->checkDomain($name, $domain_id)) {
             return InputError::DOMAIN_EXIST;
-        } else if (!$this->validateDoamin($name)) {
+        } else if (!$this->validateDomain($name)) {
             return InputError::DOMAIN_VERIFICATION_ERROR;
         }
 

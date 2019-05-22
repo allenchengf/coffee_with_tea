@@ -29,11 +29,9 @@ class CdnRequestTest extends TestCase
 
         $this->withoutMiddleware([AuthUserModule::class, TokenCheck::class, DomainPermission::class]);
 
-        $this->seed();
+        $this->seed('DomainTableSeeder');
 
         $this->domain = Domain::inRandomOrder()->first();
-
-        $this->cdn = Cdn::inRandomOrder()->first();
 
         $this->uri = "/api/v1/domains/{$this->domain->id}/cdn";
 
@@ -93,6 +91,43 @@ class CdnRequestTest extends TestCase
      * @test
      * @group cdnRequest
      */
+    public function createCdnButDomainValidationFails()
+    {
+        $this->addUuidforPayload()->setJwtTokenPayload(4, $this->jwtPayload);
+
+        $requestParams = [
+            'name'  => $this->faker->name,
+            'cname' => $this->faker->url,
+        ];
+
+        $this->post($this->uri,
+            $requestParams)->assertStatus(422)->assertJsonFragment(['cname' => ["Domain Verification Error."],]);
+    }
+
+    /**
+     * @test
+     * @group cdnRequest
+     */
+    public function updateCdnButDomainValidationFails()
+    {
+        $cdn = factory(Cdn::class)->create();
+
+        $this->setUri($cdn->domain_id);
+
+        $requestParams = [
+            'name'    => $this->faker->name,
+            'cname'   => $this->faker->url,
+            'default' => false
+        ];
+
+        $this->put($this->getUri() . "/$cdn->id",
+            $requestParams)->assertStatus(422)->assertJsonFragment(['cname' => ["Domain Verification Error."],]);;
+    }
+
+    /**
+     * @test
+     * @group cdnRequest
+     */
     public function createCdnCnameIsTakenWithSameDomainId()
     {
         $cdn = factory(Cdn::class)->create();
@@ -112,7 +147,7 @@ class CdnRequestTest extends TestCase
 
     /**
      * @test
-     * @group cdnReqeust
+     * @group cdnRequest
      * @throws \Exception
      */
     public function createCdnFailsWhenTtlIsLessThan600()
@@ -169,7 +204,7 @@ class CdnRequestTest extends TestCase
 
         $requestParams = [
             'name'    => $this->faker->name,
-            'cname'   => $this->faker->url,
+            'cname'   => $this->faker->domainName,
             'default' => false
         ];
 
