@@ -88,7 +88,6 @@ class CdnControllerTest extends TestCase
 
         Event::assertDispatched(CdnWasCreated::class);
 
-
     }
 
     /**
@@ -103,7 +102,6 @@ class CdnControllerTest extends TestCase
         $cdn = factory(Cdn::class)->create(['default' => true]);
 
         $this->setUri($cdn->domain_id);
-
 
         $this->post($this->getUri(), $this->getRequestBody())->assertStatus(200);
 
