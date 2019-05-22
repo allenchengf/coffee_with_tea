@@ -27,15 +27,15 @@ class LocationDnsSettingController extends Controller
         );
     }
 
-    public function editSetting(Request $request,$domain,$rid)
+    public function editSetting(Request $request,$domain,$locationNetworkRid)
     {
         $request->merge([
             'edited_by' => $this->getJWTPayload()['uuid']
         ]);
         
-        if($this->locationDnsSettingService->checkExistDnsSetting($domain,$rid)) 
+        if($this->locationDnsSettingService->checkExistDnsSetting($domain,$locationNetworkRid)) 
         { 
-            $result =  $this->locationDnsSettingService->updateSetting($request->all(),$domain,$rid);
+            $result =  $this->locationDnsSettingService->updateSetting($request->all(),$domain,$locationNetworkRid);
 
             if ($result === 'error')
             {
@@ -52,7 +52,7 @@ class LocationDnsSettingController extends Controller
             }
 
         }else{
-            $result = $this->locationDnsSettingService->createSetting($request->all(),$domain,$rid);
+            $result = $this->locationDnsSettingService->createSetting($request->all(),$domain,$locationNetworkRid);
 
             if ($result === 'error')
             {

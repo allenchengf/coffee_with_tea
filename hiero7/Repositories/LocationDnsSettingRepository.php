@@ -19,16 +19,9 @@ class LocationDnsSettingRepository
         $this->cdn = $cdn;
     }
 
-    public function checkCdnIdExist($domainId,$locationId)
+    public function getAll()
     {
-        $result = $this->locationDnsSetting->where('domain_id',$domainId)->where('location_networks_id',$locationId)->pluck('cdn_id')->first();
-
-        return $result ? true : false;
-    }
-
-    public function getCdnIdByLocationNetworksId($domainId,$locationId)
-    {
-        return $this->locationDnsSetting->where('domain_id',$domainId)->where('location_networks_id',$locationId)->pluck('cdn_id')->first();
+        return $this->locationDnsSetting->with('cdn','location')->get();
     }
 
     public function getLocationNetworkId($continentId,$countryId,$networkId)
