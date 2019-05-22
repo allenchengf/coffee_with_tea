@@ -29,11 +29,9 @@ class CdnRequestTest extends TestCase
 
         $this->withoutMiddleware([AuthUserModule::class, TokenCheck::class, DomainPermission::class]);
 
-        $this->seed();
+        $this->seed('DomainTableSeeder');
 
         $this->domain = Domain::inRandomOrder()->first();
-
-        $this->cdn = Cdn::inRandomOrder()->first();
 
         $this->uri = "/api/v1/domains/{$this->domain->id}/cdn";
 
