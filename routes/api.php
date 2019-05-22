@@ -14,7 +14,7 @@ Route::group(['middleware' => ['api'], 'namespace' => 'Api\v1', 'prefix' => 'v1'
                 //yuan
                 Route::group(['prefix' => '/iRouteCDN'], function () {
                     Route::get('', 'LocationDnsSettingController@getAll')->name('iRoute.get');
-                    Route::put('/{rid}', 'LocationDnsSettingController@editSetting')->name('iRoute.edit');
+                    Route::put('/{location_network_id}', 'LocationDnsSettingController@editSetting')->name('iRoute.edit');
                 });
             });
 
@@ -22,7 +22,7 @@ Route::group(['middleware' => ['api'], 'namespace' => 'Api\v1', 'prefix' => 'v1'
         });
 
         Route::middleware(['domain.permission'])->group(function () {
-            Route::put('{domain}', 'DomainController@editDomian')->name('domain.edit');
+            Route::put('{domain}', 'DomainController@editDomain')->name('domain.edit');
             Route::delete('{domain}', 'DomainController@destroy');
         });
 
@@ -45,6 +45,6 @@ Route::group(['middleware' => ['api'], 'namespace' => 'Api\v1', 'prefix' => 'v1'
         Route::get('', 'SchemeController@index')->name('schemes.index');
         Route::post('', 'SchemeController@create')->name('schemes.create');
         Route::put('{scheme}', 'SchemeController@edit')->name('schemes.edit');
-//        Route::delete('{scheme}', 'SchemeController@destroy')->name('schemes.destroy');
+        Route::delete('{scheme}', 'SchemeController@destroy')->name('schemes.destroy');
     });
 });

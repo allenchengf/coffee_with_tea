@@ -31,8 +31,8 @@ class LocationDnsSettingController extends Controller
         $request->merge([
             'edited_by' => $this->getJWTPayload()['uuid']
         ]);
-
-        if($this->locationDnsSettingService->checkExit($domain,$rid)) 
+        
+        if($this->locationDnsSettingService->checkExitDnsSetting($domain,$rid)) 
         { 
             $result =  $this->locationDnsSettingService->updateSetting($request->all(),$domain,$rid);
 
@@ -47,7 +47,7 @@ class LocationDnsSettingController extends Controller
             }else{
                 $message = '';
                 $error = '';
-                $data = $result;
+                $data = $this->locationDnsSettingService->getAll($domain);
             }
 
         }else{
@@ -64,7 +64,7 @@ class LocationDnsSettingController extends Controller
             }else{
                 $message = '';
                 $error = '';
-                $data = $result;
+                $data = $this->locationDnsSettingService->getAll($domain);                
             }
         }
 

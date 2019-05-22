@@ -16,23 +16,23 @@ use DB;
 
 class CdnController extends Controller
 {
-    protected $dnsProviderService;
-
     protected $cdnService;
 
     /**
      * CdnController constructor.
      *
-     * @param \Hiero7\Services\DnsProviderService $dnsProviderService
-     * @param \Hiero7\Services\CdnService         $cdnService
+     * @param \Hiero7\Services\CdnService $cdnService
      */
-    public function __construct(DnsProviderService $dnsProviderService, CdnService $cdnService)
+    public function __construct(CdnService $cdnService)
     {
-        $this->dnsProviderService = $dnsProviderService;
-
         $this->cdnService = $cdnService;
     }
 
+    /**
+     * @param \Hiero7\Models\Domain $domain
+     *
+     * @return \App\Http\Controllers\Api\v1\CdnController
+     */
     public function index(Domain $domain)
     {
         $result = $domain->cdns()->orderBy('created_at', 'asc')->get();
@@ -40,6 +40,12 @@ class CdnController extends Controller
         return $this->setStatusCode($result ? 200 : 404)->response('success', null, $result);
     }
 
+    /**
+     * @param \App\Http\Requests\CdnRequest $request
+     * @param \Hiero7\Models\Domain         $domain
+     *
+     * @return \App\Http\Controllers\Api\v1\CdnController
+     */
     public function store(CdnRequest $request, Domain $domain)
     {
         if ( ! $domain->cdns()->exists()) {
@@ -74,6 +80,13 @@ class CdnController extends Controller
 
     }
 
+    /**
+     * @param \App\Http\Requests\CdnRequest $request
+     * @param \Hiero7\Models\Domain         $domain
+     * @param \Hiero7\Models\Cdn            $cdn
+     *
+     * @return \App\Http\Controllers\Api\v1\CdnController
+     */
     public function update(CdnRequest $request, Domain $domain, Cdn $cdn)
     {
         $data = $this->cdnService->formatRequest($request, $this->getJWTPayload()['uuid']);
@@ -113,12 +126,18 @@ class CdnController extends Controller
     }
 
 
+    /**
+     * @param \App\Http\Requests\DeleteCdnRequest $request
+     * @param \Hiero7\Models\Domain               $domain
+     * @param \Hiero7\Models\Cdn                  $cdn
+     *
+     * @return \App\Http\Controllers\Api\v1\CdnController
+     */
     public function destroy(DeleteCdnRequest $request, Domain $domain, Cdn $cdn)
     {
         if ($cdn = $domain->getCdnById($cdn->id)->first()) {
 
             $cdn->delete();
-
         }
 
         return $this->setStatusCode(200)->response('success', null, []);

@@ -6,17 +6,20 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\SchemeRequest as Request;
 use Hiero7\Enums\InputError;
 use Hiero7\Models\Scheme;
+use Hiero7\Services\LineService;
 use Hiero7\Services\SchemeService;
 
 class SchemeController extends Controller
 {
     protected $schemeService;
+    protected $lineService;
     /**
      * SchemeController constructor.
      */
-    public function __construct(SchemeService $schemeService)
+    public function __construct(SchemeService $schemeService, LineService $lineService)
     {
         $this->schemeService = $schemeService;
+        $this->lineService = $lineService;
     }
 
     public function index()
@@ -52,6 +55,7 @@ class SchemeController extends Controller
 
     public function destroy(Scheme $scheme)
     {
+        $this->lineService->deleteByScheme($scheme->id);
         $scheme->delete();
         return $this->response();
     }

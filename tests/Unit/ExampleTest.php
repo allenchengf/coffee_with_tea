@@ -28,5 +28,6 @@ class ExampleTest extends TestCase
         $this->assertTrue(!empty(env('DNS_POD_DOMAIN_ID')), 'DNS_POD_DOMAIN_ID is not set');
         $this->assertTrue(!empty(env('DOMAIN_REGULAR')), 'DOMAIN_REGULAR is not set');
         $this->assertTrue(!empty(env('CDN_TTL')), 'CDN_TTL is not set');
+        $this->assertTrue(!empty(env('SCHEME')), 'SCHEME is not set');
     }
 }

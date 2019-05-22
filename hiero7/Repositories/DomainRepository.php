@@ -41,24 +41,9 @@ class DomainRepository
         return $this->domain->where('name', $domain)->where('user_group_id', $user_group_id)->first();
     }
 
-    public function getAll()
-    {
-        return $this->domain->all();
-    }
-
     public function getByid(int $domain_id)
     {
         return $this->domain->find($domain_id);
-    }
-
-    public function getByUgid(int $user_group_id)
-    {
-        return $this->domain->where(compact('user_group_id'))->get();
-    }
-
-    public function createDomain($data)
-    {
-        return $this->domain->create($data);
     }
 
     public function checkDomain(string $domain, int $id = 0)

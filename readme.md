@@ -18,3 +18,15 @@ DOMAIN_REGULAR='regex:/^(?!:\/\/)([a-zA-Z0-9-_]+\.)*[a-zA-Z0-9][a-zA-Z0-9-_]+\.[
 CDN_TTL=600
 SCHEME=1 #dnspod free
 ```
+
+#### Database
+
+For Production
+
+```bash
+php artisan db:seed --class=SchemeTableSeeder
+php artisan db:seed --class=ContinentTableSeeder
+php artisan db:seed --class=CountryTableSeeder
+php artisan db:seed --class=NetworkTableSeeder
+php artisan db:seed --class=LocationNetworkTableSeeder
+```
