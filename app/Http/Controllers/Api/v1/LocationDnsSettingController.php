@@ -7,7 +7,6 @@ use Hiero7\Enums\InputError;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Hiero7\Services\LocationDnsSettingService;
-use Symfony\Component\Console\Input\InputInterface;
 
 class LocationDnsSettingController extends Controller
 {

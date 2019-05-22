@@ -30,7 +30,7 @@ class LocationDnsSettingRepository
                                     ->where('network_id',$networkId)->pluck('id')->first();
     }
 
-    public function getByLocationeNetworkRid($domainId,$rid)
+    public function getByLocationNetworkRid($domainId,$rid)
     {
         return $this->locationDnsSetting->where('location_networks_id',$rid)->where('domain_id',$domainId)->first();
     }
@@ -62,7 +62,7 @@ class LocationDnsSettingRepository
         return $this->cdn->where('id',$cdnId)->where('domain_id',$domainId)->first();
     }
 
-    public function getCdnCname($domainId,$cdnId)
+    public function getCdnCname($cdnId)
     {
         return $this->cdn->where('id',$cdnId)->pluck('cname')->first();
     }

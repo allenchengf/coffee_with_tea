@@ -2,8 +2,6 @@
 namespace Hiero7\Services;
 
 use Hiero7\Repositories\LocationDnsSettingRepository;
-use League\Fractal;
-use League\Fractal\Manager;
 use Hiero7\Models\Domain;
 use Hiero7\Models\Cdn;
 use Hiero7\Models\Network;
@@ -31,12 +29,12 @@ class LocationDnsSettingService
 
         foreach($lineCollection as $lineModel)
         {
-            if($cdn->all()->isempty()){
+            if($cdn->all()->isEmpty()){
                 $lineModel->setAttribute('cdn', null);
             }else{
                 $locationDnsSetting = $this->locationDnsSettingRepository->getAll();
 
-                if($locationDnsSetting->isempty()){
+                if($locationDnsSetting->isEmpty()){
                     $cdn = $cdn->select('id','name')->where('domain_id',$domainId)->where('default',1)->first();
                     $lineModel->setAttribute('cdn', $cdn);
 
@@ -60,7 +58,7 @@ class LocationDnsSettingService
 
     public function checkExistDnsSetting($domainId,$locationNetworkRid)
     {
-        $result = $this->locationDnsSettingRepository->getByLocationeNetworkRid($domainId,$locationNetworkRid);
+        $result = $this->locationDnsSettingRepository->getByLocationNetworkRid($domainId,$locationNetworkRid);
 
         return $result ? true : false;
     }
@@ -78,6 +76,7 @@ class LocationDnsSettingService
                 'record_id' => $podData['record_id'],
                 'record_line' => $podData['network_name'],
             ]);
+
             if($podResult['message']=='Success'){
                 $result = $this->locationDnsSettingRepository->updateLocationDnsSetting($data,$domainId,$locationDnsRid);
             }else{
@@ -135,7 +134,7 @@ class LocationDnsSettingService
         for($i =0 ; $i < count($data) ; $i ++)
         {
             $newData['domain_cname'] = $domainModel->where('id',$domainId)->pluck('cname')->first();
-            $newData['cdn_cname'] = $this->locationDnsSettingRepository->getCdnCname($domainId,$data['cdn_id']);
+            $newData['cdn_cname'] = $this->locationDnsSettingRepository->getCdnCname($data['cdn_id']);
             $newData['network_name'] = $networkModel->where('id', $data['network_id'])->pluck('name')->first();
 
             if($type == 'create'){
