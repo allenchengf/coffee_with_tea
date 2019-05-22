@@ -84,13 +84,7 @@ class CdnControllerTest extends TestCase
     {
         Event::fake([CdnWasCreated::class]);
 
-
-        $requestParams = [
-            'name'  => $this->faker->domainName,
-            'cname' => $this->faker->url
-        ];
-
-        $this->call('POST', $this->uri, $requestParams);
+        $this->call('POST', $this->uri, $this->getRequestBody());
 
         Event::assertDispatched(CdnWasCreated::class);
 
@@ -110,12 +104,8 @@ class CdnControllerTest extends TestCase
 
         $this->setUri($cdn->domain_id);
 
-        $requestParams = [
-            'name'  => $this->faker->domainName,
-            'cname' => $this->faker->url
-        ];
 
-        $this->post($this->getUri(), $requestParams)->assertStatus(200);
+        $this->post($this->getUri(), $this->getRequestBody())->assertStatus(200);
 
         Event::assertNotDispatched(CdnWasCreated::class);
     }
@@ -133,13 +123,8 @@ class CdnControllerTest extends TestCase
 
         $this->setUri($defaultCdn->domain_id);
 
-        $requestParams = [
-            'name'    => $this->faker->domainName,
-            'cname'   => $this->faker->url,
-            'default' => true
-        ];
-
-        $this->put($this->getUri() . "/$defaultCdn->id", $requestParams)->assertStatus(500);
+        $this->put($this->getUri() . "/$defaultCdn->id",
+            array_merge($this->getRequestBody(), ['default' => true]))->assertStatus(500);
 
         Event::assertDispatched(CdnWasEdited::class);
     }
@@ -151,6 +136,7 @@ class CdnControllerTest extends TestCase
      */
     public function editCdnEventNotDispatched()
     {
+
         Event::fake([CdnWasEdited::class]);
 
         $defaultCdn = factory(Cdn::class)->create([
@@ -165,13 +151,8 @@ class CdnControllerTest extends TestCase
 
         $this->setUri($cdn->domain_id);
 
-        $requestParams = [
-            'name'    => $this->faker->domainName,
-            'cname'   => $this->faker->url,
-            'default' => 0
-        ];
-
-        $this->put($this->getUri() . "/$cdn->id", $requestParams)->assertStatus(200);
+        $this->put($this->getUri() . "/$cdn->id",
+            array_merge($this->getRequestBody(), ['default' => 0]))->assertStatus(200);
 
         Event::assertNotDispatched(CdnWasEdited::class);
     }
@@ -196,13 +177,8 @@ class CdnControllerTest extends TestCase
 
         $this->setUri($cdn->domain_id);
 
-        $requestParams = [
-            'name'    => $this->faker->domainName,
-            'cname'   => $this->faker->url,
-            'default' => 1
-        ];
-
-        $this->put($this->getUri() . "/$cdn->id", $requestParams)->assertStatus(500);
+        $this->put($this->getUri() . "/$cdn->id",
+            array_merge($this->getRequestBody(), ['default' => 1]))->assertStatus(500);
 
         Event::assertDispatched(CdnWasEdited::class);
     }
@@ -222,5 +198,13 @@ class CdnControllerTest extends TestCase
 
     }
 
+
+    private function getRequestBody()
+    {
+        return [
+            'name'  => $this->faker->name,
+            'cname' => $this->faker->domainName
+        ];
+    }
 
 }
