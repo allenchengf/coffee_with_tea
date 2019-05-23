@@ -10,14 +10,24 @@ class LocationDnsSetting extends Model
     protected $primaryKey = 'id';
     protected $fillable = ['edited_by','user_group_id', 'pod_record_id', 'location_networks_id', 'cdn_id','domain_id'];
 
-    public function cdns()
+    public function cdn()
     {
-        return $this->belongsTo(Cdn::class, 'cdn_id', 'id');
+        return $this->belongsTo(Cdn::class)->withDefault();
+    }
+
+    public function domain()
+    {
+        return $this->belongsTo(Domain::class,'domain_id')->withDefault();
     }
 
     public function locations()
     {
-        return $this->belongsTo(LocationNetwork::class, 'location_networks_id', 'id');
+        return $this->belongsToMany(LocationNetwork::class,'location_networks_id','id');
+    }
+
+    public function location()
+    {
+        return $this->belongsTo(LocationNetwork::class,'location_networks_id','id');
     }
 
 

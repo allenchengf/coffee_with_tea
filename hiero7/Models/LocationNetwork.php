@@ -29,8 +29,8 @@ class LocationNetwork extends Model
         return $this->belongsTo(Country::class)->withDefault();
     }
 
-    public function dnsSetting()
+    public function locationDnsSetting()
     {
-        return $this->hasMany(LocationDnsSetting::class);
+        return $this->hasMany(LocationDnsSetting::class,'location_networks_id');
     }
 }

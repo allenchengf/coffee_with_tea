@@ -32,6 +32,6 @@ class TokenCheck
         return response()->json([
             'message' => PermissionError::getDescription($errorCode),
             'errorCode' => $errorCode,
-        ])->setStatusCode(403);
+        ])->setStatusCode(401);
     }
 }
