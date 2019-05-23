@@ -22,7 +22,7 @@ Route::group(['middleware' => ['api'], 'namespace' => 'Api\v1', 'prefix' => 'v1'
         });
 
         Route::middleware(['domain.permission'])->group(function () {
-            Route::put('{domain}', 'DomainController@editDomian')->name('domain.edit');
+            Route::put('{domain}', 'DomainController@editDomain')->name('domain.edit');
             Route::delete('{domain}', 'DomainController@destroy');
         });
 

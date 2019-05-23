@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 //use Illuminate\Foundation\Http\FormRequest;
+use App\Rules\DomainValidationRule;
 use Illuminate\Validation\Rule;
 use Hiero7\Services\CdnService;
 
@@ -44,6 +45,7 @@ class CdnRequest extends FormRequest
                     }),
                 ],
                 'cname'   => [
+                    new DomainValidationRule,
                     'required',
                     Rule::unique('cdns')->ignore($this->cdn->id)->where(function ($query) {
                         $query->where('domain_id', $this->domain->id);
@@ -63,6 +65,7 @@ class CdnRequest extends FormRequest
                 }),
             ],
             'cname' => [
+                new DomainValidationRule,
                 'required',
                 Rule::unique('cdns')->where(function ($query) {
                     $query->where('domain_id', $this->domain->id);

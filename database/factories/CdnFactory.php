@@ -10,6 +10,6 @@ $factory->define(\Hiero7\Models\Cdn::class, function (Faker $faker) {
     return [
         'domain_id' => $domain->id,
         'name'      => $faker->name,
-        'cname'     => $faker->url
+        'cname'     => $faker->domainName
     ];
 });
