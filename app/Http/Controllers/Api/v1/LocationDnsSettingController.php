@@ -3,10 +3,10 @@
 namespace App\Http\Controllers\Api\v1;
 
 use Hiero7\Enums\DbError;
+use Hiero7\Enums\InputError;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Hiero7\Services\LocationDnsSettingService;
-use Symfony\Component\Console\Input\InputInterface;
 
 class LocationDnsSettingController extends Controller
 {
@@ -26,15 +26,15 @@ class LocationDnsSettingController extends Controller
         );
     }
 
-    public function editSetting(Request $request,$domain,$rid)
+    public function editSetting(Request $request,$domain,$locationNetworkRid)
     {
         $request->merge([
             'edited_by' => $this->getJWTPayload()['uuid']
         ]);
         
-        if($this->locationDnsSettingService->checkExitDnsSetting($domain,$rid)) 
+        if($this->locationDnsSettingService->checkExistDnsSetting($domain,$locationNetworkRid)) 
         { 
-            $result =  $this->locationDnsSettingService->updateSetting($request->all(),$domain,$rid);
+            $result =  $this->locationDnsSettingService->updateSetting($request->all(),$domain,$locationNetworkRid);
 
             if ($result === 'error')
             {
@@ -51,7 +51,7 @@ class LocationDnsSettingController extends Controller
             }
 
         }else{
-            $result = $this->locationDnsSettingService->createSetting($request->all(),$domain,$rid);
+            $result = $this->locationDnsSettingService->createSetting($request->all(),$domain,$locationNetworkRid);
 
             if ($result === 'error')
             {
