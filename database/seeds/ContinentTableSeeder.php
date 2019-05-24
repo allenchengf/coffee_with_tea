@@ -14,31 +14,26 @@ class ContinentTableSeeder extends Seeder
         $data = [
             [
                 'id' => 1,
-                'name' => 'all',
-                'created_at' => \Carbon\Carbon::now(),
-                'updated_at' => \Carbon\Carbon::now()
-            ], [
-                'id' => 2,
                 'name' => 'africa',
                 'created_at' => \Carbon\Carbon::now(),
                 'updated_at' => \Carbon\Carbon::now()
             ],  [
-                'id' => 3,
+                'id' => 2,
                 'name' => 'america',
                 'created_at' => \Carbon\Carbon::now(),
                 'updated_at' => \Carbon\Carbon::now()
             ],  [
-                'id' => 4,
+                'id' => 3,
                 'name' => 'asia',
                 'created_at' => \Carbon\Carbon::now(),
                 'updated_at' => \Carbon\Carbon::now()
             ],  [
-                'id' => 5,
+                'id' => 4,
                 'name' => 'europe',
                 'created_at' => \Carbon\Carbon::now(),
                 'updated_at' => \Carbon\Carbon::now()
             ],  [
-                'id' => 6,
+                'id' => 5,
                 'name' => 'oceania',
                 'created_at' => \Carbon\Carbon::now(),
                 'updated_at' => \Carbon\Carbon::now()
