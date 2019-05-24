@@ -59,7 +59,7 @@ class InputError extends Enum
         self::INVALID_VERIFICATION_CODE => 'Invalid Verification Code, Please try again.',
         self::THE_PRODUCT_EXIST => 'The Product Exist',
         self::USER_NOT_EXIST => 'User Not Exist',
-        self::WRONG_PARAMETER_ERROR => 'Wrowg Parameter Error',
+        self::WRONG_PARAMETER_ERROR => 'Wrong Parameter Error',
         self::DOMAIN_EXIST => 'Domain Exist',
         self::CNAME_EXIST => 'CNAME Exist',
         self::DOMAIN_FORMAT_ERROR => 'Domain format error.',

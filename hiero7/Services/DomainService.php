@@ -22,16 +22,6 @@ class DomainService
         $this->domainRepository = $domainRepository;
     }
 
-    public function getAllDomain()
-    {
-        return $this->domainRepository->getAll();
-    }
-
-    public function getDomain(int $ugid)
-    {
-        return $this->domainRepository->getByUgid($ugid);
-    }
-
     public function getDomainbyId(int $domain_id)
     {
         return $this->domainRepository->getByid($domain_id);
@@ -50,7 +40,7 @@ class DomainService
     {
         if ($this->domainRepository->checkDomain($name, $domain_id)) {
             return InputError::DOMAIN_EXIST;
-        } else if (!$this->validateDoamin($name)) {
+        } else if (!$this->validateDomain($name)) {
             return InputError::DOMAIN_VERIFICATION_ERROR;
         }
 

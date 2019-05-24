@@ -19,16 +19,9 @@ class LocationDnsSettingRepository
         $this->cdn = $cdn;
     }
 
-    public function checkCdnIdExit($domainId,$locationId)
+    public function getAll()
     {
-        $result = $this->locationDnsSetting->where('domain_id',$domainId)->where('location_networks_id',$locationId)->pluck('cdn_id')->first();
-
-        return $result ? true : false;
-    }
-
-    public function getCdnIdByLocationNetworksId($domainId,$locationId)
-    {
-        return $this->locationDnsSetting->where('domain_id',$domainId)->where('location_networks_id',$locationId)->pluck('cdn_id')->first();
+        return $this->locationDnsSetting->with('cdn','location')->get();
     }
 
     public function getLocationNetworkId($continentId,$countryId,$networkId)
@@ -37,7 +30,7 @@ class LocationDnsSettingRepository
                                     ->where('network_id',$networkId)->pluck('id')->first();
     }
 
-    public function getByLocationeNetworkRid($domainId,$rid)
+    public function getByLocationNetworkRid($domainId,$rid)
     {
         return $this->locationDnsSetting->where('location_networks_id',$rid)->where('domain_id',$domainId)->first();
     }
@@ -69,7 +62,7 @@ class LocationDnsSettingRepository
         return $this->cdn->where('id',$cdnId)->where('domain_id',$domainId)->first();
     }
 
-    public function getCdnCname($domainId,$cdnId)
+    public function getCdnCname($cdnId)
     {
         return $this->cdn->where('id',$cdnId)->pluck('cname')->first();
     }
