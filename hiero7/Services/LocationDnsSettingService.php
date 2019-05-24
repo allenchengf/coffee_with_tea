@@ -39,7 +39,7 @@ class LocationDnsSettingService
                     $lineModel->setAttribute('cdn', $cdn);
 
                 }else{
-                    $locationSetting = $lineModel->locationDnsSetting()->first();
+                    $locationSetting = $lineModel->locationDnsSetting()->where('domain_id',$domainId)->first();
 
                     if($locationSetting){
                         $cdn = $locationSetting->cdn()->select('id','name')->first();
