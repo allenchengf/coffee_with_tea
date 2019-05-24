@@ -13,6 +13,8 @@ use Hiero7\Services\DnsProviderService;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use DB;
+use Hiero7\Enums\InternalError;
+
 
 class CdnController extends Controller
 {
@@ -66,7 +68,7 @@ class CdnController extends Controller
 
                 DB::rollback();
 
-                return $this->setStatusCode(409)->response('please contact the admin', null, []);
+                return $this->setStatusCode(409)->response('please contact the admin', InternalError::INTERNAL_ERROR, []);
             }
 
             DB::commit();
@@ -115,7 +117,7 @@ class CdnController extends Controller
 
                 DB::rollback();
 
-                return $this->setStatusCode(409)->response('please contact the admin', null, []);
+                return $this->setStatusCode(409)->response('please contact the admin', InternalError::INTERNAL_ERROR, []);
             }
         }
 
