@@ -2,8 +2,7 @@
 
 namespace App\Http\Controllers\Api\v1;
 
-use Hiero7\Enums\DbError;
-use Hiero7\Enums\InputError;
+use Hiero7\Enums\{DbError,InputError,InternalError};
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Hiero7\Services\LocationDnsSettingService;
@@ -38,7 +37,7 @@ class LocationDnsSettingController extends Controller
 
             if ($result === 'error')
             {
-                return $this->setStatusCode(409)->response('please contact the admin', null, []);
+                return $this->setStatusCode(409)->response('please contact the admin',InternalError::INTERNAL_ERROR , []);
 
             }elseif($result == false){
                 $message = InputError::getDescription(InputError::WRONG_PARAMETER_ERROR);
@@ -55,7 +54,7 @@ class LocationDnsSettingController extends Controller
 
             if ($result === 'error')
             {
-                return $this->setStatusCode(409)->response('please contact the admin', null, []);
+                $this->setStatusCode(409)->response('please contact the admin', InternalError::INTERNAL_ERROR, []);
 
             }elseif($result == false){
                 $message = DbError::getDescription(DbError::FOREIGN_CONSTRAINT_OR_CDN_SETTING);
