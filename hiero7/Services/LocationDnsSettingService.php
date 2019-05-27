@@ -31,27 +31,17 @@ class LocationDnsSettingService
         {
             if($cdn->all()->isEmpty()){
                 $lineModel->setAttribute('cdn', null);
-            }else{
-                $locationDnsSetting = $this->locationDnsSettingRepository->getAll();
-
-                if($locationDnsSetting->isEmpty()){
-                    $cdn = $cdn->select('id','name')->where('domain_id',$domainId)->where('default',1)->first();
-                    $lineModel->setAttribute('cdn', $cdn);
-
-                }else{
-                    $locationSetting = $lineModel->locationDnsSetting()->where('domain_id',$domainId)->first();
-
-                    if($locationSetting){
-                        $cdn = $locationSetting->cdn()->select('id','name')->first();
-                        $lineModel->setAttribute('cdn', $cdn);
-
-                    }else{
-                        $cdn = $cdn->select('id','name')->where('domain_id',$domainId)->where('default',1)->first();
-                        $lineModel->setAttribute('cdn', $cdn);
-                        }
-                    }
-                }
+                continue;
             }
+
+            if($this->locationDnsSettingRepository->getAll()->isEmpty()){
+                $cdn = $cdn->select('id','name')->where('domain_id',$domainId)->where('default',1)->first();
+                $lineModel->setAttribute('cdn', $cdn);
+                continue;
+            }
+            
+            $this->getDnsSettingAll($lineModel,$cdn,$domainId,$lineModel->locationDnsSetting()->where('domain_id',$domainId)->first());
+        }
 
         return $lineCollection;
     }
@@ -65,27 +55,23 @@ class LocationDnsSettingService
 
     public function updateSetting($data,$domainId,$locationDnsRid)
     {
-        $checkCdnSetting = $this->checkCdnSetting($domainId,$data['cdn_id']);
-
-        if ($checkCdnSetting){
-
-            $podData = $this->formatData($data,$domainId,$locationDnsRid,'update');
-            $podResult = $this->dnsProviderService->editRecord([
-                'sub_domain' => $podData['domain_cname'],
-                'value'      => $podData['cdn_cname'],
-                'record_id' => $podData['record_id'],
-                'record_line' => $podData['network_name'],
-            ]);
-
-            if($podResult['message']=='Success'){
-                $result = $this->locationDnsSettingRepository->updateLocationDnsSetting($data,$domainId,$locationDnsRid);
-            }else{
-                return 'error';
-            }
-            
-        }else{
+        if(!$this->checkCdnSetting($domainId,$data['cdn_id'])){
             return false;
         }
+
+        $podData = $this->formatData($data,$domainId,$locationDnsRid,'update');
+        $podResult = $this->dnsProviderService->editRecord([
+            'sub_domain' => $podData['domain_cname'],
+            'value'      => $podData['cdn_cname'],
+            'record_id' => $podData['record_id'],
+            'record_line' => $podData['network_name'],
+        ]);
+
+        if($podResult['errorCode']){
+            return 'error';
+        }
+
+        $result = $this->locationDnsSettingRepository->updateLocationDnsSetting($data,$domainId,$locationDnsRid);
 
         return $result;
     } 
@@ -93,36 +79,33 @@ class LocationDnsSettingService
     public function createSetting($data,$domainId,$locationNetworkRid)
     {
         try{
-
-            $checkCdnSetting = $this->checkCdnSetting($domainId,$data['cdn_id']);
-            $checkLocationNetwork = $this->checkLocationNetwork($data,$locationNetworkRid);
-
-            if ($checkCdnSetting && $checkLocationNetwork){
-                $data = $this->formatData($data,$domainId,$locationNetworkRid,'create');
-
-                $podResult = $this->dnsProviderService->createRecord([
-                    'sub_domain' => $data['domain_cname'],
-                    'value'      => $data['cdn_cname'],
-                    'record_line' => $data['network_name']
-                ]);
-
-                if($podResult['message'] == 'Success'){
-                    $data['pod_id'] = $podResult['data']['record']['id'];
-                    $result = $this->locationDnsSettingRepository->createSetting($data,$domainId);
-                    
-                    return $result;
-
-                }else{
-                    return 'error';
-                }
-            }else{
+            if(!$this->checkCdnSetting($domainId,$data['cdn_id'])){
                 return false;
             }
-        } catch (\Exception $e){
 
+            if(!$this->checkLocationNetwork($data,$locationNetworkRid)){
+                return false;
+            }
+
+            $formatData = $this->formatData($data,$domainId,$locationNetworkRid,'create');
+
+            $podResult = $this->dnsProviderService->createRecord([
+                'sub_domain' => $formatData['domain_cname'],
+                'value'      => $formatData['cdn_cname'],
+                'record_line' => $formatData['network_name']
+            ]);
+
+            if($podResult['errorCode']){
+                return 'error';
+            }
+            
+            $formatData['pod_id'] = $podResult['data']['record']['id'];
+            
+            return $this->locationDnsSettingRepository->createSetting($formatData,$domainId);
+
+        } catch (\Exception $e){
             return false;
         }
-
     }
 
     public function formatData($data,$domainId,$locationNetworkRid,$type)
@@ -145,11 +128,25 @@ class LocationDnsSettingService
 
             }else{
                 $newData['record_id'] = $this->getPodId($locationNetworkRid,$domainId);
-
             }
         }
 
         return $newData;
+    }
+
+    private function getDnsSettingAll($lineModel,$cdn,$domainId,$locationSetting)
+    {
+        if(!$locationSetting){
+            $cdn = $cdn->select('id','name')->where('domain_id',$domainId)->where('default',1)->first();
+            $lineModel->setAttribute('cdn', $cdn);        
+            
+            return $lineModel;
+        }
+
+        $cdn = $locationSetting->cdn()->select('id','name')->first();
+        $lineModel->setAttribute('cdn', $cdn);
+        
+        return $lineModel;
     }
 
     private function getPodId($data,$domainId)
