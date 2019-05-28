@@ -2,10 +2,11 @@
 
 namespace App\Http\Controllers\Api\v1;
 
-use Hiero7\Enums\{DbError,InputError,InternalError};
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
+use Hiero7\Enums\InputError;
+use Hiero7\Enums\InternalError;
 use Hiero7\Services\LocationDnsSettingService;
+use Illuminate\Http\Request;
 
 class LocationDnsSettingController extends Controller
 {
@@ -21,50 +22,32 @@ class LocationDnsSettingController extends Controller
         $result = $this->locationDnsSettingService->getAll($domain);
         return $this->setStatusCode($result ? 200 : 400)->response(
             '',
-            '',$result
+            '', $result
         );
     }
 
-    public function editSetting(Request $request,$domain,$locationNetworkRid)
+    public function editSetting(Request $request, $domain, $locationNetworkId)
     {
         $request->merge([
-            'edited_by' => $this->getJWTPayload()['uuid']
+            'edited_by' => $this->getJWTPayload()['uuid'],
         ]);
-        
-        if($this->locationDnsSettingService->checkExistDnsSetting($domain,$locationNetworkRid)) 
-        { 
-            $result =  $this->locationDnsSettingService->updateSetting($request->all(),$domain,$locationNetworkRid);
 
-            if ($result === 'error')
-            {
-                return $this->setStatusCode(409)->response('please contact the admin',InternalError::INTERNAL_ERROR , []);
+        if ($this->locationDnsSettingService->checkExistDnsSetting($domain, $locationNetworkId)) {
+            $result = $this->locationDnsSettingService->updateSetting($request->all(), $domain, $locationNetworkId);
+        } else {
+            $result = $this->locationDnsSettingService->createSetting($request->all(), $domain, $locationNetworkId);
+        }
 
-            }elseif($result == false){
-                $message = InputError::getDescription(InputError::WRONG_PARAMETER_ERROR);
-                $error = InputError::WRONG_PARAMETER_ERROR;
-                $data = $result;
-            }else{
-                $message = '';
-                $error = '';
-                $data = $this->locationDnsSettingService->getAll($domain);
-            }
-
-        }else{
-            $result = $this->locationDnsSettingService->createSetting($request->all(),$domain,$locationNetworkRid);
-
-            if ($result === 'error')
-            {
-                $this->setStatusCode(409)->response('please contact the admin', InternalError::INTERNAL_ERROR, []);
-
-            }elseif($result == false){
-                $message = DbError::getDescription(DbError::FOREIGN_CONSTRAINT_OR_CDN_SETTING);
-                $error = DbError::FOREIGN_CONSTRAINT_OR_CDN_SETTING;
-                $data = $result;
-            }else{
-                $message = '';
-                $error = '';
-                $data = $this->locationDnsSettingService->getAll($domain);                
-            }
+        if ($result === 'error') {
+            return $this->setStatusCode(409)->response('please contact the admin', InternalError::INTERNAL_ERROR, []);
+        } elseif ($result == false) {
+            $message = InputError::getDescription(InputError::WRONG_PARAMETER_ERROR);
+            $error = InputError::WRONG_PARAMETER_ERROR;
+            $data = $result;
+        } else {
+            $message = '';
+            $error = '';
+            $data = $this->locationDnsSettingService->getAll($domain);
         }
 
         return $this->setStatusCode($result ? 200 : 400)->response(
