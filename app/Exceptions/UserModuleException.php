@@ -9,9 +9,9 @@ class UserModuleException extends Exception
     public $message;
     public $errorCode;
 
-    public function __construct($message = [], $errorCode = 5000)
+    public function __construct($message, $errorCode = 5000)
     {
-        $this->message = $message;
+        $this->message = ($errorCode == 422) ? json_decode($message, true) : $message;
         $this->errorCode = $errorCode;
         parent::__construct($message, $errorCode);
     }
