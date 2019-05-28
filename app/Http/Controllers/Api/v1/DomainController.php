@@ -5,16 +5,12 @@ namespace App\Http\Controllers\Api\v1;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\DomainRequest as Request;
 use Hiero7\Models\Domain;
-use Hiero7\Services\DomainService;
 
 class DomainController extends Controller
 {
 
-    protected $domainService;
-
-    public function __construct(DomainService $domainService)
+    public function __construct()
     {
-        $this->domainService = $domainService;
     }
 
     /**
