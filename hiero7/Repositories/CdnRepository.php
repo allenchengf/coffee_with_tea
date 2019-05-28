@@ -15,7 +15,7 @@ class CdnRepository
         $this->cdn = $cdn;
     }
 
-    public function store($info, int $id, $user, $defult)
+    public function store($info, int $id, $user)
     {
         try {
             $row = [
@@ -29,7 +29,9 @@ class CdnRepository
                 "updated_at" => \Carbon\Carbon::now(),
                 "default" => $info["default"],
             ];
-            return $this->cdn::insertGetId($row);
+            $collection = collect($row);
+            $filtered = $collection->only(['domain_id', 'name']);
+            return $this->cdn->updateOrInsertGetId($filtered->all(), $collection->except(['created_at'])->all());
         } catch (\Exception $e) {
             if ($e->getCode() == '23000')
                 return new \Exception(DbError::getDescription(DbError::DUPLICATE_ENTRY), DbError::DUPLICATE_ENTRY);  

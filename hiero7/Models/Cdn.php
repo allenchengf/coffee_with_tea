@@ -48,4 +48,17 @@ class Cdn extends Model
     {
         return $this->hasMany(LocationDnsSetting::class);
     }
+
+    public function updateOrInsertGetId(array $attributes, array $values = []):int
+    {
+        $instance = $this;
+        foreach($attributes as $key => $val)
+            $instance = $instance->where($key, $val);
+        
+        if(is_null($instance = $instance->first()))
+            return $this->insertGetId($attributes + $values);
+
+        $instance->fill($values)->save();
+        return $instance->id;
+    } 
 }
