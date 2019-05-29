@@ -32,6 +32,20 @@ class DomainTest extends TestCase
     }
 
     /**
+     * Get Domain By Id
+     * by Admin
+     * @test
+     */
+    public function getDomainById()
+    {
+        $domain_id = 3;
+        $domain = $this->domain->find($domain_id);
+
+        $response = $this->controller->getDomainById($domain);
+        $this->assertEquals(200, $response->status());
+    }
+
+    /**
      * Get Domain
      * by Admin
      * @test
@@ -216,91 +230,6 @@ class DomainTest extends TestCase
         $this->assertEquals(200, $response->status());
     }
 
-    /**
-     * Create Exist Domain
-     *
-     * @test
-     */
-    public function create_Exist_Domain()
-    {
-        $loginUid = 1;
-        $user_group_id = 1;
-        $errorCode = 4020;
-        $request = new Request;
-
-        $request->merge([
-            'user_group_id' => 3,
-            'name' => 'rd.test1.com',
-        ]);
-
-        $this->addUuidforPayload()
-            ->addUserGroupId($user_group_id)
-            ->setJwtTokenPayload($loginUid, $this->jwtPayload);
-
-        $response = $this->controller->create($request, $this->domain);
-        $this->assertEquals(400, $response->status());
-
-        $data = json_decode($response->getContent(), true);
-        $this->assertEquals($errorCode, $data['errorCode']);
-    }
-
-    /**
-     * Create Exist CNAME
-     *
-     * @test
-     */
-    public function create_Exist_CNAME()
-    {
-        $loginUid = 1;
-        $user_group_id = 1;
-        $errorCode = 4021;
-        $request = new Request;
-
-        $request->merge([
-            'user_group_id' => $user_group_id,
-            'name' => 'rd.test99.com',
-            'cname' => 'rd.test1.com',
-        ]);
-
-        $this->addUuidforPayload()
-            ->addUserGroupId($user_group_id)
-            ->setJwtTokenPayload($loginUid, $this->jwtPayload);
-
-        $response = $this->controller->create($request, $this->domain);
-        $this->assertEquals(400, $response->status());
-
-        $data = json_decode($response->getContent(), true);
-        $this->assertEquals($errorCode, $data['errorCode']);
-    }
-
-    /**
-     * Create domain error
-     *
-     * @test
-     */
-    public function create_NAME_Error()
-    {
-        $loginUid = 1;
-        $user_group_id = 1;
-        $errorCode = 4024;
-        $request = new Request;
-
-        $request->merge([
-            'user_group_id' => $user_group_id,
-            'name' => 'rd.test99',
-            'cname' => 'rd.test1.com',
-        ]);
-
-        $this->addUuidforPayload()
-            ->addUserGroupId($user_group_id)
-            ->setJwtTokenPayload($loginUid, $this->jwtPayload);
-
-        $response = $this->controller->create($request, $this->domain);
-        $this->assertEquals(400, $response->status());
-
-        $data = json_decode($response->getContent(), true);
-        $this->assertEquals($errorCode, $data['errorCode']);
-    }
 
     /**
      * Edit Domain
@@ -333,97 +262,6 @@ class DomainTest extends TestCase
         $data = json_decode($response->getContent(), true);
         $this->assertEquals($inputData['name'], $data['data']['name']);
         $this->assertEquals($inputData['cname'], $data['data']['cname']);
-    }
-
-    /**
-     * Edit Exist Domain
-     *
-     * @test
-     */
-    public function edit_Domain_Exist_Domain()
-    {
-        $loginUid = 4;
-        $user_group_id = 2;
-        $errorCode = 4020;
-        $domain_id = 3;
-        $request = new Request;
-        $domain = $this->domain->find($domain_id);
-
-        $request->merge([
-            'domain' => $domain_id,
-            'name' => 'rd.test2.com',
-            'cname' => 'rd.test99.com',
-        ]);
-
-        $this->addUuidforPayload()
-            ->addUserGroupId($user_group_id)
-            ->setJwtTokenPayload($loginUid, $this->jwtPayload);
-
-        $response = $this->controller->editDomain($request, $domain);
-        $this->assertEquals(400, $response->status());
-
-        $data = json_decode($response->getContent(), true);
-        $this->assertEquals($errorCode, $data['errorCode']);
-    }
-
-    /**
-     * Edit Exist Cname
-     *
-     * @test
-     */
-    public function edit_Domain_Exist_Cname()
-    {
-        $loginUid = 1;
-        $user_group_id = 2;
-        $errorCode = 4021;
-        $domain_id = 3;
-        $request = new Request;
-        $domain = $this->domain->find($domain_id);
-
-        $request->merge([
-            'name' => 'rd.test99.com',
-            'cname' => 'rd.test2.com',
-        ]);
-
-        $this->addUuidforPayload()
-            ->addUserGroupId($user_group_id)
-            ->setJwtTokenPayload($loginUid, $this->jwtPayload);
-
-        $response = $this->controller->editDomain($request, $domain);
-        $this->assertEquals(400, $response->status());
-
-        $data = json_decode($response->getContent(), true);
-        $this->assertEquals($errorCode, $data['errorCode']);
-    }
-
-    /**
-     * Edit domain Error
-     *
-     * @test
-     */
-    public function edit_Domain_Error()
-    {
-        $loginUid = 1;
-        $user_group_id = 2;
-        $errorCode = 4024;
-        $domain_id = 3;
-        $request = new Request;
-        $domain = $this->domain->find($domain_id);
-
-        $request->merge([
-            'name' => 'rd.test99',
-            'cname' => 'rd.test2.com',
-        ]);
-
-        $this->addUuidforPayload()
-            ->addUserGroupId($user_group_id)
-            ->setJwtTokenPayload($loginUid, $this->jwtPayload);
-
-        $response = $this->controller->editDomain($request, $domain);
-        $this->assertEquals(400, $response->status());
-
-        $data = json_decode($response->getContent(), true);
-        $this->assertEquals($errorCode, $data['errorCode']);
     }
 
     /**

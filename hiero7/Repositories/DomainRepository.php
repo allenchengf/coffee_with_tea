@@ -45,18 +45,4 @@ class DomainRepository
     {
         return $this->domain->find($domain_id);
     }
-
-    public function checkDomain(string $domain, int $id = 0)
-    {
-        return $this->domain->where('name', $domain)
-            ->whereNotIn('id', [$id])
-            ->exists();
-    }
-
-    public function checkCname(string $cname, int $id = 0)
-    {
-        return $this->domain->where('cname', $cname)
-            ->whereNotIn('id', [$id])
-            ->exists();
-    }
 }
