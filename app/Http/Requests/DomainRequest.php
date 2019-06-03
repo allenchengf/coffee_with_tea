@@ -2,6 +2,9 @@
 
 namespace App\Http\Requests;
 
+use App\Rules\DomainValidationRule;
+use Illuminate\Validation\Rule;
+
 class DomainRequest extends FormRequest
 {
     /**
@@ -26,22 +29,34 @@ class DomainRequest extends FormRequest
         switch ($routeName) {
             case ($routeName == "$prefix.get"):
                 return [
-                    'domain_id' => 'nullable|integer',
                     'user_group_id' => 'nullable|integer',
-                    'all' => 'nullable|boolean',
                 ];
                 break;
             case ($routeName == "$prefix.create"):
                 return [
                     'user_group_id' => 'nullable|integer',
-                    'name' => 'required|string',
-                    'cname' => 'nullable|string',
+                    'name' => [
+                        'required',
+                        'string',
+                        new DomainValidationRule,
+                        'unique:domains,name',
+                    ],
+                    'cname' => 'nullable|string|unique:domains,cname',
                 ];
                 break;
             case ($routeName == "$prefix.edit"):
                 return [
-                    'name' => 'nullable|string',
-                    'cname' => 'nullable|string',
+                    'name' => [
+                        'nullable',
+                        'string',
+                        new DomainValidationRule,
+                        Rule::unique('domains')->ignore($this->domain->id),
+                    ],
+                    'cname' => [
+                        'nullable',
+                        'string',
+                        Rule::unique('domains')->ignore($this->domain->id),
+                    ],
                 ];
                 break;
             default:

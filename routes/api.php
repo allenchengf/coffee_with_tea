@@ -4,7 +4,6 @@ Route::group(['middleware' => ['api'], 'namespace' => 'Api\v1', 'prefix' => 'v1'
 
     Route::group(['prefix' => 'domains'], function () {
         Route::get('', 'DomainController@getDomain')->name('domain.get');
-
         Route::middleware(['auth.user.module', 'domain.permission'])->group(function () {
             Route::post('', 'DomainController@create')->name('domain.create');
 
@@ -14,7 +13,7 @@ Route::group(['middleware' => ['api'], 'namespace' => 'Api\v1', 'prefix' => 'v1'
                 //yuan
                 Route::group(['prefix' => '/iRouteCDN'], function () {
                     Route::get('', 'LocationDnsSettingController@getAll')->name('iRoute.get');
-                    Route::put('/{location_network_id}', 'LocationDnsSettingController@editSetting')->name('iRoute.edit');
+                    Route::put('/{locationNetworkId}', 'LocationDnsSettingController@editSetting')->name('iRoute.edit');
                 });
             });
 
@@ -22,6 +21,7 @@ Route::group(['middleware' => ['api'], 'namespace' => 'Api\v1', 'prefix' => 'v1'
         });
 
         Route::middleware(['domain.permission'])->group(function () {
+            Route::get('{domain}', 'DomainController@getDomainById');
             Route::put('{domain}', 'DomainController@editDomain')->name('domain.edit');
             Route::delete('{domain}', 'DomainController@destroy');
         });

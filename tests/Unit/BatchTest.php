@@ -7,6 +7,7 @@ use Illuminate\Foundation\Testing\DatabaseMigrations;
 use Tests\TestCase;
 use Hiero7\Services\DnsProviderService;
 use Faker\Factory as Faker;
+use Hiero7\Models\Cdn;
 
 class BatchTest extends TestCase
 {
@@ -16,6 +17,7 @@ class BatchTest extends TestCase
 
     protected $domains = [];
     protected $user;
+    protected $cdn;
 
     protected function setUp()
     {
@@ -30,6 +32,7 @@ class BatchTest extends TestCase
         $this->domains[] = $this->addDomain("hello.com", $this->addCdn("cdn1", "cdn1.com", 90));
         $this->user = array("uuid" => \Illuminate\Support\Str::uuid(), "user_group_id" => 3);
         $this->batchService = $this->app->make('Hiero7\Services\BatchService');
+        $this->cdn = new Cdn();
     }
 
     public function tearDown()
@@ -69,6 +72,32 @@ class BatchTest extends TestCase
         $result = $this->batchService->store($this->domains, $this->user);
         $this->assertEquals($result["hello.com"], []);
         $this->assertEquals($result["hello2.com"], []);
+    }
+
+    public function testBatchUpdate() {
+        $actual = $this->cdn
+            ->where("cname", $this->domains[0]["cdns"][0]["cname"])
+            ->where("name", $this->domains[0]["cdns"][0]["name"])
+            ->first();
+
+        $this->assertEquals($actual, null);
+
+        $result = $this->batchService->store($this->domains, $this->user);
+        $actual = $this->cdn
+            ->where("cname", $this->domains[0]["cdns"][0]["cname"])
+            ->where("name", $this->domains[0]["cdns"][0]["name"])
+            ->first();
+
+        $this->assertNotEquals($actual, null);
+
+        $this->domains[0]["cdns"][0]["cname"] = "cdn999.com";
+        $result = $this->batchService->store($this->domains, $this->user);
+        $actual = $this->cdn
+            ->where("cname", $this->domains[0]["cdns"][0]["cname"])
+            ->where("name", $this->domains[0]["cdns"][0]["name"])
+            ->first();
+
+        $this->assertNotEquals($actual, null);
     }
 
     public function testDnsPodError() {

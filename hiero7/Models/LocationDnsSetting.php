@@ -12,12 +12,12 @@ class LocationDnsSetting extends Model
 
     public function cdn()
     {
-        return $this->belongsTo(Cdn::class)->withDefault();
+        return $this->belongsTo(Cdn::class);
     }
 
     public function domain()
     {
-        return $this->belongsTo(Domain::class,'domain_id')->withDefault();
+        return $this->belongsTo(Domain::class,'domain_id');
     }
 
     public function locations()

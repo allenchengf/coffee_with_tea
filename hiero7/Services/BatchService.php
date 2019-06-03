@@ -62,7 +62,7 @@ class BatchService{
                             $cdn["dns_provider_id"] = $dnsPodResponse['data']['record']['id'];
                         }
                         $cdn["default"] = !$append&&$key===0?1:0;
-                        $add_cdn_result = $this->cdnRepository->store($cdn, $domain_id, $user, $key);
+                        $add_cdn_result = $this->cdnRepository->store($cdn, $domain_id, $user);
                         if(!is_int($add_cdn_result))
                             throw $add_cdn_result;
                         

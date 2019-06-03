@@ -1,6 +1,7 @@
 <?php
 namespace Hiero7\Services;
 
+use App\Exceptions\UserModuleException;
 use Ixudra\Curl\Facades\Curl;
 
 class UserModuleService
@@ -21,14 +22,16 @@ class UserModuleService
     public function authorization($request): array
     {
         $uid = $request->uid ?? null;
-        $ugid = $request->ugid ?? null;
         $user_group_id = $request->user_group_id ?? null;
 
-        return Curl::to($this->user_module_API . '/users/authorization')
+        $response = Curl::to($this->user_module_API . '/users/authorization')
             ->withHeaders(['Authorization: ' . $request->header('Authorization')])
-            ->withData(compact('uid', 'ugid', 'user_group_id'))
+            ->withData(compact('uid', 'user_group_id'))
             ->asJson(true)
             ->get();
+
+        $this->userModuleOutputCheck($response);
+        return $response;
     }
 
     /**
@@ -40,14 +43,16 @@ class UserModuleService
     public function getSelf($request): array
     {
         $uid = $request->uid ?? null;
-        $ugid = $request->ugid ?? null;
         $user_group_id = $request->user_group_id ?? null;
 
-        return Curl::to($this->user_module_API . '/users/self')
+        $response = Curl::to($this->user_module_API . '/users/self')
             ->withHeaders(['Authorization: ' . $request->header('Authorization')])
-            ->withData(compact('uid', 'ugid', 'user_group_id'))
+            ->withData(compact('uid', 'user_group_id'))
             ->asJson(true)
             ->get();
+
+        $this->userModuleOutputCheck($response);
+        return $response;
     }
 
     /**
@@ -59,10 +64,13 @@ class UserModuleService
      */
     public function getTargetUser($request, int $uid): array
     {
-        return Curl::to($this->user_module_API . "/users/$uid/profile")
+        $response = Curl::to($this->user_module_API . "/users/$uid/profile")
             ->withHeaders(['Authorization: ' . $request->header('Authorization')])
             ->asJson(true)
             ->get();
+
+        $this->userModuleOutputCheck($response);
+        return $response;
     }
 
     /**
@@ -99,5 +107,13 @@ class UserModuleService
             ->withData(compact('groups', 'message'))
             ->asJson(true)
             ->post();
+    }
+
+    public function userModuleOutPutCheck($response)
+    {
+        if ($response['errorCode'] != null) {
+            $message = (gettype($response['message']) == 'array') ? json_encode($response['message']) : $response['message'];
+            throw new UserModuleException($message, $response['errorCode']);
+        }
     }
 }
