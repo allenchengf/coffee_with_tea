@@ -13,7 +13,9 @@ Route::group(['middleware' => ['api'], 'namespace' => 'Api\v1', 'prefix' => 'v1'
                 //yuan
                 Route::group(['prefix' => '/iRouteCDN'], function () {
                     Route::get('', 'LocationDnsSettingController@getAll')->name('iRoute.get');
-                    Route::put('/{locationNetworkId}', 'LocationDnsSettingController@editSetting')->name('iRoute.edit');
+                    Route::middleware(['admin.check'])->group(function() {
+                        Route::put('/{locationNetworkId}', 'LocationDnsSettingController@editSetting')->name('iRoute.edit');
+                    });
                 });
             });
 
