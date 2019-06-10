@@ -32,7 +32,7 @@ class CreateDnsPodRecord
         return $this->dnsProviderService->createRecord([
             'sub_domain' => $event->domain->cname,
             'value'      => $event->cdn->cname,
-            'ttl'        => $event->cdn->ttl,
+            'ttl'        => $event->cdn->cdnProvider->ttl,
             'status'     => true
         ]);
 

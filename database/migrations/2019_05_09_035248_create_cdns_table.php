@@ -27,6 +27,10 @@ class CreateCdnsTable extends Migration
                 'domain_id',
                 'cname',
             ], 'cdn');
+            $table->unique([
+                'domain_id',
+                'cdn_provider_id',
+            ], 'cdn_provider');
             $table->foreign('domain_id')->references('id')->on('domains')->onDelete('cascade');
             $table->foreign('cdn_provider_id')->references('id')->on('cdn_providers')->onDelete('cascade');
         });

@@ -33,7 +33,7 @@ class EditDnsPodRecord
             'record_type' => "CNAME",
             'record_line' => "默认",
             'value'       => $event->cdn->cname,
-            'ttl'         => $event->cdn->ttl,
+            'ttl'        => $event->cdn->cdnProvider->ttl,
             'status'      => $event->cdn->default
         ]);
     }

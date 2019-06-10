@@ -9,22 +9,20 @@ class Cdn extends Model
 {
     use SoftDeletes;
 
-    protected $fillable
-        = [
-            'domain_id',
-            'cdn_provider_id',
-            'dns_provider_id',
-            'cname',
-            'default',
-            'edited_by'
-        ];
+    protected $fillable = [
+        'domain_id',
+        'cdn_provider_id',
+        'dns_provider_id',
+        'cname',
+        'default',
+        'edited_by',
+    ];
 
-    protected $hidden
-        = [
-            'created_at',
-            'updated_at',
-            'deleted_at'
-        ];
+    protected $hidden = [
+        'created_at',
+        'updated_at',
+        'deleted_at',
+    ];
 
     protected $casts = ['default' => 'boolean'];
 
@@ -53,16 +51,18 @@ class Cdn extends Model
         return $this->hasOne(LocationDnsSetting::class);
     }
 
-    public function updateOrInsertGetId(array $attributes, array $values = []):int
+    public function updateOrInsertGetId(array $attributes, array $values = []): int
     {
         $instance = $this;
-        foreach($attributes as $key => $val)
+        foreach ($attributes as $key => $val) {
             $instance = $instance->where($key, $val);
-        
-        if(is_null($instance = $instance->first()))
+        }
+
+        if (is_null($instance = $instance->first())) {
             return $this->insertGetId($attributes + $values);
+        }
 
         $instance->fill($values)->save();
         return $instance->id;
-    } 
+    }
 }
