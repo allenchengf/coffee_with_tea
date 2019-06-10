@@ -50,7 +50,6 @@ class DomainController extends Controller
     public function create(Request $request, Domain $domain)
     {
         $request->merge([
-            'edited_by' => $this->getJWTPayload()['uuid'],
             'user_group_id' => $this->getUgid($request),
             'cname' => $request->get('cname') ?? $request->get('name'),
         ]);
@@ -61,8 +60,7 @@ class DomainController extends Controller
 
     public function editDomain(Request $request, Domain $domain)
     {
-        $request->merge(['edited_by' => $this->getJWTPayload()['uuid']]);
-        $domain->update($request->only('name', 'cname', 'edited_by'));
+        $domain->update($request->only('name', 'cname', 'label', 'edited_by'));
         return $this->response('', null, $domain);
     }
 

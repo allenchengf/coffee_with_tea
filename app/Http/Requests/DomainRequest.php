@@ -42,6 +42,7 @@ class DomainRequest extends FormRequest
                         'unique:domains,name',
                     ],
                     'cname' => 'nullable|string|unique:domains,cname',
+                    'label' => 'nullable|string',
                 ];
                 break;
             case ($routeName == "$prefix.edit"):
@@ -57,6 +58,7 @@ class DomainRequest extends FormRequest
                         'string',
                         Rule::unique('domains')->ignore($this->domain->id),
                     ],
+                    'label' => 'nullable|string',
                 ];
                 break;
             default:
