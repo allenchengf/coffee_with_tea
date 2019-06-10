@@ -12,10 +12,9 @@ class Cdn extends Model
     protected $fillable
         = [
             'domain_id',
+            'cdn_provider_id',
             'dns_provider_id',
-            'name',
             'cname',
-            'ttl',
             'default',
             'edited_by'
         ];
@@ -32,6 +31,11 @@ class Cdn extends Model
     public function domain()
     {
         return $this->belongsTo(Domain::class);
+    }
+
+    public function cdnProvider()
+    {
+        return $this->belongsTo(CdnProvider::class);
     }
 
     public function scopeGetById($query, $id)
