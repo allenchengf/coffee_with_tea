@@ -50,6 +50,8 @@ class DomainTest extends TestRequest
         $this->assertTrue($this->validateField('cname', 'leo.com'));
         $this->assertFalse($this->validateField('cname', $this->domain->cname));
 
+        $this->assertTrue($this->validateField('label', null));
+        $this->assertTrue($this->validateField('label', 'label'));
     }
 
     /** @test */
@@ -76,6 +78,9 @@ class DomainTest extends TestRequest
         $this->assertTrue($this->validateField('cname', null));
         $this->assertTrue($this->validateField('cname', $this->domain->cname));
         $this->assertTrue($this->validateField('cname', 'leo.com'));
+
+        $this->assertTrue($this->validateField('label', null));
+        $this->assertTrue($this->validateField('label', 'label'));
     }
 
     /** @test */
