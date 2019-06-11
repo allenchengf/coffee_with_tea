@@ -14,16 +14,19 @@ class CdnProviderSeeder extends Seeder
         $data = [[
             'name' => 'Hiero7',
             'status' => 'active',
+            'user_group_id' => 1,
             'ttl' => 600,
             'user_group_id' => 1
         ], [
             'name' => 'Cloudflare',
             'status' => 'active',
+            'user_group_id' => 1,
             'ttl' => 600,
             'user_group_id' => 1
         ], [
             'name' => 'CloudFront',
             'status' => 'active',
+            'user_group_id' => 1,
             'ttl' => 600,
             'user_group_id' => 1
         ]];

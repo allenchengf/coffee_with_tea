@@ -109,6 +109,29 @@ class DnsProviderService
     }
 
     /**
+     * Batch Edit DNS Pod Record function
+     *
+     * @param string login_token DNS Pod LoginToken
+     * @param int domain_id 對應域名ID
+     * @param string record_id 記錄的ID，多個record_id用英文的逗號分割
+     * @param string change 要修改的字段，可選值為["sub_domain"，"record_type"，"area"，"value"，"ttl"，"status"] 中的一個
+     * @param string change_to 修改為，具體依賴改變字段，必填參數
+     * @param string value (可選) 要修改到的記錄值，僅當更改字段為 "record_type" 時為必填參數
+     */
+    public function batchEditRecord(array $data = [])
+    {
+        $url = $this->dnsProviderApi . "/records/batch";
+
+        $data['login_token'] = $data['login_token'] ?? $this->dnsPodLoginToken;
+        $data['domain_id'] = $data['domain_id'] ?? env('DNS_POD_DOMAIN_ID');
+
+        return Curl::to($url)
+            ->withData($data)
+            ->asJson(true)
+            ->put();
+    }
+
+    /**
      * Destroy DNS Pod Record function
      *
      * @param string login_token DNS Pod LoginToken
