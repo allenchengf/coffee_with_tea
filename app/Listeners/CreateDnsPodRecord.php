@@ -2,10 +2,8 @@
 
 namespace App\Listeners;
 
-use Hiero7\Services\DnsProviderService;
-use Illuminate\Queue\InteractsWithQueue;
-use Illuminate\Contracts\Queue\ShouldQueue;
 use App\Events\CdnWasCreated;
+use Hiero7\Services\DnsProviderService;
 
 class CreateDnsPodRecord
 {
@@ -31,9 +29,9 @@ class CreateDnsPodRecord
 
         return $this->dnsProviderService->createRecord([
             'sub_domain' => $event->domain->cname,
-            'value'      => $event->cdn->cname,
-            'ttl'        => $event->cdn->cdnProvider->ttl,
-            'status'     => true
+            'value' => $event->cdn->cname,
+            'ttl' => $event->cdn->cdnProvider->ttl,
+            'status' => $event->cdn->default && $event->cdn->cdnProvider->status,
         ]);
 
     }

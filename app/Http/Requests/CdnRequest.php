@@ -43,7 +43,7 @@ class CdnRequest extends FormRequest
                 'cdn_provider_id' => [
                     'required',
                     'integer',
-                    Rule::unique('cdns')->where(function ($query) {
+                    Rule::unique('cdns')->ignore($this->cdn->id)->where(function ($query) {
                         $query->where('domain_id', $this->domain->id);
                     }),
                     'exists:cdn_providers,id'
