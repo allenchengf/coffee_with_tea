@@ -12,4 +12,10 @@ class CdnProvider extends Model
     public $timestamps = true;
 
     protected $hidden = ['created_at', 'updated_at', 'edited_by'];
+
+    public function getStatusAttribute($value)
+    {
+        $status = ['active' => true, 'stop' => false];
+        return $status[$value];
+    }
 }

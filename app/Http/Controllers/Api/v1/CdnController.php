@@ -37,7 +37,7 @@ class CdnController extends Controller
      */
     public function index(Domain $domain)
     {
-        $result = $domain->cdns()->orderBy('created_at', 'asc')->get();
+        $result = $domain->cdns()->with('CdnProvider')->orderBy('created_at', 'asc')->get();
 
         return $this->setStatusCode($result ? 200 : 404)->response('success', null, $result);
     }
@@ -78,7 +78,7 @@ class CdnController extends Controller
 
         DB::commit();
 
-        return $this->setStatusCode(200)->response('success', null, []);
+        return $this->setStatusCode(200)->response('success', null, $cdn);
 
     }
 
@@ -123,8 +123,7 @@ class CdnController extends Controller
 
         DB::commit();
 
-        return $this->setStatusCode(200)->response('success', null, []);
-
+        return $this->setStatusCode(200)->response('success', null, $cdn);
     }
 
 

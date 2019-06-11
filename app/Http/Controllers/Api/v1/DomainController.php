@@ -20,6 +20,7 @@ class DomainController extends Controller
      */
     public function getDomainById(Domain $domain)
     {
+        $domain->cdns;
         $domain->toArray;
         $dnsPodDomain = env('DNS_POD_DOMAIN');
         return $this->response('', null, compact('domain', 'dnsPodDomain'));
@@ -39,8 +40,8 @@ class DomainController extends Controller
         $user_group_id = $this->getUgid($request);
 
         $domains = !$request->has('user_group_id') && $user_group_id == 1 ?
-        $domain->all() :
-        $domain->where(compact('user_group_id'))->get();
+        $domain->with('cdns')->get() :
+        $domain->with('cdns')->where(compact('user_group_id'))->get();
 
         $domains->toArray();
         $dnsPodDomain = env('DNS_POD_DOMAIN');
@@ -50,7 +51,6 @@ class DomainController extends Controller
     public function create(Request $request, Domain $domain)
     {
         $request->merge([
-            'edited_by' => $this->getJWTPayload()['uuid'],
             'user_group_id' => $this->getUgid($request),
             'cname' => $request->get('cname') ?? $request->get('name'),
         ]);
@@ -61,8 +61,8 @@ class DomainController extends Controller
 
     public function editDomain(Request $request, Domain $domain)
     {
-        $request->merge(['edited_by' => $this->getJWTPayload()['uuid']]);
-        $domain->update($request->only('name', 'cname', 'edited_by'));
+        $domain->update($request->only('name', 'cname', 'label', 'edited_by'));
+        $domain->cdns;
         return $this->response('', null, $domain);
     }
 

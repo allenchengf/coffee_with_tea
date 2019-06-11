@@ -16,10 +16,9 @@ class CreateCdnsTable extends Migration
         Schema::create('cdns', function (Blueprint $table) {
             $table->increments('id');
             $table->integer('domain_id')->unsigned();
+            $table->integer('cdn_provider_id')->unsigned();
             $table->integer('dns_provider_id')->default(0);
-            $table->string('name');
             $table->string('cname');
-            $table->integer('ttl')->nullable();
             $table->uuid('edited_by')->nullable();
             $table->boolean('default')->default(false);
             $table->timestamps();
@@ -28,6 +27,12 @@ class CreateCdnsTable extends Migration
                 'domain_id',
                 'cname',
             ], 'cdn');
+            $table->unique([
+                'domain_id',
+                'cdn_provider_id',
+            ], 'cdn_provider');
+            $table->foreign('domain_id')->references('id')->on('domains')->onDelete('cascade');
+            $table->foreign('cdn_provider_id')->references('id')->on('cdn_providers')->onDelete('cascade');
         });
     }
 

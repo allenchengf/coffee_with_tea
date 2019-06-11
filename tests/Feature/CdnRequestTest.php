@@ -7,11 +7,10 @@ use App\Http\Middleware\DomainPermission;
 use App\Http\Middleware\TokenCheck;
 use Hiero7\Models\Cdn;
 use Hiero7\Models\Domain;
-use Tests\TestCase;
-use Illuminate\Foundation\Testing\WithFaker;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Foundation\Testing\WithFaker;
 use Illuminate\Foundation\Testing\WithoutMiddleware;
-
+use Tests\TestCase;
 
 class CdnRequestTest extends TestCase
 {
@@ -30,6 +29,7 @@ class CdnRequestTest extends TestCase
         $this->withoutMiddleware([AuthUserModule::class, TokenCheck::class, DomainPermission::class]);
 
         $this->seed('DomainTableSeeder');
+        $this->seed('CdnProviderSeeder');
 
         $this->domain = Domain::inRandomOrder()->first();
 
@@ -59,31 +59,8 @@ class CdnRequestTest extends TestCase
     public function createCdnFailsWithNoAttribute()
     {
         $this->json('POST', $this->uri)->assertJsonFragment([
-            'name'  => ["The name field is required."],
-            'cname' => ["The cname field is required."]
+            'cname' => ["The cname field is required."],
         ])->assertStatus(422);
-
-    }
-
-    /**
-     * @test
-     * @group cdnRequest
-     */
-    public function createCdnNameIsTakenWithSameDomainId()
-    {
-        $cdn = factory(Cdn::class)->create();
-
-        $this->setUri($cdn->domain_id);
-
-        $requestParams = [
-            'name'  => $cdn->name,
-            'cname' => $this->faker->url,
-        ];
-
-        $this->addUuidforPayload()->setJwtTokenPayload(4, $this->jwtPayload);
-
-        $this->post($this->getUri(),
-            $requestParams)->assertStatus(422)->assertJsonFragment(['name' => ["The name has already been taken."],]);
 
     }
 
@@ -96,12 +73,12 @@ class CdnRequestTest extends TestCase
         $this->addUuidforPayload()->setJwtTokenPayload(4, $this->jwtPayload);
 
         $requestParams = [
-            'name'  => $this->faker->name,
+            'name' => $this->faker->name,
             'cname' => $this->faker->url,
         ];
 
         $this->post($this->uri,
-            $requestParams)->assertStatus(422)->assertJsonFragment(['cname' => ["Domain Verification Error."],]);
+            $requestParams)->assertStatus(422)->assertJsonFragment(['cname' => ["Domain Verification Error."]]);
     }
 
     /**
@@ -115,13 +92,37 @@ class CdnRequestTest extends TestCase
         $this->setUri($cdn->domain_id);
 
         $requestParams = [
-            'name'    => $this->faker->name,
-            'cname'   => $this->faker->url,
-            'default' => false
+            'cname' => $this->faker->url,
+            'default' => false,
         ];
 
         $this->put($this->getUri() . "/$cdn->id",
-            $requestParams)->assertStatus(422)->assertJsonFragment(['cname' => ["Domain Verification Error."],]);;
+            $requestParams)->assertStatus(422)->assertJsonFragment(['cname' => ["Domain Verification Error."]]);
+    }
+
+    /**
+     * @test
+     * @group cdnRequest
+     */
+    public function updateCdnButDomainAndCdnNoMapping()
+    {
+        $cdn = factory(Cdn::class)->create();
+
+        $this->setUri($cdn->domain_id);
+
+        $requestParams = [
+            'cname' => $cdn->cname,
+            'default' => false,
+        ];
+
+        $domain = Domain::whereNotIn('id', [$cdn->domain_id])->inRandomOrder()->first();
+
+        $cdn2 = factory(Cdn::class)->create(['domain_id' => $domain->id]);
+
+        $this->setUri($cdn->domain_id);
+
+        $this->put($this->getUri() . "/$cdn2->id",
+            $requestParams)->assertStatus(404);
     }
 
     /**
@@ -135,61 +136,14 @@ class CdnRequestTest extends TestCase
         $this->setUri($cdn->domain_id);
 
         $requestParams = [
-            'name'  => $this->faker->name,
+            'name' => $this->faker->name,
             'cname' => $cdn->cname,
         ];
 
         $this->addUuidforPayload()->setJwtTokenPayload(4, $this->jwtPayload);
 
         $this->post($this->getUri(),
-            $requestParams)->assertStatus(422)->assertJsonFragment(['cname' => ["The cname has already been taken."],]);
-    }
-
-    /**
-     * @test
-     * @group cdnRequest
-     * @throws \Exception
-     */
-    public function createCdnFailsWhenTtlIsLessThan600()
-    {
-        $cdn = factory(Cdn::class)->create();
-
-        $this->setUri($cdn->domain_id);
-
-        $requestParams = [
-            'name'  => $cdn->name,
-            'cname' => $this->faker->url,
-            'ttl'   => random_int(1, 500)
-        ];
-
-        $this->addUuidforPayload()->setJwtTokenPayload(4, $this->jwtPayload);
-
-        $this->post($this->getUri(),
-            $requestParams)->assertStatus(422)->assertJsonFragment(['ttl' => ["The ttl must be at least 600."],]);
-    }
-
-
-    /**
-     * @test
-     * @group cdnRequest
-     * @throws \Exception
-     */
-    public function createCdnFailsWhenTtlIsLessThan604800()
-    {
-        $cdn = factory(Cdn::class)->create();
-
-        $this->setUri($cdn->domain_id);
-
-        $requestParams = [
-            'name'  => $cdn->name,
-            'cname' => $this->faker->url,
-            'ttl'   => random_int(604801, 800000)
-        ];
-
-        $this->addUuidforPayload()->setJwtTokenPayload(4, $this->jwtPayload);
-
-        $this->post($this->getUri(),
-            $requestParams)->assertStatus(422)->assertJsonFragment(['ttl' => ["The ttl may not be greater than 604800."],]);
+            $requestParams)->assertStatus(422)->assertJsonFragment(['cname' => ["The cname has already been taken."]]);
     }
 
     /**
@@ -203,9 +157,9 @@ class CdnRequestTest extends TestCase
         $this->setUri($cdn->domain_id);
 
         $requestParams = [
-            'name'    => $this->faker->name,
-            'cname'   => $this->faker->domainName,
-            'default' => false
+            'name' => $this->faker->name,
+            'cname' => $this->faker->domainName,
+            'default' => false,
         ];
 
         $this->put($this->getUri() . "/$cdn->id", $requestParams)->assertStatus(403);
@@ -223,7 +177,6 @@ class CdnRequestTest extends TestCase
 
         $this->delete($this->getUri() . "/$cdn->id", [])->assertStatus(403);
     }
-
 
     /**
      * @test

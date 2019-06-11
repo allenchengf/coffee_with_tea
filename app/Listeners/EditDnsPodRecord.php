@@ -2,8 +2,6 @@
 
 namespace App\Listeners;
 
-use Illuminate\Queue\InteractsWithQueue;
-use Illuminate\Contracts\Queue\ShouldQueue;
 use Hiero7\Services\DnsProviderService;
 
 class EditDnsPodRecord
@@ -27,14 +25,15 @@ class EditDnsPodRecord
      */
     public function handle($event)
     {
+
         return $this->dnsProviderService->editRecord([
-            'record_id'   => $event->cdn->dns_provider_id,
-            'sub_domain'  => $event->domain->cname,
+            'record_id' => $event->cdn->dns_provider_id,
+            'sub_domain' => $event->domain->cname . "." . $event->domain->user_group_id,
             'record_type' => "CNAME",
             'record_line' => "默认",
-            'value'       => $event->cdn->cname,
-            'ttl'         => $event->cdn->ttl,
-            'status'      => $event->cdn->default
+            'value' => $event->cdn->cname,
+            'ttl' => $event->cdn->cdnProvider->ttl,
+            'status' => $event->cdn->default && $event->cdn->cdnProvider->status,
         ]);
     }
 }

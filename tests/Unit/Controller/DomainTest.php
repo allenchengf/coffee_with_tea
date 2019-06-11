@@ -12,9 +12,7 @@ use Tests\TestCase;
 class DomainTest extends TestCase
 {
     use DatabaseMigrations;
-    protected $domainService;
-    protected $domain;
-    protected $jwtPayload = [];
+    protected $domainService, $domain, $jwtPayload = [];
 
     protected function setUp()
     {
@@ -220,6 +218,7 @@ class DomainTest extends TestCase
 
         $request->merge([
             'name' => 'leo.test3.com',
+            'label' => 'LeoLabel',
         ]);
 
         $this->addUuidforPayload()
@@ -247,6 +246,7 @@ class DomainTest extends TestCase
             'domain' => $domain_id,
             'name' => 'rd.test99.com',
             'cname' => 'rd.test99.com',
+            'label' => 'LeoLabel',
         ];
 
         $request = new Request;
