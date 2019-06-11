@@ -17,6 +17,7 @@ class CreateCdnProvidersTable extends Migration
             $table->increments('id');
             $table->string('name');
             $table->enum('status', ['active','stop']);
+            $table->integer('user_group_id')->unsigned();
             $table->integer('ttl')->nullable();
             $table->uuid('edited_by')->nullable();
             $table->timestamps();

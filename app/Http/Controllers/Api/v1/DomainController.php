@@ -71,28 +71,4 @@ class DomainController extends Controller
         $domain->delete();
         return $this->response();
     }
-
-    /**
-     * get User Group ID function
-     *
-     * 判斷是否能夠取得 $request->user_group_id
-     *
-     * $request->user_group_id == null ，給予 login User_group_id
-     * 權限符合，給予 $request->user_group_id
-     * 權限不符合，給予 login User_group_id
-     *
-     * @param Request $request
-     * @return int
-     */
-    private function getUgid(Request $request)
-    {
-        $getPayload = $this->getJWTPayload();
-
-        $ugid = (($getPayload['user_group_id'] == $request->get('user_group_id')) ||
-            ($getPayload['user_group_id'] == 1)) ?
-        $request->get('user_group_id', $getPayload['user_group_id']) :
-        $getPayload['user_group_id'];
-
-        return $ugid;
-    }
 }

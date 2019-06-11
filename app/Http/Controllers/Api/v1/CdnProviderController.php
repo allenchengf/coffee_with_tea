@@ -2,30 +2,33 @@
 
 namespace App\Http\Controllers\Api\v1;
 
-use App\CdnProvider;
+use Hiero7\Models\CdnProvider;
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
+use Hiero7\Services\CdnProviderService;
+use App\Http\Requests\CdnProviderRequest as Request;
 
 class CdnProviderController extends Controller
 {
+    protected $cdnProviderService;
+    /**
+     * CdnProviderController constructor.
+     */
+    public function __construct(CdnProviderService $cdnProviderService)
+    {
+        $this->cdnProviderService = $cdnProviderService;
+    }
+
     /**
      * Display a listing of the resource.
      *
      * @return \Illuminate\Http\Response
      */
-    public function index()
+    public function index(Request $request)
     {
-        //
-    }
+        $user_group_id = $this->getUgid($request);
+        $result = $this->cdnProviderService->getCdnProvider($user_group_id);
 
-    /**
-     * Show the form for creating a new resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function create()
-    {
-        //
+        return $this->setStatusCode($result ? 200 : 404)->response('success', null, $result);
     }
 
     /**
@@ -34,38 +37,37 @@ class CdnProviderController extends Controller
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
-    public function store(Request $request)
+    public function store(Request $request, CdnProvider $cdnProvider)
     {
-        //
+        $request->merge([
+            'edited_by' => $this->getJWTPayload()['uuid'],
+            'status' => 'active'
+        ]);
+        $cdnProvider = $cdnProvider->create($request->all());
+        return $this->response('', null, $cdnProvider);
     }
 
-    /**
-     * Display the specified resource.
-     *
-     * @param  \App\CdnProvider  $cdnProvider
-     * @return \Illuminate\Http\Response
-     */
-    public function show(CdnProvider $cdnProvider)
-    {
-        //
-    }
 
     /**
      * Show the form for editing the specified resource.
      *
-     * @param  \App\CdnProvider  $cdnProvider
+     * @param  \Hiero7\Models\CdnProvider  $cdnProvider
      * @return \Illuminate\Http\Response
      */
-    public function edit(CdnProvider $cdnProvider)
+    public function edit(Request $request, CdnProvider $cdnProvider)
     {
-        //
+        $request->merge([
+            'edited_by' => $this->getJWTPayload()['uuid'],
+        ]);
+        $cdnProvider->update($request->only('name','ttl'));
+        return $this->response("Success", null, $cdnProvider);
     }
 
     /**
      * Update the specified resource in storage.
      *
      * @param  \Illuminate\Http\Request  $request
-     * @param  \App\CdnProvider  $cdnProvider
+     * @param  \Hiero7\Models\CdnProvider  $cdnProvider
      * @return \Illuminate\Http\Response
      */
     public function update(Request $request, CdnProvider $cdnProvider)
@@ -76,7 +78,7 @@ class CdnProviderController extends Controller
     /**
      * Remove the specified resource from storage.
      *
-     * @param  \App\CdnProvider  $cdnProvider
+     * @param  \Hiero7\Models\CdnProvider  $cdnProvider
      * @return \Illuminate\Http\Response
      */
     public function destroy(CdnProvider $cdnProvider)
