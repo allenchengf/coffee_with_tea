@@ -37,7 +37,7 @@ class CdnControllerTest extends TestCase
 
         $this->withoutMiddleware([AuthUserModule::class, TokenCheck::class, DomainPermission::class]);
 
-        $this->domain = Domain::inRandomOrder()->first();
+        $this->domain = Domain::where('user_group_id', 1)->inRandomOrder()->first();
 
         $this->cdn = Cdn::inRandomOrder()->first();
 
@@ -124,11 +124,19 @@ class CdnControllerTest extends TestCase
 
         $defaultCdn = factory(Cdn::class)->create(['default' => true]);
 
-        $this->setUri($defaultCdn->domain_id);
+        $this->cdnProvider = CdnProvider::whereNotIn('id', [$defaultCdn->cdn_provider_id])->inRandomOrder()->first();
 
-        $this->put($this->getUri() . "/$defaultCdn->id",
-            array_merge($this->getRequestBody(), ['default' => true]))->assertStatus(500);
+        $cdn = factory(Cdn::class)->create([
+            'cdn_provider_id' => $this->cdnProvider->id,
+            'domain_id' => $defaultCdn->domain_id,
+            'default' => false,
+        ]);
 
+        $this->setUri($cdn->domain_id);
+
+        $this->put($this->getUri() . "/$cdn->id",
+            array_merge($this->getRequestBody(), ['default' => true]))
+            ->assertStatus(500);
         Event::assertDispatched(CdnWasEdited::class);
     }
 
