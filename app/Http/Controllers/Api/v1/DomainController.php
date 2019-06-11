@@ -20,6 +20,7 @@ class DomainController extends Controller
      */
     public function getDomainById(Domain $domain)
     {
+        $domain->cdns;
         $domain->toArray;
         $dnsPodDomain = env('DNS_POD_DOMAIN');
         return $this->response('', null, compact('domain', 'dnsPodDomain'));
@@ -61,6 +62,7 @@ class DomainController extends Controller
     public function editDomain(Request $request, Domain $domain)
     {
         $domain->update($request->only('name', 'cname', 'label', 'edited_by'));
+        $domain->cdns;
         return $this->response('', null, $domain);
     }
 

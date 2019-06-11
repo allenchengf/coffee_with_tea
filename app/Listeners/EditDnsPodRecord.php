@@ -28,7 +28,7 @@ class EditDnsPodRecord
 
         return $this->dnsProviderService->editRecord([
             'record_id' => $event->cdn->dns_provider_id,
-            'sub_domain' => $event->domain->cname,
+            'sub_domain' => $event->domain->cname . "." . $event->domain->user_group_id,
             'record_type' => "CNAME",
             'record_line' => "默认",
             'value' => $event->cdn->cname,

@@ -4,16 +4,17 @@ namespace Tests\Feature;
 
 use App\Events\CdnWasCreated;
 use App\Events\CdnWasEdited;
-use Hiero7\Models\Cdn;
-use Hiero7\Models\Domain;
-use Tests\TestCase;
-use Illuminate\Foundation\Testing\WithFaker;
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Foundation\Testing\WithoutMiddleware;
-use Illuminate\Support\Facades\Event;
 use App\Http\Middleware\AuthUserModule;
 use App\Http\Middleware\DomainPermission;
 use App\Http\Middleware\TokenCheck;
+use Hiero7\Models\Cdn;
+use Hiero7\Models\CdnProvider;
+use Hiero7\Models\Domain;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Foundation\Testing\WithFaker;
+use Illuminate\Foundation\Testing\WithoutMiddleware;
+use Illuminate\Support\Facades\Event;
+use Tests\TestCase;
 
 /**
  * Class CdnControllerTest
@@ -23,13 +24,14 @@ class CdnControllerTest extends TestCase
 {
     use WithFaker, RefreshDatabase;
 
-    protected $mockService, $domain, $cdn, $controller, $uri;
+    protected $mockService, $domain, $cdn, $controller, $uri, $cdnProvider;
 
     protected function setUp()
     {
         parent::setUp();
 
         $this->seed('DomainTableSeeder');
+        $this->seed('CdnProviderSeeder');
 
         $this->login();
 
@@ -38,6 +40,8 @@ class CdnControllerTest extends TestCase
         $this->domain = Domain::inRandomOrder()->first();
 
         $this->cdn = Cdn::inRandomOrder()->first();
+
+        $this->cdnProvider = CdnProvider::inRandomOrder()->first();
 
         $this->uri = "/api/v1/domains/{$this->domain->id}/cdn";
 
@@ -101,13 +105,14 @@ class CdnControllerTest extends TestCase
 
         $cdn = factory(Cdn::class)->create(['default' => true]);
 
+        $this->cdnProvider = CdnProvider::whereNotIn('id', [$cdn->cdn_provider_id])->inRandomOrder()->first();
+
         $this->setUri($cdn->domain_id);
 
         $this->post($this->getUri(), $this->getRequestBody())->assertStatus(200);
 
         Event::assertNotDispatched(CdnWasCreated::class);
     }
-
 
     /**
      * @test
@@ -127,7 +132,6 @@ class CdnControllerTest extends TestCase
         Event::assertDispatched(CdnWasEdited::class);
     }
 
-
     /**
      * @test
      * @group cdn
@@ -139,18 +143,22 @@ class CdnControllerTest extends TestCase
 
         $defaultCdn = factory(Cdn::class)->create([
             'domain_id' => $this->domain->id,
-            'default'   => true
+            'default' => true,
         ]);
+
+        $this->cdnProvider = CdnProvider::whereNotIn('id', [$defaultCdn->cdn_provider_id])->inRandomOrder()->first();
 
         $cdn = factory(Cdn::class)->create([
             'domain_id' => $this->domain->id,
-            'default'   => false
+            'cdn_provider_id' => $this->cdnProvider->id,
+            'default' => false,
         ]);
 
         $this->setUri($cdn->domain_id);
 
         $this->put($this->getUri() . "/$cdn->id",
-            array_merge($this->getRequestBody(), ['default' => 0]))->assertStatus(200);
+            array_merge($this->getRequestBody(), ['default' => 0]))
+            ->assertStatus(200);
 
         Event::assertNotDispatched(CdnWasEdited::class);
     }
@@ -165,12 +173,15 @@ class CdnControllerTest extends TestCase
 
         $defaultCdn = factory(Cdn::class)->create([
             'domain_id' => $this->domain->id,
-            'default'   => true
+            'default' => true,
         ]);
+
+        $this->cdnProvider = CdnProvider::whereNotIn('id', [$defaultCdn->cdn_provider_id])->inRandomOrder()->first();
 
         $cdn = factory(Cdn::class)->create([
             'domain_id' => $this->domain->id,
-            'default'   => false
+            'cdn_provider_id' => $this->cdnProvider->id,
+            'default' => false,
         ]);
 
         $this->setUri($cdn->domain_id);
@@ -180,7 +191,6 @@ class CdnControllerTest extends TestCase
 
         Event::assertDispatched(CdnWasEdited::class);
     }
-
 
     /**
      * @test
@@ -196,12 +206,11 @@ class CdnControllerTest extends TestCase
 
     }
 
-
     private function getRequestBody()
     {
         return [
-            'name'  => $this->faker->name,
-            'cname' => $this->faker->domainName
+            'cdn_provider_id' => $this->cdnProvider->id,
+            'cname' => $this->faker->domainName,
         ];
     }
 
