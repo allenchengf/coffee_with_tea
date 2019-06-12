@@ -9,8 +9,9 @@
 namespace Hiero7\Services;
 
 
+use Hiero7\Models\Cdn;
 use Hiero7\Repositories\CdnProviderRepository;
-
+use DB;
 class CdnProviderService
 {
 
@@ -27,4 +28,31 @@ class CdnProviderService
     {
         return $this->cdnProviderRepository->getCdnProvider($ugid);
     }
+
+    public function updateCdnProvider($info, $cdnProvider)
+    {
+        DB::beginTransaction();
+        try {
+            $cdnProvider->update($info->only('name','ttl', 'edited_by'));
+            $cdns = Cdn::where('cdn_provider_id', $cdnProvider->id)->get();
+            DB::commit();
+        } catch (\Exception $e) {
+            DB::rollback();
+        }
+        return $cdnProvider;
+    }
+
+    public function changeStatus($status, $cdnProvider)
+    {
+        DB::beginTransaction();
+        try {
+            $this->cdnProviderRepository->changeStatus($status, $cdnProvider);
+            $cdns = Cdn::where('cdn_provider_id', $cdnProvider->id)->get();
+            DB::commit();
+        } catch (\Exception $e) {
+            DB::rollback();
+        }
+        return $cdnProvider;
+    }
+
 }

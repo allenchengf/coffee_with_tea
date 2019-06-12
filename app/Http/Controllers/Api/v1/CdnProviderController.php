@@ -7,6 +7,10 @@ use App\Http\Controllers\Controller;
 use Hiero7\Services\CdnProviderService;
 use App\Http\Requests\CdnProviderRequest as Request;
 
+/**
+ * Class CdnProviderController
+ * @package App\Http\Controllers\Api\v1
+ */
 class CdnProviderController extends Controller
 {
     protected $cdnProviderService;
@@ -47,22 +51,6 @@ class CdnProviderController extends Controller
         return $this->response('', null, $cdnProvider);
     }
 
-
-    /**
-     * Show the form for editing the specified resource.
-     *
-     * @param  \Hiero7\Models\CdnProvider  $cdnProvider
-     * @return \Illuminate\Http\Response
-     */
-    public function edit(Request $request, CdnProvider $cdnProvider)
-    {
-        $request->merge([
-            'edited_by' => $this->getJWTPayload()['uuid'],
-        ]);
-        $cdnProvider->update($request->only('name','ttl'));
-        return $this->response("Success", null, $cdnProvider);
-    }
-
     /**
      * Update the specified resource in storage.
      *
@@ -72,17 +60,30 @@ class CdnProviderController extends Controller
      */
     public function update(Request $request, CdnProvider $cdnProvider)
     {
-        //
+        $request->merge([
+            'edited_by' => $this->getJWTPayload()['uuid'],
+        ]);
+
+        $cdnProvider = $this->cdnProviderService->updateCdnProvider($request, $cdnProvider);
+
+        return $this->response("Success", null, $cdnProvider);
     }
 
+
     /**
-     * Remove the specified resource from storage.
-     *
-     * @param  \Hiero7\Models\CdnProvider  $cdnProvider
-     * @return \Illuminate\Http\Response
+     * @param Request $request
+     * @param CdnProvider $cdnProvider
+     * @return $this
      */
-    public function destroy(CdnProvider $cdnProvider)
+    public function changeStatus(Request $request, CdnProvider $cdnProvider)
     {
-        //
+        $request->merge([
+            'edited_by' => $this->getJWTPayload()['uuid'],
+        ]);
+
+        $status = $request->get('status');
+        $this->cdnProviderService->changeStatus($status, $cdnProvider);
+
+        return $this->response();
     }
 }

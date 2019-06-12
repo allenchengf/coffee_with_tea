@@ -51,6 +51,7 @@ Route::group(['middleware' => ['api'], 'namespace' => 'Api\v1', 'prefix' => 'v1'
     Route::group(['middleware' => ['auth.user.module','internal.group'],  'prefix' => 'cdn_providers'], function () {
         Route::get('', 'CdnProviderController@index')->name('cdn_providers.index');
         Route::post('', 'CdnProviderController@store')->name('cdn_providers.store');
-        Route::patch('{cdn_provider}', 'CdnProviderController@edit')->name('cdn_providers.edit');
+        Route::patch('{cdn_provider}', 'CdnProviderController@update')->name('cdn_providers.update');
+        Route::patch('{cdn_provider}/status', 'CdnProviderController@changeStatus')->name('cdn_providers.status');
     });
 });

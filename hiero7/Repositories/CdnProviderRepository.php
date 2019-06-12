@@ -26,4 +26,14 @@ class CdnProviderRepository
     {
         return $this->cdnProvider::where('user_group_id', $ugid)->orderBy('created_at', 'asc')->get();
     }
+
+    public function changeStatus($status, $cdnProvider)
+    {
+        if($status){
+            $cdnProvider->status = 'active';
+        }else{
+            $cdnProvider->status = 'stop';
+        }
+        $cdnProvider->save();
+    }
 }
