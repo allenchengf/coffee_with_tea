@@ -2,7 +2,7 @@
 
 namespace App\Http\Requests;
 
-//use Illuminate\Foundation\Http\FormRequest;
+use App\Rules\DomainWithCdnProviderGroupMapping;
 use App\Rules\DomainValidationRule;
 use Hiero7\Services\CdnService;
 use Illuminate\Validation\Rule;
@@ -46,7 +46,8 @@ class CdnRequest extends FormRequest
                     Rule::unique('cdns')->ignore($this->cdn->id)->where(function ($query) {
                         $query->where('domain_id', $this->domain->id);
                     }),
-                    'exists:cdn_providers,id'
+                    'exists:cdn_providers,id',
+                    new DomainWithCdnProviderGroupMapping($this->domain),
                 ],
                 'cname' => [
                     new DomainValidationRule,
@@ -57,7 +58,6 @@ class CdnRequest extends FormRequest
                 ],
                 'default' => 'required|integer|boolean',
             ];
-
         }
 
         return [
@@ -67,7 +67,8 @@ class CdnRequest extends FormRequest
                 Rule::unique('cdns')->where(function ($query) {
                     $query->where('domain_id', $this->domain->id);
                 }),
-                'exists:cdn_providers,id'
+                'exists:cdn_providers,id',
+                new DomainWithCdnProviderGroupMapping($this->domain),
             ],
             'cname' => [
                 new DomainValidationRule,

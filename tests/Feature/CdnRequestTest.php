@@ -6,6 +6,7 @@ use App\Http\Middleware\AuthUserModule;
 use App\Http\Middleware\DomainPermission;
 use App\Http\Middleware\TokenCheck;
 use Hiero7\Models\Cdn;
+use Hiero7\Models\CdnProvider;
 use Hiero7\Models\Domain;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Foundation\Testing\WithFaker;
@@ -73,12 +74,32 @@ class CdnRequestTest extends TestCase
         $this->addUuidforPayload()->setJwtTokenPayload(4, $this->jwtPayload);
 
         $requestParams = [
-            'name' => $this->faker->name,
             'cname' => $this->faker->url,
         ];
 
         $this->post($this->uri,
             $requestParams)->assertStatus(422)->assertJsonFragment(['cname' => ["Domain Verification Error."]]);
+    }
+
+    /**
+     * @test
+     * @group cdnRequest
+     */
+    public function createCdnFailsWithNCdnProviderGroupNotMapping()
+    {
+        $cdnProvider = CdnProvider::inRandomOrder()->first();
+        $domain = Domain::whereNotIn('user_group_id', [$cdnProvider->user_group_id])->inRandomOrder()->first();
+
+        $requestParams = [
+            'cdn_provider_id' => $cdnProvider->id,
+            'cname' => $this->faker->domainName,
+        ];
+
+        $this->setUri($domain->id);
+
+        $this->post($this->getUri(), $requestParams)
+            ->assertStatus(422)
+            ->assertJsonFragment(['cdn_provider_id' => ["The Domain And Cdn Provider User_group_id Not Mapping."]]);
     }
 
     /**
