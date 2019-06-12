@@ -2,10 +2,10 @@
 
 namespace App\Http\Requests;
 
-//use Illuminate\Foundation\Http\FormRequest;
+use App\Rules\DomainWithCdnProviderGroupMapping;
 use App\Rules\DomainValidationRule;
-use Illuminate\Validation\Rule;
 use Hiero7\Services\CdnService;
+use Illuminate\Validation\Rule;
 
 class CdnRequest extends FormRequest
 {
@@ -18,11 +18,13 @@ class CdnRequest extends FormRequest
     {
         if ($this->method() == 'PUT') {
 
-            if ($cdnService->checkCurrentCdnIsDefault($this->domain, $this->cdn) and ! $this->request->get('default')) {
+            if ($cdnService->checkCurrentCdnIsDefault($this->domain, $this->cdn) and !$this->request->get('default')) {
 
                 return false;
-            }
+            } else if ($this->cdn->domain_id != $this->domain->id) {
 
+                return abort(404);
+            }
         }
 
         return true;
@@ -38,31 +40,35 @@ class CdnRequest extends FormRequest
         if ($this->method() == 'PUT') {
 
             return [
-                'name'    => [
+                'cdn_provider_id' => [
                     'required',
+                    'integer',
                     Rule::unique('cdns')->ignore($this->cdn->id)->where(function ($query) {
                         $query->where('domain_id', $this->domain->id);
                     }),
+                    'exists:cdn_providers,id',
+                    new DomainWithCdnProviderGroupMapping($this->domain),
                 ],
-                'cname'   => [
+                'cname' => [
                     new DomainValidationRule,
                     'required',
                     Rule::unique('cdns')->ignore($this->cdn->id)->where(function ($query) {
                         $query->where('domain_id', $this->domain->id);
                     }),
                 ],
-                'ttl'     => 'integer' . '|min:' . env('CDN_TTL') . '|max:604800',
-                'default' => 'required|integer|boolean'
+                'default' => 'required|integer|boolean',
             ];
-
         }
 
         return [
-            'name'  => [
+            'cdn_provider_id' => [
                 'required',
+                'integer',
                 Rule::unique('cdns')->where(function ($query) {
                     $query->where('domain_id', $this->domain->id);
                 }),
+                'exists:cdn_providers,id',
+                new DomainWithCdnProviderGroupMapping($this->domain),
             ],
             'cname' => [
                 new DomainValidationRule,
@@ -71,7 +77,6 @@ class CdnRequest extends FormRequest
                     $query->where('domain_id', $this->domain->id);
                 }),
             ],
-            'ttl'   => 'integer' . '|min:' . env('CDN_TTL') . '|max:604800',
         ];
     }
 }

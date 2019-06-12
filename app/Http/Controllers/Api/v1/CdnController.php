@@ -4,17 +4,15 @@ namespace App\Http\Controllers\Api\v1;
 
 use App\Events\CdnWasCreated;
 use App\Events\CdnWasEdited;
+use App\Http\Controllers\Controller;
 use App\Http\Requests\CdnRequest;
 use App\Http\Requests\DeleteCdnRequest;
+use DB;
+use Hiero7\Enums\InternalError;
 use Hiero7\Models\Cdn;
 use Hiero7\Models\Domain;
 use Hiero7\Services\CdnService;
-use Hiero7\Services\DnsProviderService;
 use Illuminate\Http\Request;
-use App\Http\Controllers\Controller;
-use DB;
-use Hiero7\Enums\InternalError;
-
 
 class CdnController extends Controller
 {
@@ -37,7 +35,7 @@ class CdnController extends Controller
      */
     public function index(Domain $domain)
     {
-        $result = $domain->cdns()->orderBy('created_at', 'asc')->get();
+        $result = $domain->cdns()->with('CdnProvider')->orderBy('created_at', 'asc')->get();
 
         return $this->setStatusCode($result ? 200 : 404)->response('success', null, $result);
     }
@@ -50,7 +48,7 @@ class CdnController extends Controller
      */
     public function store(CdnRequest $request, Domain $domain)
     {
-        if ( ! $domain->cdns()->exists()) {
+        if (!$domain->cdns()->exists()) {
 
             $request->merge(['default' => true]);
         }
@@ -63,8 +61,8 @@ class CdnController extends Controller
 
             $createdDnsProviderRecordResult = event(new CdnWasCreated($domain, $cdn));
 
-            if ( ! is_null($createdDnsProviderRecordResult[0]['errorCode']) or array_key_exists('errors',
-                    $createdDnsProviderRecordResult[0])) {
+            if (!is_null($createdDnsProviderRecordResult[0]['errorCode']) or array_key_exists('errors',
+                $createdDnsProviderRecordResult[0])) {
 
                 DB::rollback();
 
@@ -78,7 +76,7 @@ class CdnController extends Controller
 
         DB::commit();
 
-        return $this->setStatusCode(200)->response('success', null, []);
+        return $this->setStatusCode(200)->response('success', null, $cdn);
 
     }
 
@@ -95,7 +93,7 @@ class CdnController extends Controller
 
         DB::beginTransaction();
 
-        if ( ! $this->cdnService->checkCurrentCdnIsDefault($domain, $cdn) and $request->get('default')) {
+        if (!$this->cdnService->checkCurrentCdnIsDefault($domain, $cdn) and $request->get('default')) {
 
             $getDefaultRecord = $this->cdnService->getDefaultRecord($domain);
 
@@ -112,8 +110,8 @@ class CdnController extends Controller
 
             $editedDnsProviderRecordResult = event(new CdnWasEdited($domain, $cdn));
 
-            if ( ! is_null($editedDnsProviderRecordResult[0]['errorCode']) or array_key_exists('errors',
-                    $editedDnsProviderRecordResult[0])) {
+            if (!is_null($editedDnsProviderRecordResult[0]['errorCode']) or array_key_exists('errors',
+                $editedDnsProviderRecordResult[0])) {
 
                 DB::rollback();
 
@@ -123,10 +121,8 @@ class CdnController extends Controller
 
         DB::commit();
 
-        return $this->setStatusCode(200)->response('success', null, []);
-
+        return $this->setStatusCode(200)->response('success', null, $cdn);
     }
-
 
     /**
      * @param \App\Http\Requests\DeleteCdnRequest $request

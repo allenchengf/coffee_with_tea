@@ -13,7 +13,7 @@ use Illuminate\Foundation\Validation\ValidatesRequests;
 use Illuminate\Routing\Controller as BaseController;
 use Tymon\JWTAuth\Facades\JWTAuth;
 use Validator;
-
+use Illuminate\Http\Request;
 class Controller extends BaseController
 {
     use AuthorizesRequests, DispatchesJobs, ValidatesRequests;
@@ -85,5 +85,29 @@ class Controller extends BaseController
     {
         $token = JWTAuth::getToken();
         return JWTAuth::getPayload($token)->toArray();
+    }
+
+    /**
+     * get User Group ID function
+     *
+     * 判斷是否能夠取得 $request->user_group_id
+     *
+     * $request->user_group_id == null ，給予 login User_group_id
+     * 權限符合，給予 $request->user_group_id
+     * 權限不符合，給予 login User_group_id
+     *
+     * @param Request $request
+     * @return int
+     */
+    public function getUgid(Request $request)
+    {
+        $getPayload = $this->getJWTPayload();
+
+        $ugid = (($getPayload['user_group_id'] == $request->get('user_group_id')) ||
+            ($getPayload['user_group_id'] == 1)) ?
+            $request->get('user_group_id', $getPayload['user_group_id']) :
+            $getPayload['user_group_id'];
+
+        return $ugid;
     }
 }
