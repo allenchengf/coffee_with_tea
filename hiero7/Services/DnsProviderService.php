@@ -21,6 +21,7 @@ class DnsProviderService
     public function getDomain(array $data = [])
     {
         $url = $this->dnsProviderApi . "/domains";
+
         $data['login_token'] = $data['login_token'] ?? $this->dnsPodLoginToken;
 
         return Curl::to($url)
@@ -44,8 +45,7 @@ class DnsProviderService
     {
         $url = $this->dnsProviderApi . "/records";
 
-        $data['login_token'] = $data['login_token'] ?? $this->dnsPodLoginToken;
-        $data['domain_id'] = $data['domain_id'] ?? env('DNS_POD_DOMAIN_ID');
+        $data = $this->addLoginTokenAndDomainId($data);
 
         return Curl::to($url)
             ->withData($data)
@@ -69,8 +69,7 @@ class DnsProviderService
     {
         $url = $this->dnsProviderApi . "/records/create";
 
-        $data['login_token'] = $data['login_token'] ?? $this->dnsPodLoginToken;
-        $data['domain_id'] = $data['domain_id'] ?? env('DNS_POD_DOMAIN_ID');
+        $data = $this->addLoginTokenAndDomainId($data);
         $data['record_type'] = $data['record_type'] ?? "CNAME";
         $data['record_line'] = $data['record_line'] ?? "默认";
 
@@ -97,10 +96,8 @@ class DnsProviderService
     {
         $url = $this->dnsProviderApi . "/records";
 
-        $data['login_token'] = $data['login_token'] ?? $this->dnsPodLoginToken;
-        $data['domain_id'] = $data['domain_id'] ?? env('DNS_POD_DOMAIN_ID');
+        $data = $this->addLoginTokenAndDomainId($data);
         $data['record_type'] = $data['record_type'] ?? "CNAME";
-
 
         return Curl::to($url)
             ->withData($data)
@@ -122,8 +119,7 @@ class DnsProviderService
     {
         $url = $this->dnsProviderApi . "/records/batch";
 
-        $data['login_token'] = $data['login_token'] ?? $this->dnsPodLoginToken;
-        $data['domain_id'] = $data['domain_id'] ?? env('DNS_POD_DOMAIN_ID');
+        $data = $this->addLoginTokenAndDomainId($data);
 
         return Curl::to($url)
             ->withData($data)
@@ -142,12 +138,18 @@ class DnsProviderService
     {
         $url = $this->dnsProviderApi . "/records";
 
-        $data['login_token'] = $data['login_token'] ?? $this->dnsPodLoginToken;
-        $data['domain_id'] = $data['domain_id'] ?? env('DNS_POD_DOMAIN_ID');
+        $data = $this->addLoginTokenAndDomainId($data);
 
         return Curl::to($url)
             ->withData($data)
             ->asJson(true)
             ->delete();
+    }
+
+    private function addLoginTokenAndDomainId(array $data)
+    {
+        $data['login_token'] = $data['login_token'] ?? $this->dnsPodLoginToken;
+        $data['domain_id'] = $data['domain_id'] ?? env('DNS_POD_DOMAIN_ID');
+        return $data;
     }
 }
