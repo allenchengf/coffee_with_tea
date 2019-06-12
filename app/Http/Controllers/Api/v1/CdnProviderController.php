@@ -2,11 +2,14 @@
 
 namespace App\Http\Controllers\Api\v1;
 
+use App\Events\CdnWasBatchEdited;
+use Hiero7\Enums\InternalError;
+use Hiero7\Models\Cdn;
 use Hiero7\Models\CdnProvider;
 use App\Http\Controllers\Controller;
 use Hiero7\Services\CdnProviderService;
 use App\Http\Requests\CdnProviderRequest as Request;
-
+use DB;
 /**
  * Class CdnProviderController
  * @package App\Http\Controllers\Api\v1
@@ -64,7 +67,15 @@ class CdnProviderController extends Controller
             'edited_by' => $this->getJWTPayload()['uuid'],
         ]);
 
-        $cdnProvider = $this->cdnProviderService->updateCdnProvider($request, $cdnProvider);
+        DB::beginTransaction();
+        $cdnProvider->update($request->only('name','ttl', 'edited_by'));
+        $cdn = Cdn::where('cdn_provider_id', $cdnProvider->id)->where('default',1)->pluck('dns_provider_id')->all();
+        $BatchEditedDnsProviderRecordResult = $this->cdnProviderService->updateDnsProviderTTL($cdnProvider, $cdn);
+        if (array_key_exists('errors', $BatchEditedDnsProviderRecordResult[0])) {
+            DB::rollback();
+            return $this->setStatusCode(409)->response('please contact the admin', InternalError::INTERNAL_ERROR, []);
+        }
+        DB::commit();
 
         return $this->response("Success", null, $cdnProvider);
     }
@@ -81,9 +92,18 @@ class CdnProviderController extends Controller
             'edited_by' => $this->getJWTPayload()['uuid'],
         ]);
 
-        $status = $request->get('status');
-        $this->cdnProviderService->changeStatus($status, $cdnProvider);
+        $status = $request->get('status')?'active':'stop';
 
+        DB::beginTransaction();
+        $cdnProvider->update(['status' => $status,'edited_by' => $request->get('edited_by')]);
+        $cdn = Cdn::where('cdn_provider_id', $cdnProvider->id)->where('default',1)->pluck('dns_provider_id')->all();
+        $BatchEditedDnsProviderRecordResult = $this->cdnProviderService->updateDnsProviderStatus($cdn, $status);
+        if (array_key_exists('errors', $BatchEditedDnsProviderRecordResult[0])) {
+            DB::rollback();
+            return $this->setStatusCode(409)->response('please contact the admin', InternalError::INTERNAL_ERROR, []);
+        }
+
+        DB::commit();
         return $this->response();
     }
 }

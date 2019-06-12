@@ -9,6 +9,8 @@
 namespace Hiero7\Services;
 
 
+use App\Events\CdnWasBatchEdited;
+use Hiero7\Enums\InternalError;
 use Hiero7\Models\Cdn;
 use Hiero7\Repositories\CdnProviderRepository;
 use DB;
@@ -29,30 +31,17 @@ class CdnProviderService
         return $this->cdnProviderRepository->getCdnProvider($ugid);
     }
 
-    public function updateCdnProvider($info, $cdnProvider)
+    public function updateDnsProviderTTL($cdnProvider, $cdn)
     {
-        DB::beginTransaction();
-        try {
-            $cdnProvider->update($info->only('name','ttl', 'edited_by'));
-            $cdns = Cdn::where('cdn_provider_id', $cdnProvider->id)->get();
-            DB::commit();
-        } catch (\Exception $e) {
-            DB::rollback();
-        }
-        return $cdnProvider;
+        $change = 'ttl';
+        $changeTo = $cdnProvider->ttl;
+        return event(new CdnWasBatchEdited($changeTo, $cdn, $change));
     }
 
-    public function changeStatus($status, $cdnProvider)
+    public function updateDnsProviderStatus($cdn, $status)
     {
-        DB::beginTransaction();
-        try {
-            $this->cdnProviderRepository->changeStatus($status, $cdnProvider);
-            $cdns = Cdn::where('cdn_provider_id', $cdnProvider->id)->get();
-            DB::commit();
-        } catch (\Exception $e) {
-            DB::rollback();
-        }
-        return $cdnProvider;
+        $change = 'status';
+        $changeTo = ($status == 'active')?'enable':'disable';
+        return event(new CdnWasBatchEdited($changeTo, $cdn, $change));
     }
-
 }
