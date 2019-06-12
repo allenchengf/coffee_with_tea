@@ -48,4 +48,11 @@ class LocationDnsSettingRepository
     {
         return $this->locationDnsSetting->where('location_networks_id', $locationNetworkId)->where('domain_id', $domainId)->pluck('pod_record_id')->first();
     }
+
+    public function updateToDefaultCdnId(int $targetCdnId, int $defaultCdnId)
+    {
+        return $this->locationDnsSetting->where('cdn_id', $targetCdnId)
+        ->update(['cdn_id' => $defaultCdnId]);
+
+    }
 }

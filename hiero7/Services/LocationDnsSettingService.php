@@ -91,6 +91,11 @@ class LocationDnsSettingService
         return $this->locationDnsSettingRepository->createSetting($domain, $cdnResult, $locationNetwork, $podResult['data']['record']['id'], $data['edited_by']);
     }
 
+    public function updateToDefaultCdnId(Cdn $targetCdn, Cdn $defaultCdn)
+    {
+        return $this->locationDnsSettingRepository->updateToDefaultCdnId($targetCdn->id, $defaultCdn->id);
+    }
+
     private function getDnsSettingAll($lineModel, Cdn $cdnModel, int $domainId, $locationSetting)
     {
         if (!$locationSetting) {

@@ -8,7 +8,7 @@ class LocationDnsSetting extends Model
 {
     protected $table = 'location_dns_settings';
     protected $primaryKey = 'id';
-    protected $fillable = ['edited_by','user_group_id', 'pod_record_id', 'location_networks_id', 'cdn_id','domain_id'];
+    protected $fillable = ['edited_by', 'user_group_id', 'pod_record_id', 'location_networks_id', 'cdn_id', 'domain_id'];
 
     public function cdn()
     {
@@ -17,18 +17,21 @@ class LocationDnsSetting extends Model
 
     public function domain()
     {
-        return $this->belongsTo(Domain::class,'domain_id');
+        return $this->belongsTo(Domain::class, 'domain_id');
     }
 
     public function locations()
     {
-        return $this->belongsToMany(LocationNetwork::class,'location_networks_id','id');
+        return $this->belongsToMany(LocationNetwork::class, 'location_networks_id', 'id');
     }
 
     public function location()
     {
-        return $this->belongsTo(LocationNetwork::class,'location_networks_id','id');
+        return $this->belongsTo(LocationNetwork::class, 'location_networks_id', 'id');
     }
 
-
+    public function scopeGetDnsRecordId($query, $cdnId)
+    {
+        return $query->where('cdn_id', $cdnId)->pluck('pod_record_id');
+    }
 }
