@@ -3,16 +3,13 @@
 namespace Hiero7\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Cdn extends Model
 {
-    use SoftDeletes;
-
     protected $fillable = [
         'domain_id',
         'cdn_provider_id',
-        'dns_provider_id',
+        'provider_record_id',
         'cname',
         'default',
         'edited_by',
@@ -48,7 +45,12 @@ class Cdn extends Model
 
     public function locationDnsSetting()
     {
-        return $this->hasOne(LocationDnsSetting::class);
+        return $this->hasMany(LocationDnsSetting::class);
+    }
+
+    public function getlocationDnsSettingDomainId($cdnId)
+    {
+        return $this->locationDnsSetting()->getDnsRecordId($cdnId);
     }
 
     public function updateOrInsertGetId(array $attributes, array $values = []): int

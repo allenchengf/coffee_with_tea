@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\v1;
 
 use App\Events\CdnWasCreated;
+use App\Events\CdnWasDelete;
 use App\Events\CdnWasEdited;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\CdnRequest;
@@ -71,7 +72,7 @@ class CdnController extends Controller
 
             DB::commit();
 
-            $cdn->update(['dns_provider_id' => $createdDnsProviderRecordResult[0]['data']['record']['id']]);
+            $cdn->update(['provider_record_id' => $createdDnsProviderRecordResult[0]['data']['record']['id']]);
         }
 
         DB::commit();
@@ -99,7 +100,7 @@ class CdnController extends Controller
 
             $getDefaultRecord->update(['default' => false]);
 
-            $domain->getCdnById($cdn->id)->update(['dns_provider_id' => $getDefaultRecord->dns_provider_id]);
+            $domain->getCdnById($cdn->id)->update(['provider_record_id' => $getDefaultRecord->provider_record_id]);
         }
 
         $updateResult = $domain->getCdnById($cdn->id)->update($data);
@@ -133,10 +134,23 @@ class CdnController extends Controller
      */
     public function destroy(DeleteCdnRequest $request, Domain $domain, Cdn $cdn)
     {
+        $defaultCdn = $this->cdnService->getDefaultRecord($domain);
+        DB::beginTransaction();
+
         if ($cdn = $domain->getCdnById($cdn->id)->first()) {
+            $deleteDnsPodRecord = event(new CdnWasDelete($cdn));
+
+            if (!is_null($deleteDnsPodRecord[0]['errorCode']) or array_key_exists('errors',
+                $deleteDnsPodRecord[0])) {
+                DB::rollback();
+
+                return $this->setStatusCode(409)->response('please contact the admin', InternalError::INTERNAL_ERROR, []);
+            }
 
             $cdn->delete();
         }
+
+        DB::commit();
 
         return $this->setStatusCode(200)->response('success', null, []);
     }

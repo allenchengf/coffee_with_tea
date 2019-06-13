@@ -25,7 +25,7 @@ class LocationDnsSettingRepository
     public function createSetting(Domain $domain, Cdn $cdn, LocationNetwork $locationNetwork, int $podId, string $editedBy)
     {
         return $this->locationDnsSetting->insert([
-            'pod_record_id' => $podId,
+            'provider_record_id' => $podId,
             'location_networks_id' => $locationNetwork->id,
             'cdn_id' => $cdn->id,
             'domain_id' => $domain->id,
@@ -46,6 +46,13 @@ class LocationDnsSettingRepository
 
     public function getPodId($locationNetworkId, $domainId)
     {
-        return $this->locationDnsSetting->where('location_networks_id', $locationNetworkId)->where('domain_id', $domainId)->pluck('pod_record_id')->first();
+        return $this->locationDnsSetting->where('location_networks_id', $locationNetworkId)->where('domain_id', $domainId)->pluck('provider_record_id')->first();
+    }
+
+    public function updateToDefaultCdnId(int $targetCdnId, int $defaultCdnId)
+    {
+        return $this->locationDnsSetting->where('cdn_id', $targetCdnId)
+        ->update(['cdn_id' => $defaultCdnId]);
+
     }
 }
