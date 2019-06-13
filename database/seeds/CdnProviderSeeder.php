@@ -16,19 +16,16 @@ class CdnProviderSeeder extends Seeder
             'status' => 'active',
             'user_group_id' => 1,
             'ttl' => 600,
-            'user_group_id' => 1
         ], [
             'name' => 'Cloudflare',
             'status' => 'active',
             'user_group_id' => 1,
             'ttl' => 600,
-            'user_group_id' => 1
         ], [
             'name' => 'CloudFront',
             'status' => 'active',
             'user_group_id' => 1,
             'ttl' => 600,
-            'user_group_id' => 1
         ]];
         DB::table('cdn_providers')->insert($data);
     }

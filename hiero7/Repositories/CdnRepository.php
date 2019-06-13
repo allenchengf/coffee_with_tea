@@ -24,7 +24,7 @@ class CdnRepository
                 "cname"=>$info["cname"],
                 "edited_by"=>$user["uuid"],
                 "ttl"=>$info["ttl"],
-                "dns_provider_id"=>$info["dns_provider_id"],
+                "provider_record_id"=>$info["provider_record_id"],
                 "created_at" =>  \Carbon\Carbon::now(),
                 "updated_at" => \Carbon\Carbon::now(),
                 "default" => $info["default"],

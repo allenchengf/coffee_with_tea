@@ -15,7 +15,7 @@ class CreateLocationDnsSettings extends Migration
     {
         Schema::create('location_dns_settings', function (Blueprint $table) {
             $table->increments('id');
-            $table->integer('pod_record_id')->nullable()->comment('從 pod 產出的資料 id');
+            $table->integer('provider_record_id')->default(0)->comment('Third Party Dns Provider Record Id');
             $table->integer('location_networks_id')->unsigned();
             $table->integer('cdn_id')->unsigned();
             $table->integer('domain_id')->unsigned();

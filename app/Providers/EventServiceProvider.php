@@ -27,7 +27,11 @@ class EventServiceProvider extends ServiceProvider
             ],
             \App\Events\CdnWasBatchEdited::class  => [
                 \App\Listeners\BatchEditDnsPodRecord::class,
-            ]
+            ],
+            \App\Events\CdnWasDelete::class  => [
+                \App\Listeners\ChangeToDefaultDnsPodRecord::class,
+                \App\Listeners\ChangeToDefaultStatusDnsPodRecord::class,
+            ],
         ];
 
     /**

@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Events\CdnWasCreated;
+use App\Events\CdnWasDelete;
 use App\Events\CdnWasEdited;
 use App\Http\Middleware\AuthUserModule;
 use App\Http\Middleware\DomainPermission;
@@ -24,7 +25,7 @@ class CdnControllerTest extends TestCase
 {
     use WithFaker, RefreshDatabase;
 
-    protected $mockService, $domain, $cdn, $controller, $uri, $cdnProvider;
+    protected $mockService, $domain, $cdn, $controller, $uri, $cdnProvider, $defaultCdn;
 
     protected function setUp()
     {
@@ -103,11 +104,9 @@ class CdnControllerTest extends TestCase
     {
         Event::fake([CdnWasCreated::class]);
 
-        $cdn = factory(Cdn::class)->create(['default' => true]);
+        $this->setDaultCdn();
 
-        $this->cdnProvider = CdnProvider::whereNotIn('id', [$cdn->cdn_provider_id])->inRandomOrder()->first();
-
-        $this->setUri($cdn->domain_id);
+        $this->setUri($this->defaultCdn->domain_id);
 
         $this->post($this->getUri(), $this->getRequestBody())->assertStatus(200);
 
@@ -122,13 +121,11 @@ class CdnControllerTest extends TestCase
     {
         Event::fake([CdnWasEdited::class]);
 
-        $defaultCdn = factory(Cdn::class)->create(['default' => true]);
-
-        $this->cdnProvider = CdnProvider::whereNotIn('id', [$defaultCdn->cdn_provider_id])->inRandomOrder()->first();
+        $this->setDaultCdn();
 
         $cdn = factory(Cdn::class)->create([
             'cdn_provider_id' => $this->cdnProvider->id,
-            'domain_id' => $defaultCdn->domain_id,
+            'domain_id' => $this->defaultCdn->domain_id,
             'default' => false,
         ]);
 
@@ -149,12 +146,7 @@ class CdnControllerTest extends TestCase
 
         Event::fake([CdnWasEdited::class]);
 
-        $defaultCdn = factory(Cdn::class)->create([
-            'domain_id' => $this->domain->id,
-            'default' => true,
-        ]);
-
-        $this->cdnProvider = CdnProvider::whereNotIn('id', [$defaultCdn->cdn_provider_id])->inRandomOrder()->first();
+        $this->setDaultCdn();
 
         $cdn = factory(Cdn::class)->create([
             'domain_id' => $this->domain->id,
@@ -179,12 +171,7 @@ class CdnControllerTest extends TestCase
     {
         Event::fake([CdnWasEdited::class]);
 
-        $defaultCdn = factory(Cdn::class)->create([
-            'domain_id' => $this->domain->id,
-            'default' => true,
-        ]);
-
-        $this->cdnProvider = CdnProvider::whereNotIn('id', [$defaultCdn->cdn_provider_id])->inRandomOrder()->first();
+        $this->setDaultCdn();
 
         $cdn = factory(Cdn::class)->create([
             'domain_id' => $this->domain->id,
@@ -204,14 +191,35 @@ class CdnControllerTest extends TestCase
      * @test
      * @group cdn
      */
-    public function testDestroyCdn()
+    public function destroyCdn()
     {
-        $cdn = factory(Cdn::class)->create(['default' => false]);
+        Event::fake([CdnWasDelete::class]);
+
+        $this->setDaultCdn();
+
+        $cdn = factory(Cdn::class)->create([
+            'domain_id' => $this->defaultCdn->domain_id,
+            'default' => false,
+            'cdn_provider_id' => $this->cdnProvider->id,
+        ]);
 
         $this->setUri($cdn->domain_id);
+        $response = $this->delete($this->getUri() . "/$cdn->id", [])
+            ->assertStatus(500);
 
-        $this->delete($this->getUri() . "/$cdn->id", [])->assertStatus(200);
+        Event::assertDispatched(CdnWasDelete::class);
+    }
 
+    private function setDaultCdn()
+    {
+        $this->defaultCdn = factory(Cdn::class)->create([
+            'domain_id' => $this->domain->id,
+            'default' => true,
+        ]);
+
+        $this->cdnProvider = CdnProvider::whereNotIn('id', [$this->defaultCdn->cdn_provider_id])
+            ->inRandomOrder()
+            ->first();
     }
 
     private function getRequestBody()

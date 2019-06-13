@@ -14,7 +14,7 @@ class LocationDnsSettingSeeder extends Seeder
         $data = [
             [
                 'id' => 1,
-                'pod_record_id' => 123456,
+                'provider_record_id' => 123456,
                 'location_networks_id' => 1,
                 'cdn_id' => 1,
                 'domain_id' => 1,
