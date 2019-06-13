@@ -91,13 +91,21 @@ class CdnProviderController extends Controller
         $request->merge([
             'edited_by' => $this->getJWTPayload()['uuid'],
         ]);
-
+        $recordList =[];
         $status = $request->get('status')?'active':'stop';
 
         DB::beginTransaction();
         $cdnProvider->update(['status' => $status,'edited_by' => $request->get('edited_by')]);
-        $cdn = Cdn::where('cdn_provider_id', $cdnProvider->id)->where('default',1)->pluck('dns_provider_id')->all();
-        $BatchEditedDnsProviderRecordResult = $this->cdnProviderService->updateDnsProviderStatus($cdn, $status);
+        $cdn = Cdn::where('cdn_provider_id', $cdnProvider->id)->with('locationDnsSetting')->get();
+
+        foreach ($cdn as $k => $v){
+            $recordList[] = $v['dns_provider_id'];
+            if(isset($v['locationDnsSetting'])){
+                $recordList[] = $v['locationDnsSetting']['pod_record_id'];
+            }
+        }
+        $recordList = array_filter($recordList);
+        $BatchEditedDnsProviderRecordResult = $this->cdnProviderService->updateDnsProviderStatus($recordList, $status);
         if (array_key_exists('errors', $BatchEditedDnsProviderRecordResult[0])) {
             DB::rollback();
             return $this->setStatusCode(409)->response('please contact the admin', InternalError::INTERNAL_ERROR, []);
