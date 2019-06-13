@@ -143,7 +143,7 @@ class CdnRequestTest extends TestCase
         $this->setUri($cdn->domain_id);
 
         $this->put($this->getUri() . "/$cdn2->id",
-            $requestParams)->assertStatus(404);
+            $requestParams)->assertStatus(403);
     }
 
     /**
