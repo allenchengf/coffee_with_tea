@@ -72,7 +72,7 @@ class CdnController extends Controller
 
             DB::commit();
 
-            $cdn->update(['dns_provider_id' => $createdDnsProviderRecordResult[0]['data']['record']['id']]);
+            $cdn->update(['provider_record_id' => $createdDnsProviderRecordResult[0]['data']['record']['id']]);
         }
 
         DB::commit();
@@ -100,7 +100,7 @@ class CdnController extends Controller
 
             $getDefaultRecord->update(['default' => false]);
 
-            $domain->getCdnById($cdn->id)->update(['dns_provider_id' => $getDefaultRecord->dns_provider_id]);
+            $domain->getCdnById($cdn->id)->update(['provider_record_id' => $getDefaultRecord->provider_record_id]);
         }
 
         $updateResult = $domain->getCdnById($cdn->id)->update($data);
@@ -138,10 +138,10 @@ class CdnController extends Controller
         DB::beginTransaction();
 
         if ($cdn = $domain->getCdnById($cdn->id)->first()) {
-            $changeDnsProviderRecordResult = event(new CdnWasDelete($defaultCdn, $cdn));
+            $deleteDnsPodRecord = event(new CdnWasDelete($cdn));
 
-            if (!is_null($changeDnsProviderRecordResult[0]['errorCode']) or array_key_exists('errors',
-                $changeDnsProviderRecordResult[0])) {
+            if (!is_null($deleteDnsPodRecord[0]['errorCode']) or array_key_exists('errors',
+                $deleteDnsPodRecord[0])) {
                 DB::rollback();
 
                 return $this->setStatusCode(409)->response('please contact the admin', InternalError::INTERNAL_ERROR, []);

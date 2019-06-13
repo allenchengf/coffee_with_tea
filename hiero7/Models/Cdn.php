@@ -9,7 +9,7 @@ class Cdn extends Model
     protected $fillable = [
         'domain_id',
         'cdn_provider_id',
-        'dns_provider_id',
+        'provider_record_id',
         'cname',
         'default',
         'edited_by',
