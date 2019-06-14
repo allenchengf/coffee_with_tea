@@ -19,29 +19,16 @@ class CdnService
         $request->merge(['edited_by' => $uuid]);
     }
 
-    public function setTTLValueOfRequest(CdnRequest $request)
-    {
-        if ($request->method() == 'PUT') {
-            return;
-        }
-
-        $request->merge(['ttl' => env('CDN_TTL')]);
-    }
-
     public function formatRequest(CdnRequest $request, $uuid)
     {
-        $request->has('ttl') ? $request->get('ttl') : $this->setTTLValueOfRequest($request);
-
         $this->setEditedByOfRequest($request, $uuid);
 
         return $request->only([
-            'name',
+            'cdn_provider_id',
             'cname',
-            'ttl',
             'edited_by',
             'default'
         ]);
-
     }
 
     public function getDefaultRecord(Domain $domain)

@@ -5,18 +5,14 @@ namespace App\Events;
 use Hiero7\Models\Cdn;
 use Hiero7\Models\Domain;
 use Illuminate\Broadcasting\Channel;
-use Illuminate\Queue\SerializesModels;
-use Illuminate\Broadcasting\PrivateChannel;
-use Illuminate\Broadcasting\PresenceChannel;
-use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Broadcasting\InteractsWithSockets;
-use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
+use Illuminate\Broadcasting\PrivateChannel;
+use Illuminate\Foundation\Events\Dispatchable;
+use Illuminate\Queue\SerializesModels;
 
-class CdnWasCreated
+class CdnWasDelete
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
-
-    public $domain;
 
     public $cdn;
 
@@ -26,10 +22,8 @@ class CdnWasCreated
      * @param \Hiero7\Models\Domain $domain
      * @param \Hiero7\Models\Cdn    $cdn
      */
-    public function __construct(Domain $domain, Cdn $cdn)
+    public function __construct(Cdn $cdn)
     {
-        $this->domain = $domain;
-
         $this->cdn = $cdn;
     }
 }

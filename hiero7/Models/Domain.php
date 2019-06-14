@@ -8,8 +8,7 @@ class Domain extends Model
 {
     protected $table = 'domains';
     protected $primaryKey = 'id';
-    protected $fillable = ['user_group_id', 'name', 'cname', 'edited_by'];
-
+    protected $fillable = ['user_group_id', 'name', 'cname', 'label', 'edited_by'];
 
     public function cdns()
     {

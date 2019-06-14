@@ -49,4 +49,10 @@ Route::group(['middleware' => ['api'], 'namespace' => 'Api\v1', 'prefix' => 'v1'
         Route::put('{scheme}', 'SchemeController@edit')->name('schemes.edit');
         Route::delete('{scheme}', 'SchemeController@destroy')->name('schemes.destroy');
     });
+
+    Route::group(['middleware' => ['auth.user.module','internal.group'],  'prefix' => 'cdn_providers'], function () {
+        Route::get('', 'CdnProviderController@index')->name('cdn_providers.index');
+        Route::post('', 'CdnProviderController@store')->name('cdn_providers.store');
+        Route::patch('{cdn_provider}', 'CdnProviderController@edit')->name('cdn_providers.edit');
+    });
 });
