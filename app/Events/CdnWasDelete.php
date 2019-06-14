@@ -14,7 +14,7 @@ class CdnWasDelete
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
-    public $defaultCdn, $cdn, $dnsPodDomainId;
+    public $cdn;
 
     /**
      * CdnWasCreated constructor.
@@ -22,13 +22,8 @@ class CdnWasDelete
      * @param \Hiero7\Models\Domain $domain
      * @param \Hiero7\Models\Cdn    $cdn
      */
-    public function __construct(Cdn $defaultCdn, Cdn $cdn)
+    public function __construct(Cdn $cdn)
     {
-        $this->defaultCdn = $defaultCdn;
-
         $this->cdn = $cdn;
-
-        $this->dnsPodDomainId = implode(',', $cdn->getlocationDnsSettingDomainId($cdn->id)->toArray());
-
     }
 }

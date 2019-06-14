@@ -134,24 +134,8 @@ class CdnController extends Controller
      */
     public function destroy(DeleteCdnRequest $request, Domain $domain, Cdn $cdn)
     {
-        $defaultCdn = $this->cdnService->getDefaultRecord($domain);
-        DB::beginTransaction();
-
-        if ($cdn = $domain->getCdnById($cdn->id)->first()) {
-            $deleteDnsPodRecord = event(new CdnWasDelete($cdn));
-
-            if (!is_null($deleteDnsPodRecord[0]['errorCode']) or array_key_exists('errors',
-                $deleteDnsPodRecord[0])) {
-                DB::rollback();
-
-                return $this->setStatusCode(409)->response('please contact the admin', InternalError::INTERNAL_ERROR, []);
-            }
-
-            $cdn->delete();
-        }
-
-        DB::commit();
-
+        $deleteDnsPodRecord = event(new CdnWasDelete($cdn));
+        $cdn->delete();
         return $this->setStatusCode(200)->response('success', null, []);
     }
 }

@@ -11,6 +11,7 @@ use App\Http\Middleware\TokenCheck;
 use Hiero7\Models\Cdn;
 use Hiero7\Models\CdnProvider;
 use Hiero7\Models\Domain;
+use Hiero7\Models\LocationDnsSetting;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Foundation\Testing\WithFaker;
 use Illuminate\Foundation\Testing\WithoutMiddleware;
@@ -33,6 +34,11 @@ class CdnControllerTest extends TestCase
 
         $this->seed('DomainTableSeeder');
         $this->seed('CdnProviderSeeder');
+        $this->seed('SchemeTableSeeder');
+        $this->seed('ContinentTableSeeder');
+        $this->seed('CountryTableSeeder');
+        $this->seed('NetworkTableSeeder');
+        $this->seed('LocationNetworkTableSeeder');
 
         $this->login();
 
@@ -203,9 +209,14 @@ class CdnControllerTest extends TestCase
             'cdn_provider_id' => $this->cdnProvider->id,
         ]);
 
+        factory(LocationDnsSetting::class)->create([
+            'domain_id' => $this->defaultCdn->domain_id,
+            'cdn_id' => $cdn->id,
+        ]);
+
         $this->setUri($cdn->domain_id);
-        $response = $this->delete($this->getUri() . "/$cdn->id", [])
-            ->assertStatus(500);
+        $this->delete($this->getUri() . "/$cdn->id")
+            ->assertStatus(200);
 
         Event::assertDispatched(CdnWasDelete::class);
     }
