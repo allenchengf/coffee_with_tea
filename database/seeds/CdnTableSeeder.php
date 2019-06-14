@@ -15,21 +15,18 @@ class CdnTableSeeder extends Seeder
         for ($i = 1; $i <= $count; $i++) {
             $data = [[
                 'domain_id' => $i,
-                'name' => 'hiero7',
+                'cdn_provider_id' => 1,
                 'cname' => 'speedlll.com',
-                'ttl' => 600,
                 'default' => 1,
             ], [
                 'domain_id' => $i,
-                'name' => 'dnspod',
+                'cdn_provider_id' => 2,
                 'cname' => 'dnspod.com',
-                'ttl' => 600,
                 'default' => 0,
             ], [
                 'domain_id' => $i,
-                'name' => str_random(6),
+                'cdn_provider_id' => 3,
                 'cname' => str_random(6) . '.com',
-                'ttl' => 600,
                 'default' => 0,
             ]];
             DB::table('cdns')->insert($data);

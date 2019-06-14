@@ -4,7 +4,7 @@ use Illuminate\Support\Facades\Schema;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
 
-class CreateDomainsTable extends Migration
+class CreateCdnProvidersTable extends Migration
 {
     /**
      * Run the migrations.
@@ -13,12 +13,12 @@ class CreateDomainsTable extends Migration
      */
     public function up()
     {
-        Schema::create('domains', function (Blueprint $table) {
+        Schema::create('cdn_providers', function (Blueprint $table) {
             $table->increments('id');
+            $table->string('name');
+            $table->enum('status', ['active','stop']);
             $table->integer('user_group_id')->unsigned();
-            $table->string('name')->comment('domain')->unique();
-            $table->string('cname')->unique();
-            $table->string('label')->nullable()->comment('標籤');
+            $table->integer('ttl')->nullable();
             $table->uuid('edited_by')->nullable();
             $table->timestamps();
         });
@@ -31,6 +31,6 @@ class CreateDomainsTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('domains');
+        Schema::dropIfExists('cdn_providers');
     }
 }

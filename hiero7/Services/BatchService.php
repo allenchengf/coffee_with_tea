@@ -47,7 +47,7 @@ class BatchService{
                     DB::beginTransaction();
                     try {
                         $cdn["ttl"] = $cdn["ttl"]??env("CDN_TTL");
-                        $cdn["dns_provider_id"] = 0;
+                        $cdn["provider_record_id"] = 0;
                         if($key === 0 && !$append){
                             $dnsPodResponse = $this->dnsProviderService->createRecord(
                                 [
@@ -59,7 +59,7 @@ class BatchService{
                             if (!is_null($dnsPodResponse['errorCode']) || array_key_exists('errors',
                                     $dnsPodResponse))
                                 throw new \Exception($dnsPodResponse['message']." for ".$cdn["cname"], $dnsPodResponse['errorCode']);
-                            $cdn["dns_provider_id"] = $dnsPodResponse['data']['record']['id'];
+                            $cdn["provider_record_id"] = $dnsPodResponse['data']['record']['id'];
                         }
                         $cdn["default"] = !$append&&$key===0?1:0;
                         $add_cdn_result = $this->cdnRepository->store($cdn, $domain_id, $user);

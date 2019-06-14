@@ -2,18 +2,15 @@
 
 use Illuminate\Database\Seeder;
 
-class DatabaseSeeder extends Seeder
+class ProductDataSeeder extends Seeder
 {
     /**
-     * Seed the application's database.
+     * Run the database seeds.
      *
      * @return void
      */
     public function run()
     {
-        $this->call(DomainTableSeeder::class);
-        $this->call(CdnProviderSeeder::class);
-        $this->call(CdnTableSeeder::class);
         $this->call(SchemeTableSeeder::class);
         $this->call(ContinentTableSeeder::class);
         $this->call(CountryTableSeeder::class);
