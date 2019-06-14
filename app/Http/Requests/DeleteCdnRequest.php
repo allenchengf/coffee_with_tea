@@ -15,7 +15,11 @@ class DeleteCdnRequest extends FormRequest
      */
     public function authorize(CdnService $cdnService)
     {
-        return ! $cdnService->checkCurrentCdnIsDefault($this->domain, $this->cdn);
+        if ($this->cdn->domain_id != $this->domain->id) {
+            return false;
+        }
+
+        return !$cdnService->checkCurrentCdnIsDefault($this->domain, $this->cdn);
     }
 
     /**
@@ -25,7 +29,6 @@ class DeleteCdnRequest extends FormRequest
      */
     public function rules()
     {
-        return [//
-        ];
+        return [];
     }
 }

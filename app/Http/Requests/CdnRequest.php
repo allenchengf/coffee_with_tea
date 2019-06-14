@@ -2,8 +2,8 @@
 
 namespace App\Http\Requests;
 
-use App\Rules\DomainWithCdnProviderGroupMapping;
 use App\Rules\DomainValidationRule;
+use App\Rules\DomainWithCdnProviderGroupMapping;
 use Hiero7\Services\CdnService;
 use Illuminate\Validation\Rule;
 
@@ -23,7 +23,7 @@ class CdnRequest extends FormRequest
                 return false;
             } else if ($this->cdn->domain_id != $this->domain->id) {
 
-                return abort(404);
+                return false;
             }
         }
 
