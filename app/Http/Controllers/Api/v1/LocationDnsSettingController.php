@@ -19,9 +19,9 @@ class LocationDnsSettingController extends Controller
         $this->locationDnsSettingService = $locationDnsSettingService;
     }
 
-    public function getAll($domain)
+    public function getAll(Domain $domain)
     {
-        $result = $this->locationDnsSettingService->getAll($domain);
+        $result = $this->locationDnsSettingService->getAll($domain->id);
         return $this->setStatusCode($result ? 200 : 400)->response(
             '',
             '', $result
