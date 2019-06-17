@@ -79,7 +79,7 @@ class LocationDnsSettingService
         }
 
         $podResult = $this->dnsProviderService->createRecord([
-            'sub_domain' => $domain->cname,
+            'sub_domain' => $domain->cname.'.'.$domain->user_group_id,
             'value' => $cdnResult->cname,
             'record_line' => $locationNetwork->network()->first()->name,
         ]);
@@ -113,7 +113,6 @@ class LocationDnsSettingService
     private function checkCdnIfExist(array $data, Domain $domain)
     {
         return $domain->cdns()->where('id', $data['cdn_id'])->first();
-
     }
 
     private function getDefaultCdn(Cdn $cdnModel, int $domainId)

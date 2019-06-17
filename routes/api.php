@@ -55,4 +55,9 @@ Route::group(['middleware' => ['api'], 'namespace' => 'Api\v1', 'prefix' => 'v1'
         Route::post('', 'CdnProviderController@store')->name('cdn_providers.store');
         Route::patch('{cdn_provider}', 'CdnProviderController@edit')->name('cdn_providers.edit');
     });
+
+    Route::group(['prefix' => 'groups'], function(){
+        Route::get('', 'GroupController@index')->name('groups.index');
+        Route::post('', 'GroupController@create')->name('groups.create');
+    });
 });
