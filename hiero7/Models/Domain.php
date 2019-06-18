@@ -9,6 +9,7 @@ class Domain extends Model
     protected $table = 'domains';
     protected $primaryKey = 'id';
     protected $fillable = ['user_group_id', 'name', 'cname', 'label', 'edited_by'];
+    protected $hidden = ['created_at', 'updated_at'];
 
     public function cdns()
     {
@@ -18,5 +19,13 @@ class Domain extends Model
     public function getCdnById($id)
     {
         return $this->cdns()->getById($id);
+    }
+
+    public function cdnProvider()
+    {
+        return $this->belongsToMany(CdnProvider::class, 'cdns', 'domain_id', 'cdn_provider_id')
+            ->as('cdns')    
+            ->withPivot('id', 'cname', 'default')
+            ->withTimestamps();
     }
 }
