@@ -69,11 +69,13 @@ class CdnProviderController extends Controller
 
         DB::beginTransaction();
         $cdnProvider->update($request->only('name','ttl', 'edited_by'));
-        $cdn = Cdn::where('cdn_provider_id', $cdnProvider->id)->where('default',1)->pluck('provider_record_id')->all();
-        $BatchEditedDnsProviderRecordResult = $this->cdnProviderService->updateDnsProviderTTL($cdnProvider, $cdn);
-        if (array_key_exists('errors', $BatchEditedDnsProviderRecordResult[0])) {
-            DB::rollback();
-            return $this->setStatusCode(409)->response('please contact the admin', InternalError::INTERNAL_ERROR, []);
+        $cdn = Cdn::where('cdn_provider_id', $cdnProvider->id)->pluck('provider_record_id')->all();
+        if(!empty($cdn)){
+            $BatchEditedDnsProviderRecordResult = $this->cdnProviderService->updateDnsProviderTTL($cdnProvider, $cdn);
+            if (array_key_exists('errors', $BatchEditedDnsProviderRecordResult[0])) {
+                DB::rollback();
+                return $this->setStatusCode(409)->response('please contact the admin', InternalError::INTERNAL_ERROR, []);
+            }
         }
         DB::commit();
 
@@ -104,12 +106,15 @@ class CdnProviderController extends Controller
             }
         }
         $recordList = array_filter($recordList);
-        $BatchEditedDnsProviderRecordResult = $this->cdnProviderService->updateDnsProviderStatus($recordList, $status);
-        if (array_key_exists('errors', $BatchEditedDnsProviderRecordResult[0])) {
-            DB::rollback();
-            return $this->setStatusCode(409)->response('please contact the admin', InternalError::INTERNAL_ERROR, []);
+        if(!empty($recordList)) {
+            $BatchEditedDnsProviderRecordResult = $this->cdnProviderService->updateDnsProviderStatus($recordList,
+                $status);
+            if (array_key_exists('errors', $BatchEditedDnsProviderRecordResult[0])) {
+                DB::rollback();
+                return $this->setStatusCode(409)->response('please contact the admin', InternalError::INTERNAL_ERROR,
+                    []);
+            }
         }
-
         DB::commit();
         return $this->response();
     }
