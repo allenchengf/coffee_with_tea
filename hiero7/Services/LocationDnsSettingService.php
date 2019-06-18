@@ -1,7 +1,7 @@
 <?php
 namespace Hiero7\Services;
 
-use Hiero7\Models\Cdn;
+use Hiero7\Models\{Cdn,CdnProvider};
 use Hiero7\Models\Domain;
 use Hiero7\Models\LocationNetwork;
 use Hiero7\Repositories\LineRepository;
@@ -104,7 +104,7 @@ class LocationDnsSettingService
             return $lineModel;
         }
 
-        $locationCdnResult = $locationSetting->cdn()->select('id', 'name')->first();
+        $locationCdnResult = $locationSetting->cdn()->select('id', 'cdn_provider_id')->with('cdnProvider')->first();
         $lineModel->setAttribute('cdn', $locationCdnResult);
 
         return $lineModel;
@@ -118,7 +118,7 @@ class LocationDnsSettingService
 
     private function getDefaultCdn(Cdn $cdnModel, int $domainId)
     {
-        return $cdnModel->select('id', 'name')->where('domain_id', $domainId)->where('default', 1)->first();
+        return $cdnModel->select('id','cdn_provider_id')->where('domain_id', $domainId)->where('default', 1)->with('cdnProvider')->first();
     }
 
     private function getPodId(int $locationNetworkId, int $domainId)

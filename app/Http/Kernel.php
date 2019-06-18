@@ -65,5 +65,6 @@ class Kernel extends HttpKernel
         'internal.group' => \App\Http\Middleware\InternalGroup::class,
         'auth.user.module' => \App\Http\Middleware\AuthUserModule::class,
         'domain.permission' => \App\Http\Middleware\DomainPermission::class,
+        'admin.check' => \App\Http\Middleware\AdminCheck::class,
     ];
 }
