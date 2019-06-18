@@ -34,7 +34,7 @@ class CdnProviderService
     public function updateDnsProviderTTL($cdnProvider, $cdn)
     {
         $change = 'ttl';
-        $changeTo = $cdnProvider->ttl;
+        $changeTo = (string) $cdnProvider->ttl;
         return event(new CdnWasBatchEdited($changeTo, $cdn, $change));
     }
 

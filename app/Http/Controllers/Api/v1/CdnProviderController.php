@@ -69,7 +69,7 @@ class CdnProviderController extends Controller
 
         DB::beginTransaction();
         $cdnProvider->update($request->only('name','ttl', 'edited_by'));
-        $cdn = Cdn::where('cdn_provider_id', $cdnProvider->id)->where('default',1)->pluck('dns_provider_id')->all();
+        $cdn = Cdn::where('cdn_provider_id', $cdnProvider->id)->where('default',1)->pluck('provider_record_id')->all();
         $BatchEditedDnsProviderRecordResult = $this->cdnProviderService->updateDnsProviderTTL($cdnProvider, $cdn);
         if (array_key_exists('errors', $BatchEditedDnsProviderRecordResult[0])) {
             DB::rollback();
@@ -97,11 +97,10 @@ class CdnProviderController extends Controller
         DB::beginTransaction();
         $cdnProvider->update(['status' => $status,'edited_by' => $request->get('edited_by')]);
         $cdn = Cdn::where('cdn_provider_id', $cdnProvider->id)->with('locationDnsSetting')->get();
-
         foreach ($cdn as $k => $v){
-            $recordList[] = $v['dns_provider_id'];
-            if(isset($v['locationDnsSetting'])){
-                $recordList[] = $v['locationDnsSetting']['pod_record_id'];
+            $recordList[] = $v['provider_record_id'];
+            if(isset($v['locationDnsSetting']['provider_record_id'])){
+                $recordList[] = $v['locationDnsSetting']['provider_record_id'];
             }
         }
         $recordList = array_filter($recordList);
