@@ -25,6 +25,9 @@ class EventServiceProvider extends ServiceProvider
             \App\Events\CdnWasEdited::class  => [
                 \App\Listeners\EditDnsPodRecord::class,
             ],
+            \App\Events\CdnWasBatchEdited::class  => [
+                \App\Listeners\BatchEditDnsPodRecord::class,
+            ],
             \App\Events\CdnWasDelete::class  => [
                 \App\Listeners\DeleteDnsPodRecord::class,
             ],
