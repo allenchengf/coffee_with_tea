@@ -39,13 +39,18 @@ class CdnProviderRequest extends FormRequest
                     'ttl'   => 'integer' . '|min:' . env('CDN_TTL') . '|max:604800',
                 ];
                 break;
-            case ($routeName == "$prefix.edit"):
+            case ($routeName == "$prefix.update"):
                 return [
                     'name'  => [
                         'required',
                         Rule::unique('cdn_providers')->ignore($this->cdn_provider->id),
                     ],
                     'ttl'   => 'integer' . '|min:' . env('CDN_TTL') . '|max:604800',
+                ];
+                break;
+            case ($routeName == "$prefix.status"):
+                return [
+                    'status'   => 'required|integer',
                 ];
                 break;
             default :
