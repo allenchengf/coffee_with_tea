@@ -18,4 +18,17 @@ class CdnProvider extends Model
         $status = ['active' => true, 'stop' => false];
         return $status[$value];
     }
+
+    public function domains()
+    {
+        return $this->belongsToMany(Domain::class, 'cdns', 'cdn_provider_id', 'domain_id')
+            ->as('cdns')
+            ->withPivot('id', 'cname', 'default')
+            ->withTimestamps();
+    }
+
+    public function cdns()
+    {
+        return $this->hasMany(Cdn::class);
+    }
 }
