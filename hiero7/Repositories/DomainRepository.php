@@ -16,17 +16,15 @@ class DomainRepository
     public function store($info, $user)
     {
         try {
-            return $this->domain::insertGetId(
+            return $this->domain::create(
                 [
                     "user_group_id" => $user["user_group_id"],
                     "name" => $info["name"],
                     "cname" => $info["name"],
                     "edited_by" => $user["uuid"],
                     "created_at" => \Carbon\Carbon::now(),
-                    "updated_at" => \Carbon\Carbon::now(),
                 ]
             );
-            return;
         } catch (\Exception $e) {
             if ($e->getCode() == '23000') {
                 return new \Exception(DbError::getDescription(DbError::DUPLICATE_ENTRY), DbError::DUPLICATE_ENTRY);  

@@ -3,6 +3,7 @@
 namespace Hiero7\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Hiero7\Enums\DbError;
 
 class Cdn extends Model
 {
@@ -14,6 +15,8 @@ class Cdn extends Model
         'default',
         'edited_by',
     ];
+
+    public $timestamps = true;
 
     protected $hidden = [
         'created_at',
@@ -52,18 +55,23 @@ class Cdn extends Model
         return $this->locationDnsSetting()->getDnsRecordId($cdnId);
     }
 
-    public function updateOrInsertGetId(array $attributes, array $values = []): int
+    public function store(array $input)
     {
-        $instance = $this;
-        foreach ($attributes as $key => $val) {
-            $instance = $instance->where($key, $val);
-        }
-
-        if (is_null($instance = $instance->first())) {
-            return $this->insertGetId($attributes + $values);
-        }
-
-        $instance->fill($values)->save();
-        return $instance->id;
+        return $this->insertGetId($input);
     }
+
+    // public function updateOrInsertGetId(array $attributes, array $values = []): int
+    // {
+    //     $instance = $this;
+    //     foreach ($attributes as $key => $val) {
+    //         $instance = $instance->where($key, $val);
+    //     }
+
+    //     if (is_null($instance = $instance->first())) {
+    //         return $this->insertGetId($attributes + $values);
+    //     }
+
+    //     $instance->fill($values)->save();
+    //     return $instance->id;
+    // }
 }
