@@ -29,7 +29,6 @@ class BatchService{
         // 批次新增 domain 迴圈
         foreach ($domains as $domain) {
             $error = [];
-            $isFirstCdn = true; // // 若為第一次新增 cdn 時打 POD
             try {
                 // 新增 domain
                 $domainObj = $this->domainRepository->store($domain, $user);
@@ -58,20 +57,24 @@ class BatchService{
                 continue;
             }
 
+            // 查詢 cdns.domain_id 是否存在 ? 不存在才打 POD，代表 POD 的 default 尚未存在
+            $cdns = $this->cdnRepository->getWhere(['domain_id' => $domain_id, 'default' => 1]);
+            $isFirstCdn = count($cdns) == 0 ? true : false;
+
             // 取此權限全部 cdn_providers
-            $myCdnProviders = $this->cdnProviderRepository->getCdnProvider($user["user_group_id"]);
+            $myCdnProviders = collect($this->cdnProviderRepository->getCdnProvider($user["user_group_id"])->toArray());
 
             // 批次新增 cdn 迴圈
             foreach ($domain["cdns"] as $key => $cdn) {
 
                 // 此次 $cdn['name'] 換 cdn_providers.id、ttl欄位
-                foreach ($myCdnProviders as $mcp) {
-                    if ($mcp->name == $cdn["name"]) {
-                        $cdn["cdn_provider_id"] = $mcp->id;
-                        $cdn["ttl"] = $mcp->ttl;
-                        break;
+                $myCdnProviders->each(function ($v) use (&$cdn) {
+                    if ($v['name'] == ucfirst(trim($cdn["name"]))) {
+                        $cdn["cdn_provider_id"] = $v['id'];
+                        $cdn["ttl"] = $v['ttl'];
+                        return false; // break;
                     }
-                }
+                });
 
                 // 若此 $cdn['name'] 不匹配 cdn_providers.name
                 if(! isset($cdn["cdn_provider_id"])) {

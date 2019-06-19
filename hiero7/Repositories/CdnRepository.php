@@ -34,4 +34,18 @@ class CdnRepository
             return $e;
         }
     }
+    
+
+    public function getWhere(array $conditions = null)
+    {
+        $select = $this->cdn;
+
+        if (is_array($conditions)) {
+            foreach ($conditions as $k => $v){
+                $select = $select->where($k, $v);
+            }
+        }
+
+        return $select->get();
+    }
 }
