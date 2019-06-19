@@ -57,7 +57,9 @@ Route::group(['middleware' => ['api'], 'namespace' => 'Api\v1', 'prefix' => 'v1'
     });
 
     Route::group(['prefix' => 'groups'], function(){
-        Route::get('', 'GroupController@index')->name('groups.index');
-        Route::post('', 'GroupController@create')->name('groups.create');
+        Route::get('', 'DomainGroupController@index')->name('groups.index');
+        Route::post('', 'DomainGroupController@create')->name('groups.create');
+        Route::put('{domainGroup}', 'DomainGroupController@edit')->name('groups.edit');
+        Route::delete('{domainGroup}', 'DomainGroupController@destroy')->name('groups.destroy');
     });
 });

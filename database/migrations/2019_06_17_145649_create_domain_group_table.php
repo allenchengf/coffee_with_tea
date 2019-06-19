@@ -13,13 +13,13 @@ class CreateDomainGroupTable extends Migration
      */
     public function up()
     {
-        Schema::create('domain_group', function (Blueprint $table) {
+        Schema::create('domain_group_mapping', function (Blueprint $table) {
             $table->increments('id');
             $table->integer('domain_id')->unsigned();
-            $table->integer('group_id')->unsigned();
+            $table->integer('domain_group_id')->unsigned();
             $table->timestamps();
-            $table->foreign('domain_id')->references('id')->on('domains')->comment('domains.id');
-            $table->foreign('group_id')->references('id')->on('groups')->comment('groups.id');
+            $table->foreign('domain_id')->references('id')->on('domains')->onDelete('cascade')->comment('domains.id');
+            $table->foreign('domain_group_id')->references('id')->on('domain_groups')->onDelete('cascade')->comment('domain_groups.id');
         });
     }
 
@@ -30,6 +30,6 @@ class CreateDomainGroupTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('domain_group');
+        Schema::dropIfExists('domain_group_mapping');
     }
 }

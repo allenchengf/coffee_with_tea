@@ -20,8 +20,8 @@ class Domain extends Model
         return $this->cdns()->getById($id);
     }
 
-    public function groups()
+    public function domainGroup()
     {
-        return $this->belongsToMany(Group::class);
+        return $this->belongsToMany(DomainGroup::class,'domain_group_mapping')->as('domain_group_mapping');
     }
 }
