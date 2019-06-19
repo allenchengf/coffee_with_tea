@@ -36,6 +36,8 @@ class InputError extends Enum
     const DOMAIN_VERIFICATION_ERROR = 4024;
     const THE_NETWORK_ID_EXIST = 4025;
     const THE_SCHEME_NAME_EXIST = 4026;
+    const PARAMETERS_IN_DIFFERENT_USERGROUP = 4027;
+    const GROUP_EXIST = 4028;
     /**
      * @var array
      */
@@ -68,5 +70,8 @@ class InputError extends Enum
         self::BATCH_INPUT_FORMAT_ERROR=> 'Batch input format error.',
         self::THE_NETWORK_ID_EXIST => 'The network id exist',
         self::THE_SCHEME_NAME_EXIST => 'The scheme name exist',
+        self::PARAMETERS_IN_DIFFERENT_USERGROUP => 'Parameters are in different user_group',
+        self::GROUP_EXIST => 'Group Exist',
+
     ];
 }

@@ -19,8 +19,8 @@ class DomainService
         $this->domainRepository = $domainRepository;
     }
 
-    public function getDomainbyId(int $domain_id)
+    public function getDomainById(int $domain_id)
     {
-        return $this->domainRepository->getByid($domain_id);
+        return $this->domainRepository->getById($domain_id);
     }
 }
