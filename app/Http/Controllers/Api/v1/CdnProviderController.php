@@ -118,4 +118,26 @@ class CdnProviderController extends Controller
         DB::commit();
         return $this->response();
     }
+
+    public function checkDefault(Request $request, CdnProvider $cdnProvider)
+    {
+        $request->merge([
+            'edited_by' => $this->getJWTPayload()['uuid'],
+        ]);
+
+        $cdnProvider = CdnProvider::with('domains')->where('id', $cdnProvider->id)->get();
+        $defaultInfo = $this->cdnProviderService->cdnDefaultInfo($cdnProvider);
+        return $this->response('', null, $defaultInfo);
+    }
+
+    public function changeDefault(Request $request, CdnProvider $cdnProvider)
+    {
+        $request->merge([
+            'edited_by' => $this->getJWTPayload()['uuid'],
+        ]);
+
+        $cdnProvider = CdnProvider::with('domains')->where('id', $cdnProvider->id)->get();
+        $this->cdnProviderService->changeDefaultCDN($cdnProvider);
+        return $this->response();
+    }
 }

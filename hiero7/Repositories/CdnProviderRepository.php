@@ -9,6 +9,7 @@
 namespace Hiero7\Repositories;
 
 
+use Hiero7\Models\Cdn;
 use Hiero7\Models\CdnProvider;
 
 class CdnProviderRepository
