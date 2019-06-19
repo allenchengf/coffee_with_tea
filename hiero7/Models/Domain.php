@@ -3,13 +3,21 @@
 namespace Hiero7\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Hiero7\Traits\DomainHelperTrait;
 
 class Domain extends Model
 {
+    use DomainHelperTrait;
+
     protected $table = 'domains';
     protected $primaryKey = 'id';
     protected $fillable = ['user_group_id', 'name', 'cname', 'label', 'edited_by'];
     protected $hidden = ['created_at', 'updated_at'];
+
+    public function getCnameAttribute($value)
+    {
+        return $this->formateDomainCname($value);
+    }
 
     public function cdns()
     {
