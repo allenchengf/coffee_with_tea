@@ -10,6 +10,7 @@ namespace Hiero7\Services;
 
 
 use App\Events\CdnWasBatchEdited;
+use App\Events\CdnWasEdited;
 use Hiero7\Enums\InternalError;
 use Hiero7\Models\Cdn;
 use Hiero7\Models\Domain;
@@ -72,7 +73,27 @@ class CdnProviderService
     {
         $domainId = $cdnProvider->pluck('cdns')->flatten()->pluck('domain_id')->all();
         if (!empty($domainId)){
-            $this->cdnProviderRepository->changeDefaultCDN($domainId);
+            foreach ($domainId as $k => $v){
+                $domain = Domain::where('id',$v)->first();
+                $default = Cdn::where('domain_id',$v)->get()->pluck('default')->flatten()->all();
+                if (in_array(0,$default)){
+                    DB::beginTransaction();
+                    $oldDefault = Cdn::where('domain_id', $v)->where('default', 1)->first();
+                    $newDefault = Cdn::where('domain_id', $v)->where('default', 0)->first();
+
+                    $oldDefault->update(['default'=>0]);
+                    $newDefault->update(['default'=>1, 'provider_record_id'=>$oldDefault->provider_record_id]);
+
+                    $editedDnsProviderRecordResult = event(new CdnWasEdited($domain, $newDefault));
+                    if (!is_null($editedDnsProviderRecordResult[0]['errorCode']) or array_key_exists('errors',
+                            $editedDnsProviderRecordResult[0])) {
+                        DB::rollback();
+                        return $this->setStatusCode(409)->response('please contact the admin', InternalError::INTERNAL_ERROR,
+                            []);
+                    }
+                    DB::commit();
+                }
+            }
         }
     }
 }

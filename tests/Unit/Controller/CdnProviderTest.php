@@ -289,6 +289,16 @@ class CdnProviderTest extends TestCase
 
         $cdnProvider = $this->cdnProvider->find(1);
 
+        $this->dnsprovider->shouldReceive('editRecord')->withAnyArgs()
+            ->andReturn(["message" => "Success", "errorCode" => null, "data" => [
+                "record" => [
+                    "id" => "426278576",
+                    "name" => "hiero7.test1.com",
+                    "value" => "cCnPjg.com.",
+                    "status" => "enable",
+                    "weight" => null,
+                ]]]);
+
         $response = $this->controller->changeDefault($request, $cdnProvider);
         $this->assertEquals(200, $response->status());
     }

@@ -27,18 +27,4 @@ class CdnProviderRepository
     {
         return $this->cdnProvider::where('user_group_id', $ugid)->orderBy('created_at', 'asc')->get();
     }
-
-    public function changeDefaultCDN(array $domainId)
-    {
-        foreach ($domainId as $k => $v){
-            $default = Cdn::where('domain_id',$v)->get()->pluck('default')->flatten()->all();
-            if (in_array(0,$default)){
-                $oldDefault = Cdn::where('domain_id', $v)->where('default', 1)->first();
-                $newDefault = Cdn::where('domain_id', $v)->where('default', 0)->first();
-
-                $oldDefault->update(['default'=>0]);
-                $newDefault->update(['default'=>1, 'provider_record_id'=>$oldDefault->provider_record_id]);
-            }
-        }
-    }
 }
