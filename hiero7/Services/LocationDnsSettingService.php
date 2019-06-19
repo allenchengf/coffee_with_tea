@@ -7,9 +7,12 @@ use Hiero7\Models\LocationNetwork;
 use Hiero7\Repositories\LineRepository;
 use Hiero7\Repositories\LocationDnsSettingRepository;
 use Hiero7\Services\DnsProviderService;
+use Hiero7\Traits\DomainHelperTrait;
 
 class LocationDnsSettingService
 {
+    use DomainHelperTrait;
+
     protected $locationDnsSettingRepository;
 
     public function __construct(LocationDnsSettingRepository $locationDnsSettingRepository, DnsProviderService $dnsProviderService,
@@ -55,7 +58,7 @@ class LocationDnsSettingService
         }
 
         $podResult = $this->dnsProviderService->editRecord([
-            'sub_domain' => $domain->cname,
+            'sub_domain' => $this->formateDomainCname($domain->cname).'.'.$domain->user_group_id,
             'value' => $cdnResult->cname,
             'record_id' => $this->getPodId($locationNetwork->id, $domain->id),
             'record_line' => $locationNetwork->network()->first()->name,
@@ -65,9 +68,8 @@ class LocationDnsSettingService
             return 'error';
         }
 
-        $result = $this->locationDnsSettingRepository->updateLocationDnsSetting($domain, $cdnResult, $locationNetwork, $data['edited_by']);
-
-        return $result;
+        return $this->locationDnsSettingRepository
+                    ->updateLocationDnsSetting($domain, $cdnResult, $locationNetwork, $data['edited_by']);
     }
 
     public function createSetting(array $data, Domain $domain, LocationNetwork $locationNetwork)
@@ -77,9 +79,9 @@ class LocationDnsSettingService
         if (!$cdnResult) {
             return false;
         }
-
+dd($this->formateDomainCname($domain->cname).'.'.$domain->user_group_id);
         $podResult = $this->dnsProviderService->createRecord([
-            'sub_domain' => $domain->cname.'.'.$domain->user_group_id,
+            'sub_domain' => $this->formateDomainCname($domain->cname).'.'.$domain->user_group_id,
             'value' => $cdnResult->cname,
             'record_line' => $locationNetwork->network()->first()->name,
         ]);
@@ -88,7 +90,8 @@ class LocationDnsSettingService
             return 'error';
         }
 
-        return $this->locationDnsSettingRepository->createSetting($domain, $cdnResult, $locationNetwork, $podResult['data']['record']['id'], $data['edited_by']);
+        return $this->locationDnsSettingRepository
+                    ->createSetting($domain, $cdnResult, $locationNetwork, $podResult['data']['record']['id'], $data['edited_by']);
     }
 
     public function updateToDefaultCdnId(Cdn $targetCdn, Cdn $defaultCdn)
@@ -99,15 +102,12 @@ class LocationDnsSettingService
     private function getDnsSettingAll($lineModel, Cdn $cdnModel, int $domainId, $locationSetting)
     {
         if (!$locationSetting) {
-            $lineModel->setAttribute('cdn', $this->getDefaultCdn($cdnModel, $domainId));
-
-            return $lineModel;
+            return $lineModel->setAttribute('cdn', $this->getDefaultCdn($cdnModel, $domainId));
         }
 
         $locationCdnResult = $locationSetting->cdn()->select('id', 'cdn_provider_id')->with('cdnProvider')->first();
-        $lineModel->setAttribute('cdn', $locationCdnResult);
 
-        return $lineModel;
+        return $lineModel->setAttribute('cdn', $locationCdnResult);;
     }
 
     private function checkCdnIfExist(array $data, Domain $domain)
