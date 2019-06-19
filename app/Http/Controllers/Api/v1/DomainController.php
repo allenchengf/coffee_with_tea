@@ -40,8 +40,8 @@ class DomainController extends Controller
         $user_group_id = $this->getUgid($request);
 
         $domains = !$request->has('user_group_id') && $user_group_id == 1 ?
-        $domain->with('cdns')->get() :
-        $domain->with('cdns')->where(compact('user_group_id'))->get();
+        $domain->with('cdns','domainGroup')->get() :
+        $domain->with('cdns','domainGroup')->where(compact('user_group_id'))->get();
 
         $domains->toArray();
         $dnsPodDomain = env('DNS_POD_DOMAIN');

@@ -41,7 +41,7 @@ class DomainRepository
         return $this->domain->where('name', $domain)->where('user_group_id', $user_group_id)->first();
     }
 
-    public function getByid(int $domain_id)
+    public function getById(int $domain_id)
     {
         return $this->domain->find($domain_id);
     }

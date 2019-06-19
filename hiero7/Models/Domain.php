@@ -28,4 +28,9 @@ class Domain extends Model
             ->withPivot('id', 'cname', 'default')
             ->withTimestamps();
     }
+    
+    public function domainGroup()
+    {
+        return $this->belongsToMany(DomainGroup::class,'domain_group_mapping')->as('domain_group_mapping');
+    }
 }
