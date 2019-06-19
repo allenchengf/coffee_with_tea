@@ -233,4 +233,63 @@ class CdnProviderTest extends TestCase
 
         $this->assertEquals(200, $response->status());
     }
+
+    /** @test */
+    public function check_default_cdn()
+    {
+        $loginUid = 1;
+        $user_group_id = 1;
+        $target_user_group_id = 1;
+        $request = new Request;
+        $this->seed();
+
+        $request->merge([
+            'user_group_id' => $target_user_group_id,
+            'edited_by' => "de20afd0-d009-4fbf-a3b0-2c3257915d10",
+            'name' => 'Cloudflare',
+            'ttl' => 600
+        ]);
+
+        $this->addUuidforPayload()
+            ->addUserGroupId($user_group_id)
+            ->setJwtTokenPayload($loginUid, $this->jwtPayload);
+
+        $this->controller->store($request, $this->cdnProvider);
+
+        $cdnProvider = $this->cdnProvider->find(1);
+
+        $response = $this->controller->checkDefault($request, $cdnProvider);
+        $data = json_decode($response->getContent(), true);
+        $this->assertEquals(200, $response->status());
+        $this->assertArrayHasKey('have_multi_cdn', $data['data']);
+        $this->assertArrayHasKey('only_default', $data['data']);
+    }
+
+    /** @test */
+    public function change_default_cdn()
+    {
+        $loginUid = 1;
+        $user_group_id = 1;
+        $target_user_group_id = 1;
+        $request = new Request;
+        $this->seed();
+
+        $request->merge([
+            'user_group_id' => $target_user_group_id,
+            'edited_by' => "de20afd0-d009-4fbf-a3b0-2c3257915d10",
+            'name' => 'Cloudflare',
+            'ttl' => 600
+        ]);
+
+        $this->addUuidforPayload()
+            ->addUserGroupId($user_group_id)
+            ->setJwtTokenPayload($loginUid, $this->jwtPayload);
+
+        $this->controller->store($request, $this->cdnProvider);
+
+        $cdnProvider = $this->cdnProvider->find(1);
+
+        $response = $this->controller->changeDefault($request, $cdnProvider);
+        $this->assertEquals(200, $response->status());
+    }
 }
