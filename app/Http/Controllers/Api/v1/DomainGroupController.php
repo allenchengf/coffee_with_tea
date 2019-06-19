@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Api\v1;
 
 use App\Http\Controllers\Controller;
-
+use App\Http\Requests\DomainGroupRequest;
 use Hiero7\Enums\InputError;
 use Hiero7\Enums\PermissionError;
 use Hiero7\Models\DomainGroup;
@@ -23,7 +23,7 @@ class DomainGroupController extends Controller
         $this->domainGroupService = $domainGroupService;
     }
 
-    public function index(Request $request)
+    public function index(DomainGroupRequest $request)
     {
         $this->formateRequestAndThis($request);
 
@@ -32,7 +32,7 @@ class DomainGroupController extends Controller
         return $this->response('', null, $result);
     }
 
-    public function create(Request $request)
+    public function create(DomainGroupRequest $request)
     {
         $request = $this->formateRequestAndThis($request);
 
@@ -54,7 +54,7 @@ class DomainGroupController extends Controller
         return $this->response($this->message, $this->error, $result);
     }
 
-    public function edit(Request $request, DomainGroup $domainGroup)
+    public function edit(DomainGroupRequest $request, DomainGroup $domainGroup)
     {
         $request = $this->formateRequestAndThis($request);
 
@@ -70,7 +70,7 @@ class DomainGroupController extends Controller
         return $this->response($this->message, $this->error, $result);
     }
 
-    public function destroy(Request $request, DomainGroup $domainGroup)
+    public function destroy(DomainGroupRequest $request, DomainGroup $domainGroup)
     {
         $this->formateRequestAndThis($request);
         $this->domainGroupService->destroy($domainGroup->id);
@@ -78,7 +78,7 @@ class DomainGroupController extends Controller
         return $this->response();
     }
 
-    private function formateRequestAndThis(Request $request)
+    private function formateRequestAndThis(DomainGroupRequest $request)
     {
         $this->userGroupId = $this->getUgid($request);
         $this->uuid = $this->getJWTPayload()['uuid'];

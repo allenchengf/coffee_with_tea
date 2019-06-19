@@ -79,7 +79,7 @@ class LocationDnsSettingService
         if (!$cdnResult) {
             return false;
         }
-dd($this->formateDomainCname($domain->cname).'.'.$domain->user_group_id);
+
         $podResult = $this->dnsProviderService->createRecord([
             'sub_domain' => $this->formateDomainCname($domain->cname).'.'.$domain->user_group_id,
             'value' => $cdnResult->cname,
