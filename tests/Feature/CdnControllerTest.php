@@ -139,7 +139,7 @@ class CdnControllerTest extends TestCase
 
         $this->put($this->getUri() . "/$cdn->id",
             array_merge($this->getRequestBody(), ['default' => true]))
-            ->assertStatus(500);
+            ->assertStatus(409);
         Event::assertDispatched(CdnWasEdited::class);
     }
 
@@ -188,7 +188,7 @@ class CdnControllerTest extends TestCase
         $this->setUri($cdn->domain_id);
 
         $this->put($this->getUri() . "/$cdn->id",
-            array_merge($this->getRequestBody(), ['default' => 1]))->assertStatus(500);
+            array_merge($this->getRequestBody(), ['default' => 1]))->assertStatus(409);
 
         Event::assertDispatched(CdnWasEdited::class);
     }
