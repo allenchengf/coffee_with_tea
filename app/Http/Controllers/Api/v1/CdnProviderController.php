@@ -101,8 +101,9 @@ class CdnProviderController extends Controller
             $cdnProvider->update(['status' => $status, 'edited_by' => $request->get('edited_by')]);
             $cdn = Cdn::where('cdn_provider_id', $cdnProvider->id)->with('locationDnsSetting')->get();
             foreach ($cdn as $k => $v) {
+                $default = Cdn::where('domain_id',$v['domain_id'])->get()->pluck('default')->flatten()->all();
                 $check = Cdn::where('provider_record_id',$v['provider_record_id'])->where('default', 1)->where('cdn_provider_id', $cdnProvider->id)->get();
-                if(count($check) > 0){
+                if (!in_array(0,$default) && count($check) > 0){
                     $recordList[] = $v['provider_record_id'];
                     if (isset($v['locationDnsSetting']['provider_record_id'])) {
                         $recordList[] = $v['locationDnsSetting']['provider_record_id'];
