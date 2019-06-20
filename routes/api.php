@@ -57,4 +57,11 @@ Route::group(['middleware' => ['api'], 'namespace' => 'Api\v1', 'prefix' => 'v1'
         Route::patch('{cdn_provider}/status', 'CdnProviderController@changeStatus')->name('cdn_providers.status');
         Route::get('{cdn_provider}/check', 'CdnProviderController@checkDefault')->name('cdn_providers.check');
     });
+
+    Route::group(['prefix' => 'groups'], function(){
+        Route::get('', 'DomainGroupController@index')->name('groups.index');
+        Route::post('', 'DomainGroupController@create')->name('groups.create');
+        Route::put('{domainGroup}', 'DomainGroupController@edit')->name('groups.edit');
+        Route::delete('{domainGroup}', 'DomainGroupController@destroy')->name('groups.destroy');
+    });
 });

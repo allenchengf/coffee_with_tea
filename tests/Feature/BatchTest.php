@@ -7,6 +7,7 @@ use Illuminate\Foundation\Testing\DatabaseMigrations;
 use Tests\TestCase;
 use Hiero7\Services\DnsProviderService;
 use Faker\Factory as Faker;
+use Hiero7\Models\CdnProvider;
 
 class BatchTest extends TestCase
 {
@@ -20,9 +21,11 @@ class BatchTest extends TestCase
     protected function setUp()
     {
         parent::setUp();
-        $this->user = array("uuid" => \Illuminate\Support\Str::uuid(), "user_group_id" => 3);
+        $this->user = array("uuid" => \Illuminate\Support\Str::uuid(), "user_group_id" => 1);
         $this->dnsprovider =  $this->app->make('Hiero7\Services\DnsProviderService');
         $this->batchService = $this->app->make('Hiero7\Services\BatchService');
+
+        $this->seed('CdnProviderSeeder');
     }
 
     public function tearDown()
@@ -40,11 +43,10 @@ class BatchTest extends TestCase
         for($i=0;$i<100;$i++){
             $domain = $faker->unique()->domainName;
             $this->domains[] = [
-                'name' => $domain,
+                'name' => 'justin'.$domain,
                 'cdns'  => [[
-                    "name"=> $faker->unique()->name,
-                    "cname"=> $domain.".".$faker->unique()->domainName,
-                    "ttl"=> $faker->unique()->numberBetween($min = env("CDN_TTL"), $max = 604800)
+                    "name"=> "Cloudflare",
+                    "cname"=> $faker->unique()->domainName,
                 ]],
             ];
         }
