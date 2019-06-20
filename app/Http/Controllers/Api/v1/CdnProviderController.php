@@ -103,7 +103,8 @@ class CdnProviderController extends Controller
             foreach ($cdn as $k => $v) {
                 $default = Cdn::where('domain_id',$v['domain_id'])->get()->pluck('default')->flatten()->all();
                 $check = Cdn::where('provider_record_id',$v['provider_record_id'])->where('default', 1)->where('cdn_provider_id', $cdnProvider->id)->get();
-                if (!in_array(0,$default) && count($check) > 0){
+//                if (!in_array(0,$default) && count($check) > 0){
+                if (count($check) > 0){
                     $recordList[] = $v['provider_record_id'];
                     if (isset($v['locationDnsSetting']['provider_record_id'])) {
                         $recordList[] = $v['locationDnsSetting']['provider_record_id'];
@@ -111,6 +112,7 @@ class CdnProviderController extends Controller
                 }
             }
             $recordList = array_filter($recordList);
+
             if (!empty($recordList)) {
                 $BatchEditedDnsProviderRecordResult = $this->cdnProviderService->updateDnsProviderStatus($recordList,
                     $status);
