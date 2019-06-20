@@ -2,8 +2,7 @@
 
 namespace Hiero7\Repositories;
 
-use Hiero7\Models\DomainGroup;
-
+use Hiero7\Models\{DomainGroup,DomainGroupMapping};
 class DomainGroupRepository
 {
     protected $domainGroupModel;
@@ -13,13 +12,18 @@ class DomainGroupRepository
         $this->domainGroupModel = $domainGroupModel;
     }
 
-    public function index(int $userGroupId)
+    public function indexByUserGroup(int $userGroupId)
     {
         if($userGroupId == 1){
             return  $this->domainGroupModel->with('domains')->get();
         }
 
         return $this->domainGroupModel->with('domains')->where('user_group_id',$userGroupId)->get();
+    }
+
+    public function indexByDomainGroupId(int $domainGroupId)
+    {
+        return $this->domainGroupModel->where('id',$domainGroupId)->with('domains')->first();
     }
 /**
  * Create function
@@ -57,6 +61,12 @@ class DomainGroupRepository
     public function destroy(int $domainGroupId)
     {
         return $this->domainGroupModel->find($domainGroupId)->delete();
+        
+    }
+
+    public function destroyByDomainId(int $domainGroupId,int $domainId)
+    {
+        return DomainGroupMapping::where('domain_group_id',$domainGroupId)->where('domain_id',$domainId)->delete();
         
     }
 }

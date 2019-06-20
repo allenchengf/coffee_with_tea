@@ -17,25 +17,53 @@ class DomainGroupService
 
     public function index(int $userGroupId)
     {
-        $groupLists = $this->domainGroupRepository->index($userGroupId);
+        $groupLists = $this->domainGroupRepository->indexByUserGroup($userGroupId);
 
         $groupLists = $groupLists->each(function ($item, $key) {
-            if($item->domains()->first() == null){
+            $domainModel = $item->domains()->first();
+
+            if( $domainModel== null){
                 return false;
             }
-            $cdn = $item->domains()->first()->cdns()->where('default',1)->first()->cdnProvider()->first();
+
+            $cdn = $domainModel->cdns()->where('default',1)->first()->cdnProvider()->first();
             $item->setAttribute('default_cdn_name',$cdn->name);
         });
 
         return $groupLists;
     }
-
-    public function domainLists($userGroupId)
+/**
+ * 取得 DomainGroup 和 Domain 的關聯。在各自從 Domain 找 Cdn，再找 Cdn Provider 的名字。
+ *
+ * @param integer $domainGroup
+ * @return void
+ */
+    public function indexByDomainGroupId(int $domainGroup)
     {
-        $exist = $this->domainGroupRepository->index($userGroupId);
+        $groupLists = $this->domainGroupRepository->indexByDomainGroupId($domainGroup);
+        $domainCollection = $groupLists['domains'];
 
-        return ;
+        $domainCollection = $domainCollection->each(function ($item,$key){
+            $cdnCollection = $item->cdns()->get();
+            
+            if($cdnCollection == null){
+                return false;
+            }
+
+            $cdnCollection = $cdnCollection->each(function ($item,$key){
+                if($item->cdnProvider()->get() == null){
+                    return false;
+                }
+
+                $cdnName = $item->cdnProvider()->get(['name']);
+                $item->setAttribute('cdn_provider',$cdnName[0]);
+            });
+            $item->setAttribute('cdn',$cdnCollection);
+        });
+
+        return $domainCollection;
     }
+
 /**
  * Create Group function
  *  
@@ -72,5 +100,10 @@ class DomainGroupService
     public function destroy(int $domainGroupId)
     {
         return $this->domainGroupRepository->destroy($domainGroupId);
+    }
+
+    public function destroyByDomainId(int $domainGroupId,int $domainId)
+    {
+        return $this->domainGroupRepository->destroyByDomainId($domainGroupId,$domainId);
     }
 }

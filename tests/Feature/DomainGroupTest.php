@@ -55,7 +55,7 @@ class DomainGroupTest extends TestCase
     {
         $body =[
             "name"=> "Group3",
-            "default_cdn_id"=>"2",
+            "default_cdn_provider_id"=>2,
             "label"=> "LabelForGroup3"
         ];
         $response = $this->call('PUT', $this->uri.'/1' ,$body);
