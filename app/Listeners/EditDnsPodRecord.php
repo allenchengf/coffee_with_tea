@@ -26,7 +26,7 @@ class EditDnsPodRecord
     public function handle($event)
     {
 
-        return $this->dnsProviderService->editRecord([
+        $response = $this->dnsProviderService->editRecord([
             'record_id' => $event->cdn->provider_record_id,
             'sub_domain' => $event->domain->cname . "." . $event->domain->user_group_id,
             'record_type' => "CNAME",
@@ -35,5 +35,8 @@ class EditDnsPodRecord
             'ttl' => $event->cdn->cdnProvider->ttl,
             'status' => $event->cdn->default && $event->cdn->cdnProvider->status,
         ]);
+        return $this->dnsProviderService->checkAPIOutput($response);
+        
+
     }
 }
