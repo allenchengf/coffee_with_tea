@@ -41,7 +41,7 @@ class DomainRequest extends FormRequest
                         new DomainValidationRule,
                         'unique:domains,name',
                     ],
-                    'cname' => 'nullable|string|unique:domains,cname',
+                    'cname' => 'nullable|string',
                     'label' => 'nullable|string',
                 ];
                 break;
@@ -51,11 +51,6 @@ class DomainRequest extends FormRequest
                         'nullable',
                         'string',
                         new DomainValidationRule,
-                        Rule::unique('domains')->ignore($this->domain->id),
-                    ],
-                    'cname' => [
-                        'nullable',
-                        'string',
                         Rule::unique('domains')->ignore($this->domain->id),
                     ],
                     'label' => 'nullable|string',
