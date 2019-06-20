@@ -16,7 +16,7 @@ class Domain extends Model
 
     public function getCnameAttribute($value)
     {
-        return $this->formateDomainCname($value);
+        return $this->formatDomainCname($value);
     }
 
     public function cdns()
