@@ -88,11 +88,13 @@ class CdnProviderService
                     $newDefault->update(['default'=>1, 'provider_record_id'=>$oldDefault->provider_record_id]);
 
                     $editedDnsProviderRecordResult = event(new CdnWasEdited($domain, $newDefault));
-                    if (!is_null($editedDnsProviderRecordResult[0]['errorCode']) or array_key_exists('errors',
-                            $editedDnsProviderRecordResult[0])) {
+                    if (!is_null($editedDnsProviderRecordResult[0]['errorCode'])) {
                         DB::rollback();
-                        return $this->setStatusCode(409)->response('please contact the admin', InternalError::INTERNAL_ERROR,
-                            []);
+                        return response()->json([
+                            'message' => 'please contact the admin', InternalError::INTERNAL_ERROR,
+                            'errorCode' => null,
+                            'data' => [],
+                        ])->setStatusCode(409);
                     }
                     DB::commit();
                 }
