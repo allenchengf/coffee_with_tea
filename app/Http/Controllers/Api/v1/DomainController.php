@@ -21,6 +21,7 @@ class DomainController extends Controller
     public function getDomainById(Domain $domain)
     {
         $domain->cdns;
+        $domain->domainGroup;
         $domain->toArray;
         $dnsPodDomain = env('DNS_POD_DOMAIN');
         return $this->response('', null, compact('domain', 'dnsPodDomain'));
@@ -40,8 +41,8 @@ class DomainController extends Controller
         $user_group_id = $this->getUgid($request);
 
         $domains = !$request->has('user_group_id') && $user_group_id == 1 ?
-        $domain->with('cdns','domainGroup')->get() :
-        $domain->with('cdns','domainGroup')->where(compact('user_group_id'))->get();
+        $domain->with('cdns', 'domainGroup')->get() :
+        $domain->with('cdns', 'domainGroup')->where(compact('user_group_id'))->get();
 
         $domains->toArray();
         $dnsPodDomain = env('DNS_POD_DOMAIN');

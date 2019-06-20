@@ -19,23 +19,33 @@ class CdnRepository
     {
         try {
             $row = [
-                "domain_id"=>$id,
-                "name"=>$info["name"],
-                "cname"=>$info["cname"],
-                "edited_by"=>$user["uuid"],
-                "ttl"=>$info["ttl"],
-                "provider_record_id"=>$info["provider_record_id"],
-                "created_at" =>  \Carbon\Carbon::now(),
-                "updated_at" => \Carbon\Carbon::now(),
-                "default" => $info["default"],
+                "domain_id"          => $id,
+                "cdn_provider_id"    => $info["cdn_provider_id"],
+                "provider_record_id" => $info["provider_record_id"],
+                "cname"              => $info["cname"],
+                "edited_by"          => $user["uuid"],
+                "default"            => $info["default"],
+                "created_at"         => \Carbon\Carbon::now(),
             ];
-            $collection = collect($row);
-            $filtered = $collection->only(['domain_id', 'name']);
-            return $this->cdn->updateOrInsertGetId($filtered->all(), $collection->except(['created_at'])->all());
+            return $this->cdn->store($row);
         } catch (\Exception $e) {
             if ($e->getCode() == '23000')
                 return new \Exception(DbError::getDescription(DbError::DUPLICATE_ENTRY), DbError::DUPLICATE_ENTRY);  
             return $e;
         }
+    }
+    
+
+    public function getWhere(array $conditions = null)
+    {
+        $select = $this->cdn;
+
+        if (is_array($conditions)) {
+            foreach ($conditions as $k => $v){
+                $select = $select->where($k, $v);
+            }
+        }
+
+        return $select->get();
     }
 }
