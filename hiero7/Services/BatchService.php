@@ -3,9 +3,12 @@
 namespace Hiero7\Services;
 use Hiero7\Repositories\{CdnRepository, DomainRepository, CdnProviderRepository};
 use Hiero7\Services\DnsProviderService;
+use Hiero7\Traits\DomainHelperTrait;
 use DB;
 
 class BatchService{
+
+    use DomainHelperTrait;
 
     protected $cdnRepository;
     protected $domainRepository;
@@ -58,7 +61,7 @@ class BatchService{
             }
 
             // 查詢 cdns.domain_id 是否存在 ? 不存在才打 POD，代表 POD 的 default 尚未存在
-            $cdns = $this->cdnRepository->getWhere(['domain_id' => $domain_id, 'default' => 1]);
+            $cdns = $this->cdnRepository->getWhere(['domain_id' => $domain_id]);
             $isFirstCdn = count($cdns) == 0 ? true : false;
 
             // 取此權限全部 cdn_providers
@@ -89,10 +92,9 @@ class BatchService{
                     
                     // 若為第一次新增 cdn 時打 POD
                     if ($isFirstCdn) {
-                        $isFirstCdn = false;
                         $dnsPodResponse = $this->dnsProviderService->createRecord(
                             [
-                                'sub_domain' => $domain["name"].'.'.$domain_user_group_id,
+                                'sub_domain' => $this->formatDomainCname($domain["name"]).'.'.$domain_user_group_id,
                                 'value'      => $cdn["cname"],
                                 'ttl'        => $cdn["ttl"],
                                 'status'     => true
@@ -102,6 +104,8 @@ class BatchService{
                         // 成功打 POD 後，改寫 cdn 欄位值
                         $cdn["default"] = 1;
                         $cdn["provider_record_id"] = $dnsPodResponse['data']['record']['id'];
+
+                        $isFirstCdn = false;
                     }
                     
                     // 新增 cdn

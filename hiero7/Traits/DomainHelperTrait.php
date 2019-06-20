@@ -12,7 +12,7 @@ trait DomainHelperTrait
         return preg_match("/^(?!:\/\/)([a-zA-Z0-9-_]+\.)*[a-zA-Z0-9][a-zA-Z0-9-_]+\.[a-zA-Z]{2,11}?$/", $domain);
     }
 
-    public function formateDomainCname(string $cname)
+    public function formatDomainCname(string $cname)
     {
         if(env('SCHEME')==1){
             return preg_replace("/[[:punct:]]/i",'',$cname);
