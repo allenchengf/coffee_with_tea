@@ -261,7 +261,6 @@ class DomainTest extends TestCase
 
         $data = json_decode($response->getContent(), true);
         $this->assertEquals($inputData['name'], $data['data']['name']);
-        $this->assertEquals($inputData['cname'], $data['data']['cname']);
     }
 
     /**
