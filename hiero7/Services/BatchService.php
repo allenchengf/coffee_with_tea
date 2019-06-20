@@ -94,7 +94,7 @@ class BatchService{
                     if ($isFirstCdn) {
                         $dnsPodResponse = $this->dnsProviderService->createRecord(
                             [
-                                'sub_domain' => $this->formatDomainCname($domain["name"].'.'.$domain_user_group_id),
+                                'sub_domain' => $this->formatDomainCname($domain["name"]).'.'.$domain_user_group_id,
                                 'value'      => $cdn["cname"],
                                 'ttl'        => $cdn["ttl"],
                                 'status'     => true
