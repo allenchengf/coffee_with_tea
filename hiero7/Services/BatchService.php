@@ -45,7 +45,7 @@ class BatchService{
                 $result = $this->domainRepository->getDomainIdIfExist($domain["name"], $user["user_group_id"]);
 
                 // domain 不存在且本次新增失敗
-                if (! $result->exists()) {
+                if (is_null($result) || ! $result->exists()) {
                     $errors[$domain["name"]] = [$e->getMessage()];
                     continue;
                 }
