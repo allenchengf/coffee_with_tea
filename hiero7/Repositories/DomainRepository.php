@@ -20,7 +20,7 @@ class DomainRepository
                 [
                     "user_group_id" => $user["user_group_id"],
                     "name" => $info["name"],
-                    "cname" => $info["name"],
+                    "cname" => $info["cname"],
                     "edited_by" => $user["uuid"],
                     "created_at" => \Carbon\Carbon::now(),
                 ]
