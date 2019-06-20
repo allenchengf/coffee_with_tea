@@ -76,7 +76,9 @@ class CdnProviderService
             foreach ($domainId as $k => $v){
                 $domain = Domain::where('id',$v)->first();
                 $default = Cdn::where('domain_id',$v)->get()->pluck('default')->flatten()->all();
-                if (in_array(0,$default)){
+                $check = Cdn::where('domain_id',$v)->where('default', 1)->where('cdn_provider_id', $cdnProvider[0]->id)->get();
+
+                if (in_array(0,$default) && count($check) > 0){
                     DB::beginTransaction();
                     $oldDefault = Cdn::where('domain_id', $v)->where('default', 1)->first();
                     $newDefault = Cdn::where('domain_id', $v)->where('default', 0)->first();
