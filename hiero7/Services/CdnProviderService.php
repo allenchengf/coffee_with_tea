@@ -88,7 +88,7 @@ class CdnProviderService
                     $newDefault->update(['default'=>1, 'provider_record_id'=>$oldDefault->provider_record_id]);
 
                     $editedDnsProviderRecordResult = event(new CdnWasEdited($domain, $newDefault));
-                    if (!is_null($editedDnsProviderRecordResult[0]['errorCode'])) {
+                    if (!$editedDnsProviderRecordResult) {
                         DB::rollback();
                         return response()->json([
                             'message' => 'please contact the admin', InternalError::INTERNAL_ERROR,
