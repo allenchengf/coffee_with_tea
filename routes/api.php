@@ -50,10 +50,19 @@ Route::group(['middleware' => ['api'], 'namespace' => 'Api\v1', 'prefix' => 'v1'
         Route::delete('{scheme}', 'SchemeController@destroy')->name('schemes.destroy');
     });
 
-    Route::group(['middleware' => ['auth.user.module','internal.group'],  'prefix' => 'cdn_providers'], function () {
+    Route::group(['middleware' => ['auth.user.module'],  'prefix' => 'cdn_providers'], function () {
         Route::get('', 'CdnProviderController@index')->name('cdn_providers.index');
         Route::post('', 'CdnProviderController@store')->name('cdn_providers.store');
         Route::patch('{cdn_provider}', 'CdnProviderController@update')->name('cdn_providers.update');
         Route::patch('{cdn_provider}/status', 'CdnProviderController@changeStatus')->name('cdn_providers.status');
+        Route::get('{cdn_provider}/check', 'CdnProviderController@checkDefault')->name('cdn_providers.check');
+        Route::patch('{cdn_provider}/change', 'CdnProviderController@changeDefault')->name('cdn_providers.change');
+    });
+
+    Route::group(['prefix' => 'groups'], function(){
+        Route::get('', 'DomainGroupController@index')->name('groups.index');
+        Route::post('', 'DomainGroupController@create')->name('groups.create');
+        Route::put('{domainGroup}', 'DomainGroupController@edit')->name('groups.edit');
+        Route::delete('{domainGroup}', 'DomainGroupController@destroy')->name('groups.destroy');
     });
 });

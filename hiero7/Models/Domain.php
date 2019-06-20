@@ -19,4 +19,9 @@ class Domain extends Model
     {
         return $this->cdns()->getById($id);
     }
+
+    public function domainGroup()
+    {
+        return $this->belongsToMany(DomainGroup::class,'domain_group_mapping')->as('domain_group_mapping');
+    }
 }

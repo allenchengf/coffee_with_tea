@@ -41,7 +41,7 @@ class DomainPermission
         if (gettype($request->domain) === 'object') {
             $domain = $request->domain;
         } else {
-            $domain = $this->domainService->getDomainbyId((int) $request->domain);
+            $domain = $this->domainService->getDomainById((int) $request->domain);
         }
 
         if (($payload['user_group_id'] == 1) || empty($domain) || ($payload['user_group_id'] == $domain->user_group_id)) {
