@@ -2,6 +2,7 @@
 
 namespace App\Listeners;
 
+use App\Jobs\DeleteDnsPodRecord as DeleteJob;
 use Hiero7\Services\DnsProviderService;
 use Hiero7\Traits\OperationLogTrait;
 
@@ -9,11 +10,12 @@ class DeleteDnsPodRecord
 {
     use OperationLogTrait;
 
-    protected $dnsProviderService, $locationDnsSettingService;
+    protected $dnsProviderService, $deleteErrorCount;
 
     public function __construct(DnsProviderService $dnsProviderService)
     {
         $this->dnsProviderService = $dnsProviderService;
+        $this->deleteErrorCount = true;
     }
 
     /**
@@ -33,18 +35,17 @@ class DeleteDnsPodRecord
             $deletePodRecord = $this->dnsProviderService->deleteRecord([
                 'record_id' => $value->provider_record_id,
             ]);
-            if ($this->checkDeleteRecord($deletePodRecord)) {
+            if ($this->dnsProviderService->checkAPIOutput($deletePodRecord)) {
                 $value->delete;
+            } else {
+                $this->deleteErrorCount = true;
             }
         }
-        return;
-    }
 
-    public function checkDeleteRecord($deleteInfo)
-    {
-        if (!is_null($deleteInfo['errorCode']) || array_key_exists('errors', $deleteInfo)) {
-            return false;
+        if ($this->deleteErrorCount) {
+            DeleteJob::dispatch()->delay(60);
         }
-        return true;
+
+        return;
     }
 }

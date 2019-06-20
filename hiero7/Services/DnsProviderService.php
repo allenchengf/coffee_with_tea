@@ -146,6 +146,14 @@ class DnsProviderService
             ->delete();
     }
 
+    public function checkAPIOutput(array $response): bool
+    {
+        if (!is_null($response['errorCode']) || array_key_exists('errors', $response)) {
+            return false;
+        }
+        return true;
+    }
+
     private function addLoginTokenAndDomainId(array $data)
     {
         $data['login_token'] = $data['login_token'] ?? $this->dnsPodLoginToken;

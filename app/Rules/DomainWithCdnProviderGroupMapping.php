@@ -26,7 +26,7 @@ class DomainWithCdnProviderGroupMapping implements Rule
     public function passes($attribute, $value)
     {
         $cdnProvider = CdnProvider::find($value);
-        return (bool) ($this->domain->user_group_id == $cdnProvider->user_group_id);
+        return (bool) is_null($cdnProvider) || ($this->domain->user_group_id == $cdnProvider->user_group_id) ;
     }
 
     /**

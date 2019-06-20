@@ -111,8 +111,7 @@ class CdnController extends Controller
 
             $editedDnsProviderRecordResult = event(new CdnWasEdited($domain, $cdn));
 
-            if (!is_null($editedDnsProviderRecordResult[0]['errorCode']) or array_key_exists('errors',
-                $editedDnsProviderRecordResult[0])) {
+            if (!$editedDnsProviderRecordResult) {
 
                 DB::rollback();
 
