@@ -15,7 +15,7 @@ class DeleteDnsPodRecord
     public function __construct(DnsProviderService $dnsProviderService)
     {
         $this->dnsProviderService = $dnsProviderService;
-        $this->deleteErrorCount = true;
+        $this->deleteErrorCount = false;
     }
 
     /**
@@ -43,7 +43,7 @@ class DeleteDnsPodRecord
         }
 
         if ($this->deleteErrorCount) {
-            DeleteJob::dispatch()->delay(60);
+            DeleteJob::dispatch()->delay(300);
         }
 
         return;

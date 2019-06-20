@@ -27,7 +27,7 @@ class DomainRepository
             );
         } catch (\Exception $e) {
             if ($e->getCode() == '23000') {
-                return new \Exception(DbError::getDescription(DbError::DUPLICATE_ENTRY), DbError::DUPLICATE_ENTRY);  
+                return new \Exception(DbError::getDescription(DbError::DUPLICATE_ENTRY), DbError::DUPLICATE_ENTRY);
             }
 
             return $e;
@@ -42,5 +42,10 @@ class DomainRepository
     public function getById(int $domain_id)
     {
         return $this->domain->find($domain_id);
+    }
+
+    public function checkUniqueCname(string $cname)
+    {
+        return $this->domain->where('cname', $cname)->exists();
     }
 }

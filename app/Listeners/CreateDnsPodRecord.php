@@ -28,7 +28,7 @@ class CreateDnsPodRecord
     {
 
         return $this->dnsProviderService->createRecord([
-            'sub_domain' => $event->domain->cname . "." . $event->domain->user_group_id,
+            'sub_domain' => $event->domain->cname,
             'value' => $event->cdn->cname,
             'ttl' => $event->cdn->cdnProvider->ttl,
             'status' => $event->cdn->default && $event->cdn->cdnProvider->status,
