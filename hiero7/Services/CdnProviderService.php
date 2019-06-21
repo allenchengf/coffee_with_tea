@@ -59,9 +59,10 @@ class CdnProviderService
             foreach ($domainId as $k => $v){
                 $domain = Domain::where('id',$v)->get()->pluck('name')->all();
                 $default = Cdn::where('domain_id',$v)->get()->pluck('default')->flatten()->all();
-                if (in_array(0,$default)){
+                $check = Cdn::where('domain_id',$v)->where('default', 1)->where('cdn_provider_id', $cdnProvider[0]->id)->get();
+                if (in_array(0,$default) && count($check) > 0){
                     array_push($situation['have_multi_cdn'],$domain[0]);
-                }else{
+                }else if(count($check) > 0){
                     array_push($situation['only_default'],$domain[0]);
                 }
             }
@@ -76,7 +77,9 @@ class CdnProviderService
             foreach ($domainId as $k => $v){
                 $domain = Domain::where('id',$v)->first();
                 $default = Cdn::where('domain_id',$v)->get()->pluck('default')->flatten()->all();
-                if (in_array(0,$default)){
+                $check = Cdn::where('domain_id',$v)->where('default', 1)->where('cdn_provider_id', $cdnProvider[0]->id)->get();
+
+                if (in_array(0,$default) && count($check) > 0){
                     DB::beginTransaction();
                     $oldDefault = Cdn::where('domain_id', $v)->where('default', 1)->first();
                     $newDefault = Cdn::where('domain_id', $v)->where('default', 0)->first();
@@ -85,11 +88,13 @@ class CdnProviderService
                     $newDefault->update(['default'=>1, 'provider_record_id'=>$oldDefault->provider_record_id]);
 
                     $editedDnsProviderRecordResult = event(new CdnWasEdited($domain, $newDefault));
-                    if (!is_null($editedDnsProviderRecordResult[0]['errorCode']) or array_key_exists('errors',
-                            $editedDnsProviderRecordResult[0])) {
+                    if (!$editedDnsProviderRecordResult) {
                         DB::rollback();
-                        return $this->setStatusCode(409)->response('please contact the admin', InternalError::INTERNAL_ERROR,
-                            []);
+                        return response()->json([
+                            'message' => 'please contact the admin', InternalError::INTERNAL_ERROR,
+                            'errorCode' => null,
+                            'data' => [],
+                        ])->setStatusCode(409);
                     }
                     DB::commit();
                 }
