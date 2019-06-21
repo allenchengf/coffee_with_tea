@@ -36,7 +36,7 @@ class CdnRepository
     }
     
 
-    public function getWhere(array $conditions = null)
+    public function getByWhere(array $conditions = null)
     {
         $select = $this->cdn;
 
