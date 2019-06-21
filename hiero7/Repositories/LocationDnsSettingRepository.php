@@ -22,31 +22,22 @@ class LocationDnsSettingRepository
         return $this->locationDnsSetting->with('cdn', 'location')->get();
     }
 
-    public function createSetting(Domain $domain, Cdn $cdn, LocationNetwork $locationNetwork, int $podId, string $editedBy)
+    public function createSetting(LocationNetwork $locationNetwork, int $podId, array $data)
     {
         return $this->locationDnsSetting->insert([
             'provider_record_id' => $podId,
             'location_networks_id' => $locationNetwork->id,
-            'cdn_id' => $cdn->id,
-            'domain_id' => $domain->id,
-            'edited_by' => $editedBy,
+            'cdn_id' => $data['cdn_id'],
+            'edited_by' => $data['edited_by'],
             'created_at' => \Carbon\Carbon::now(),
         ]);
     }
 
-    public function updateLocationDnsSetting(Domain $domain, Cdn $cdn, LocationNetwork $locationNetwork, string $editedBy)
+    public function updateLocationDnsSetting(LocationDnsSetting $locationDnsSetting, array $data)
     {
-        $result = $this->locationDnsSetting->where('location_networks_id', $locationNetwork->id)->where('domain_id', $domain->id)->update([
-            'cdn_id' => $cdn->id,
-            'edited_by' => $editedBy,
-        ]);
+        $result = $this->locationDnsSetting->where('id', $locationDnsSetting->id)->update([$data]);
 
         return $result ? true : false;
-    }
-
-    public function getPodId($locationNetworkId, $domainId)
-    {
-        return $this->locationDnsSetting->where('location_networks_id', $locationNetworkId)->where('domain_id', $domainId)->pluck('provider_record_id')->first();
     }
 
     public function updateToDefaultCdnId(int $targetCdnId, int $defaultCdnId)

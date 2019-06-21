@@ -21,10 +21,6 @@ class DomainGroupRepository
         return $this->domainGroupModel->with('domains')->where('user_group_id',$userGroupId)->get();
     }
 
-    public function indexByDomainGroupId(int $domainGroupId)
-    {
-        return $this->domainGroupModel->where('id',$domainGroupId)->with('domains')->first();
-    }
 /**
  * Create function
  *
@@ -48,6 +44,14 @@ class DomainGroupRepository
         
         $this->domainGroupModel->find($domainGroupId)->domains()->attach($request['domain_id']);
         return  true;      
+    }
+
+    public function createDomainToGroup(array $request,int $domainGroupId)
+    {
+        return DomainGroupMapping::crete([
+            'domain_id' => $request['domain_id'],
+            'domain_group_id' => $request['domain_group_id']
+        ]);
     }
 
     public function update(array $request,int $domainGroupId)

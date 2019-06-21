@@ -38,30 +38,13 @@ class DomainGroupService
  * @param integer $domainGroup
  * @return void
  */
-    public function indexByDomainGroupId(int $domainGroup)
+    public function indexByDomainGroupId(DomainGroup $domainGroup)
     {
-        $groupLists = $this->domainGroupRepository->indexByDomainGroupId($domainGroup);
-        $domainCollection = $groupLists['domains'];
+        foreach ($domainGroup->domains as $key => $domain) {
+            $domain->cdnProvider;
+        }
 
-        $domainCollection = $domainCollection->each(function ($item,$key){
-            $cdnCollection = $item->cdns()->get();
-            
-            if($cdnCollection == null){
-                return false;
-            }
-
-            $cdnCollection = $cdnCollection->each(function ($item,$key){
-                if($item->cdnProvider()->get() == null){
-                    return false;
-                }
-
-                $cdnName = $item->cdnProvider()->get(['name']);
-                $item->setAttribute('cdn_provider',$cdnName[0]);
-            });
-            $item->setAttribute('cdn',$cdnCollection);
-        });
-
-        return $domainCollection;
+        return $domainGroup;
     }
 
 /**
@@ -87,6 +70,20 @@ class DomainGroupService
         return 'done';
     }
 
+    public function createDomainToGroup(array $request,DomainGroup $domainGroup)
+    {
+        $checkDomainSetting = $this->compareDomain($domainGroup,$request['domain_id']);
+        
+        if(!$checkDomainSetting){
+            return false;
+        }
+        
+        $this->followSetting($request['domain_id']);
+        $result = $this->domainGroupRepository->createDomainToGroup($request,$domainGroup->id);
+
+        return $checkDomainSetting;
+    }
+
     public function edit(array $request,DomainGroup $domainGroup)
     {
         $domain = $domainGroup->domains()->first();
@@ -105,5 +102,21 @@ class DomainGroupService
     public function destroyByDomainId(int $domainGroupId,int $domainId)
     {
         return $this->domainGroupRepository->destroyByDomainId($domainGroupId,$domainId);
+    }
+
+    private function compareDomain(DomainGroup $domainGroup,$targetDomainId)
+    {
+        $controlDomain  = $domainGroup->domains; 
+        $controlCdnProvider = $controlDomain['0']->cdns()->get(['cdn_provider_id'])->pluck('cdn_provider_id');
+        $targetCdnProvider = Domain::find($targetDomainId)->cdns()->get(['cdn_provider_id'])->pluck('cdn_provider_id');
+
+        $different = $controlCdnProvider->diff($targetCdnProvider);
+
+        return !$different->isEmpty()? false: true;
+    }
+
+    private function followSetting()
+    {
+
     }
 }

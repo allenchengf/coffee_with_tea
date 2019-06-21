@@ -17,7 +17,6 @@ class LocationDnsSettingSeeder extends Seeder
                 'provider_record_id' => 123456,
                 'location_networks_id' => 1,
                 'cdn_id' => 1,
-                'domain_id' => 1,
                 'created_at' => \Carbon\Carbon::now(),
                 'updated_at' => \Carbon\Carbon::now(),
             ]];

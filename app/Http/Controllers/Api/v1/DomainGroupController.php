@@ -47,7 +47,7 @@ class DomainGroupController extends Controller
     {
         $this->formatRequestAndThis($request);
 
-        $result = $this->domainGroupService->indexByDomainGroupId($domainGroup->id);
+        $result = $this->domainGroupService->indexByDomainGroupId($domainGroup);
 
         return $this->response('', null, $result);
     }
@@ -71,6 +71,22 @@ class DomainGroupController extends Controller
             $result = $this->domainGroupService->index($this->userGroupId);
         }
 
+        return $this->response($this->message, $this->error, $result);
+    }
+
+    public function createDomainToGroup(DomainGroupRequest $request, DomainGroup $domainGroup)
+    {
+        $request = $this->formatRequestAndThis($request);
+
+        $result = $this->domainGroupService->createDomainToGroup($request->all(),$domainGroup);
+
+        if ($result == false) {
+            $this->error = InputError::DOMAIN_CDNPROVIDER_DIFFERENT;
+            $result = [];
+        }
+        
+        // $result = $this->domainGroupService->indexByDomainGroupId($domainGroup);
+        
         return $this->response($this->message, $this->error, $result);
     }
 
