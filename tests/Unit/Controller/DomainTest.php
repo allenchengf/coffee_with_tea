@@ -12,9 +12,7 @@ use Tests\TestCase;
 class DomainTest extends TestCase
 {
     use DatabaseMigrations;
-    protected $domainService;
-    protected $domain;
-    protected $jwtPayload = [];
+    protected $domainService, $domain, $jwtPayload = [];
 
     protected function setUp()
     {
@@ -23,7 +21,6 @@ class DomainTest extends TestCase
         app()->call([$this, 'service']);
         $this->controller = new DomainController($this->domainService);
         $this->domain = new Domain();
-
     }
 
     public function service(DomainService $domainService)
@@ -220,6 +217,7 @@ class DomainTest extends TestCase
 
         $request->merge([
             'name' => 'leo.test3.com',
+            'label' => 'LeoLabel',
         ]);
 
         $this->addUuidforPayload()
@@ -229,7 +227,6 @@ class DomainTest extends TestCase
         $response = $this->controller->create($request, $this->domain);
         $this->assertEquals(200, $response->status());
     }
-
 
     /**
      * Edit Domain
@@ -247,6 +244,7 @@ class DomainTest extends TestCase
             'domain' => $domain_id,
             'name' => 'rd.test99.com',
             'cname' => 'rd.test99.com',
+            'label' => 'LeoLabel',
         ];
 
         $request = new Request;
@@ -261,7 +259,6 @@ class DomainTest extends TestCase
 
         $data = json_decode($response->getContent(), true);
         $this->assertEquals($inputData['name'], $data['data']['name']);
-        $this->assertEquals($inputData['cname'], $data['data']['cname']);
     }
 
     /**

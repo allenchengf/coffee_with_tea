@@ -5,12 +5,15 @@ namespace App\Http\Controllers\Api\v1;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\DomainRequest as Request;
 use Hiero7\Models\Domain;
+use Hiero7\Services\DomainService;
 
 class DomainController extends Controller
 {
+    protected $domainService;
 
-    public function __construct()
+    public function __construct(DomainService $domainService)
     {
+        $this->domainService = $domainService;
     }
 
     /**
@@ -20,6 +23,8 @@ class DomainController extends Controller
      */
     public function getDomainById(Domain $domain)
     {
+        $domain->cdns;
+        $domain->domainGroup;
         $domain->toArray;
         $dnsPodDomain = env('DNS_POD_DOMAIN');
         return $this->response('', null, compact('domain', 'dnsPodDomain'));
@@ -39,8 +44,8 @@ class DomainController extends Controller
         $user_group_id = $this->getUgid($request);
 
         $domains = !$request->has('user_group_id') && $user_group_id == 1 ?
-        $domain->all() :
-        $domain->where(compact('user_group_id'))->get();
+        $domain->with('cdns', 'domainGroup')->get() :
+        $domain->with('cdns', 'domainGroup')->where(compact('user_group_id'))->get();
 
         $domains->toArray();
         $dnsPodDomain = env('DNS_POD_DOMAIN');
@@ -49,20 +54,28 @@ class DomainController extends Controller
 
     public function create(Request $request, Domain $domain)
     {
+        $ugid = $this->getUgid($request);
         $request->merge([
-            'edited_by' => $this->getJWTPayload()['uuid'],
-            'user_group_id' => $this->getUgid($request),
-            'cname' => $request->get('cname') ?? $request->get('name'),
+            'user_group_id' => $ugid,
+            'cname' => $this->domainService->cnameFormat($request, $ugid),
         ]);
 
-        $domain = $domain->create($request->all());
-        return $this->response('', null, $domain);
+        if (!$errorCode = $this->domainService->checkUniqueCname($request->cname)) {
+            $domain = $domain->create($request->all());
+        }
+
+        return $this->setStatusCode($errorCode ? 400 : 200)->response(
+            '',
+            $errorCode ? $errorCode : null,
+            $errorCode ? [] : $domain
+        );
+
     }
 
     public function editDomain(Request $request, Domain $domain)
     {
-        $request->merge(['edited_by' => $this->getJWTPayload()['uuid']]);
-        $domain->update($request->only('name', 'cname', 'edited_by'));
+        $domain->update($request->only('name', 'label', 'edited_by'));
+        $domain->cdns;
         return $this->response('', null, $domain);
     }
 
@@ -70,29 +83,5 @@ class DomainController extends Controller
     {
         $domain->delete();
         return $this->response();
-    }
-
-    /**
-     * get User Group ID function
-     *
-     * 判斷是否能夠取得 $request->user_group_id
-     *
-     * $request->user_group_id == null ，給予 login User_group_id
-     * 權限符合，給予 $request->user_group_id
-     * 權限不符合，給予 login User_group_id
-     *
-     * @param Request $request
-     * @return int
-     */
-    private function getUgid(Request $request)
-    {
-        $getPayload = $this->getJWTPayload();
-
-        $ugid = (($getPayload['user_group_id'] == $request->get('user_group_id')) ||
-            ($getPayload['user_group_id'] == 1)) ?
-        $request->get('user_group_id', $getPayload['user_group_id']) :
-        $getPayload['user_group_id'];
-
-        return $ugid;
     }
 }

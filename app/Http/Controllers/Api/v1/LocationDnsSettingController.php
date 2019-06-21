@@ -19,17 +19,18 @@ class LocationDnsSettingController extends Controller
         $this->locationDnsSettingService = $locationDnsSettingService;
     }
 
-    public function getAll($domain)
+    public function getAll(Domain $domain)
     {
-        $result = $this->locationDnsSettingService->getAll($domain);
-        return $this->setStatusCode($result ? 200 : 400)->response(
-            '',
-            '', $result
-        );
+        $result = $this->locationDnsSettingService->getAll($domain->id);
+        return $this->response('',null,$result);
+
     }
 
     public function editSetting(Request $request, Domain $domain, LocationNetwork $locationNetworkId)
     {
+        $message = '';
+        $error = '';
+        
         $request->merge([
             'edited_by' => $this->getJWTPayload()['uuid'],
         ]);
@@ -43,19 +44,12 @@ class LocationDnsSettingController extends Controller
         if ($result === 'error') {
             return $this->setStatusCode(409)->response('please contact the admin', InternalError::INTERNAL_ERROR, []);
         } elseif ($result == false) {
-            $message = InputError::getDescription(InputError::WRONG_PARAMETER_ERROR);
             $error = InputError::WRONG_PARAMETER_ERROR;
             $data = $result;
         } else {
-            $message = '';
-            $error = '';
             $data = $this->locationDnsSettingService->getAll($domain->id);
         }
 
-        return $this->setStatusCode($result ? 200 : 400)->response(
-            $message,
-            $error,
-            $data
-        );
+        return $this->response($message,$error,$data);
     }
 }

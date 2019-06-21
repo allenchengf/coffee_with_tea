@@ -32,15 +32,4 @@ class CdnWasCreated
 
         $this->cdn = $cdn;
     }
-
-    /**
-     * Get the channels the event should broadcast on.
-     *
-     * @return \Illuminate\Broadcasting\Channel|array
-     */
-    public function broadcastOn()
-    {
-        return [];
-        //return new PrivateChannel('channel-name');
-    }
 }

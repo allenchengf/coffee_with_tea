@@ -16,7 +16,11 @@ class TokenCheck
 
         try {
             $token = JWTAuth::getToken();
-            JWTAuth::getPayload($token)->toArray();
+            $payload = JWTAuth::getPayload($token)->toArray();
+
+            $request->merge([
+                'edited_by' => $payload['uuid'],
+            ]);
             return $next($request);
         } catch (TokenExpiredException $e) {
 

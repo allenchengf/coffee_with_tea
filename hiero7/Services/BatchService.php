@@ -1,77 +1,122 @@
 <?php
 
 namespace Hiero7\Services;
-use Hiero7\Repositories\CdnRepository;
-use Hiero7\Repositories\DomainRepository;
+use Hiero7\Repositories\{CdnRepository, DomainRepository, CdnProviderRepository};
 use Hiero7\Services\DnsProviderService;
+use Hiero7\Traits\DomainHelperTrait;
 use DB;
 
 class BatchService{
 
+    use DomainHelperTrait;
+
     protected $cdnRepository;
     protected $domainRepository;
     protected $dnsProviderService;
+    protected $cdnProviderRepository;
 
-    public function __construct(CdnRepository $cdnRepository,
+    public function __construct(
+        CdnRepository $cdnRepository,
         DnsProviderService $dnsProviderService,
-        DomainRepository $domainRepository){
+        DomainRepository $domainRepository,
+        CdnProviderRepository $cdnProviderRepository)
+    {
         $this->dnsProviderService = $dnsProviderService;
         $this->cdnRepository = $cdnRepository;
         $this->domainRepository = $domainRepository;
+        $this->cdnProviderRepository = $cdnProviderRepository;
     }
 
     public function store($domains, $user){
         $errors = [];
-        foreach($domains as $domain){
+        // 批次新增 domain 迴圈
+        foreach ($domains as $domain) {
             $error = [];
-            $domain_added = true;
-            $append = false;
             try {
-                $domain_id = $this->domainRepository->store($domain, $user);
-                if(!is_int($domain_id))
-                    throw $domain_id;
+                // domain.cname 為 domain.name 去 . 後再補尾綴 `.user_group_id`
+                $domain['cname'] = $this->formatDomainCname($domain["name"]).'.'.$user["user_group_id"];
+                // 新增 domain
+                $domainObj = $this->domainRepository->store($domain, $user);
+                if(is_null($domainObj))
+                    throw $domainObj;
+                // 新增 domain 成功
+                $domain_id = $domainObj->id;
             } catch (\Exception $e) {
-                $record = $this->domainRepository->getDomainIdIfExist($domain["name"], $user["user_group_id"]);
+                // 新增 domain 失敗，檢查 (unique) domains.name 已存在 ?
+                $result = $this->domainRepository->getDomainIdIfExist($domain["name"], $user["user_group_id"]);
 
-                if($record->exists()){
-                    $append = true;
-                    $domain_id = $record->id;
-                }else{
-                    array_push($error, $e->getMessage());
-                    $domain_added = false;
+                // domain 不存在且本次新增失敗
+                if (is_null($result) || ! $result->exists()) {
+                    $errors[$domain["name"]] = [$e->getMessage()];
+                    continue;
                 }
+
+                // domain 早已存在
+                $domain_id = $result->id;
             }
 
-            if($domain_added && isset($domain["cdns"])){
-                foreach($domain["cdns"] as $key => $cdn){
-                    DB::beginTransaction();
-                    try {
-                        $cdn["ttl"] = $cdn["ttl"]??env("CDN_TTL");
-                        $cdn["dns_provider_id"] = 0;
-                        if($key === 0 && !$append){
-                            $dnsPodResponse = $this->dnsProviderService->createRecord(
-                                [
-                                    'sub_domain' => $domain["name"],
-                                    'value'      => $cdn["cname"],
-                                    'ttl'        => $cdn["ttl"],
-                                    'status'     => true
-                                ]);
-                            if (!is_null($dnsPodResponse['errorCode']) || array_key_exists('errors',
-                                    $dnsPodResponse))
-                                throw new \Exception($dnsPodResponse['message']." for ".$cdn["cname"], $dnsPodResponse['errorCode']);
-                            $cdn["dns_provider_id"] = $dnsPodResponse['data']['record']['id'];
-                        }
-                        $cdn["default"] = !$append&&$key===0?1:0;
-                        $add_cdn_result = $this->cdnRepository->store($cdn, $domain_id, $user);
-                        if(!is_int($add_cdn_result))
-                            throw $add_cdn_result;
-                        
-                        DB::commit();
-                    } catch (\Exception $e) {
-                        DB::rollback();
-                        $error[] = $cdn["cname"]." ".$e->getMessage();
+            // 此 domain 無需新增 cdn
+            if (! isset($domain["cdns"]) || empty($domain["cdns"])) {
+                continue;
+            }
+
+            // 查詢 cdns.domain_id 是否存在 ? 不存在才打 POD，代表 POD 的 default 尚未存在
+            $cdns = $this->cdnRepository->getWhere(['domain_id' => $domain_id]);
+            $isFirstCdn = count($cdns) == 0 ? true : false;
+
+            // 取此權限全部 cdn_providers
+            $myCdnProviders = collect($this->cdnProviderRepository->getCdnProvider($user["user_group_id"])->toArray());
+
+            // 批次新增 cdn 迴圈
+            foreach ($domain["cdns"] as $key => $cdn) {
+
+                // 此次 $cdn['name'] 換 cdn_providers.id、ttl欄位
+                $myCdnProviders->each(function ($v) use (&$cdn) {
+                    if ($v['name'] == ucfirst(trim($cdn["name"]))) {
+                        $cdn["cdn_provider_id"] = $v['id'];
+                        $cdn["ttl"] = $v['ttl'];
+                        return false; // break;
                     }
-                }                
+                });
+
+                // 若此 $cdn['name'] 不匹配 cdn_providers.name
+                if(! isset($cdn["cdn_provider_id"])) {
+                    array_push($error, 'cdn_providers.name ' . $cdn["name"] . ' doesn\'t exist');
+                    continue;
+                }
+
+                try {
+                    // 若非為第一次新增 cdn 之欄位預設值
+                    $cdn["default"] = 0;
+                    $cdn["provider_record_id"] = 0;
+                    
+                    // 若為第一次新增 cdn 時打 POD
+                    if ($isFirstCdn) {
+                        $dnsPodResponse = $this->dnsProviderService->createRecord(
+                            [
+                                'sub_domain' => $domain['cname'],
+                                'value'      => $cdn["cname"],
+                                'ttl'        => $cdn["ttl"],
+                                'status'     => true
+                            ]);
+                        if (! is_null($dnsPodResponse['errorCode']) || array_key_exists('errors', $dnsPodResponse))
+                            throw new \Exception($dnsPodResponse['message']." for ".$cdn["cname"], $dnsPodResponse['errorCode']);
+                        // 成功打 POD 後，改寫 cdn 欄位值
+                        $cdn["default"] = 1;
+                        $cdn["provider_record_id"] = $dnsPodResponse['data']['record']['id'];
+
+                        $isFirstCdn = false;
+                    }
+                    
+                    // 新增 cdn
+                    $cdnId = $this->cdnRepository->store($cdn, $domain_id, $user);
+
+                    if (! is_int($cdnId))
+                        throw $cdnId;
+                    
+                } catch (\Exception $e) {
+                    $error[] = $cdn["cname"]." ".$e->getMessage();
+                }
             }
             $errors[$domain["name"]]=$error;
         }

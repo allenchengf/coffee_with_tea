@@ -21,6 +21,7 @@ class DnsProviderService
     public function getDomain(array $data = [])
     {
         $url = $this->dnsProviderApi . "/domains";
+
         $data['login_token'] = $data['login_token'] ?? $this->dnsPodLoginToken;
 
         return Curl::to($url)
@@ -44,8 +45,7 @@ class DnsProviderService
     {
         $url = $this->dnsProviderApi . "/records";
 
-        $data['login_token'] = $data['login_token'] ?? $this->dnsPodLoginToken;
-        $data['domain_id'] = $data['domain_id'] ?? env('DNS_POD_DOMAIN_ID');
+        $data = $this->addLoginTokenAndDomainId($data);
 
         return Curl::to($url)
             ->withData($data)
@@ -69,8 +69,7 @@ class DnsProviderService
     {
         $url = $this->dnsProviderApi . "/records/create";
 
-        $data['login_token'] = $data['login_token'] ?? $this->dnsPodLoginToken;
-        $data['domain_id'] = $data['domain_id'] ?? env('DNS_POD_DOMAIN_ID');
+        $data = $this->addLoginTokenAndDomainId($data);
         $data['record_type'] = $data['record_type'] ?? "CNAME";
         $data['record_line'] = $data['record_line'] ?? "默认";
 
@@ -97,10 +96,30 @@ class DnsProviderService
     {
         $url = $this->dnsProviderApi . "/records";
 
-        $data['login_token'] = $data['login_token'] ?? $this->dnsPodLoginToken;
-        $data['domain_id'] = $data['domain_id'] ?? env('DNS_POD_DOMAIN_ID');
+        $data = $this->addLoginTokenAndDomainId($data);
         $data['record_type'] = $data['record_type'] ?? "CNAME";
 
+        return Curl::to($url)
+            ->withData($data)
+            ->asJson(true)
+            ->put();
+    }
+
+    /**
+     * Batch Edit DNS Pod Record function
+     *
+     * @param string login_token DNS Pod LoginToken
+     * @param int domain_id 對應域名ID
+     * @param string record_id 記錄的ID，多個record_id用英文的逗號分割
+     * @param string change 要修改的字段，可選值為["sub_domain"，"record_type"，"area"，"value"，"ttl"，"status"] 中的一個
+     * @param string change_to 修改為，具體依賴改變字段，必填參數
+     * @param string value (可選) 要修改到的記錄值，僅當更改字段為 "record_type" 時為必填參數
+     */
+    public function batchEditRecord(array $data = [])
+    {
+        $url = $this->dnsProviderApi . "/records/batch";
+
+        $data = $this->addLoginTokenAndDomainId($data);
 
         return Curl::to($url)
             ->withData($data)
@@ -119,12 +138,26 @@ class DnsProviderService
     {
         $url = $this->dnsProviderApi . "/records";
 
-        $data['login_token'] = $data['login_token'] ?? $this->dnsPodLoginToken;
-        $data['domain_id'] = $data['domain_id'] ?? env('DNS_POD_DOMAIN_ID');
+        $data = $this->addLoginTokenAndDomainId($data);
 
         return Curl::to($url)
             ->withData($data)
             ->asJson(true)
             ->delete();
+    }
+
+    public function checkAPIOutput(array $response): bool
+    {
+        if (!is_null($response['errorCode']) || array_key_exists('errors', $response)) {
+            return false;
+        }
+        return true;
+    }
+
+    private function addLoginTokenAndDomainId(array $data)
+    {
+        $data['login_token'] = $data['login_token'] ?? $this->dnsPodLoginToken;
+        $data['domain_id'] = $data['domain_id'] ?? env('DNS_POD_DOMAIN_ID');
+        return $data;
     }
 }

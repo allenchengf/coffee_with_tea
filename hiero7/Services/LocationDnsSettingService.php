@@ -1,15 +1,18 @@
 <?php
 namespace Hiero7\Services;
 
-use Hiero7\Models\Cdn;
+use Hiero7\Models\{Cdn,CdnProvider};
 use Hiero7\Models\Domain;
 use Hiero7\Models\LocationNetwork;
 use Hiero7\Repositories\LineRepository;
 use Hiero7\Repositories\LocationDnsSettingRepository;
 use Hiero7\Services\DnsProviderService;
+use Hiero7\Traits\DomainHelperTrait;
 
 class LocationDnsSettingService
 {
+    use DomainHelperTrait;
+
     protected $locationDnsSettingRepository;
 
     public function __construct(LocationDnsSettingRepository $locationDnsSettingRepository, DnsProviderService $dnsProviderService,
@@ -65,9 +68,8 @@ class LocationDnsSettingService
             return 'error';
         }
 
-        $result = $this->locationDnsSettingRepository->updateLocationDnsSetting($domain, $cdnResult, $locationNetwork, $data['edited_by']);
-
-        return $result;
+        return $this->locationDnsSettingRepository
+                    ->updateLocationDnsSetting($domain, $cdnResult, $locationNetwork, $data['edited_by']);
     }
 
     public function createSetting(array $data, Domain $domain, LocationNetwork $locationNetwork)
@@ -88,32 +90,34 @@ class LocationDnsSettingService
             return 'error';
         }
 
-        return $this->locationDnsSettingRepository->createSetting($domain, $cdnResult, $locationNetwork, $podResult['data']['record']['id'], $data['edited_by']);
+        return $this->locationDnsSettingRepository
+                    ->createSetting($domain, $cdnResult, $locationNetwork, $podResult['data']['record']['id'], $data['edited_by']);
+    }
+
+    public function updateToDefaultCdnId(Cdn $targetCdn, Cdn $defaultCdn)
+    {
+        return $this->locationDnsSettingRepository->updateToDefaultCdnId($targetCdn->id, $defaultCdn->id);
     }
 
     private function getDnsSettingAll($lineModel, Cdn $cdnModel, int $domainId, $locationSetting)
     {
         if (!$locationSetting) {
-            $lineModel->setAttribute('cdn', $this->getDefaultCdn($cdnModel, $domainId));
-
-            return $lineModel;
+            return $lineModel->setAttribute('cdn', $this->getDefaultCdn($cdnModel, $domainId));
         }
 
-        $locationCdnResult = $locationSetting->cdn()->select('id', 'name')->first();
-        $lineModel->setAttribute('cdn', $locationCdnResult);
+        $locationCdnResult = $locationSetting->cdn()->select('id', 'cdn_provider_id')->with('cdnProvider')->first();
 
-        return $lineModel;
+        return $lineModel->setAttribute('cdn', $locationCdnResult);;
     }
 
     private function checkCdnIfExist(array $data, Domain $domain)
     {
         return $domain->cdns()->where('id', $data['cdn_id'])->first();
-
     }
 
     private function getDefaultCdn(Cdn $cdnModel, int $domainId)
     {
-        return $cdnModel->select('id', 'name')->where('domain_id', $domainId)->where('default', 1)->first();
+        return $cdnModel->select('id','cdn_provider_id')->where('domain_id', $domainId)->where('default', 1)->with('cdnProvider')->first();
     }
 
     private function getPodId(int $locationNetworkId, int $domainId)

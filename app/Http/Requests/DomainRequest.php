@@ -25,14 +25,14 @@ class DomainRequest extends FormRequest
     public function rules()
     {
         $prefix = 'domain';
-        $routeName = $this->route()->getName();
+        $routeName = $this->route()->getName() ?? $prefix;
         switch ($routeName) {
-            case ($routeName == "$prefix.get"):
+            case ($routeName === "$prefix.get"):
                 return [
                     'user_group_id' => 'nullable|integer',
                 ];
                 break;
-            case ($routeName == "$prefix.create"):
+            case ($routeName === "$prefix.create"):
                 return [
                     'user_group_id' => 'nullable|integer',
                     'name' => [
@@ -41,10 +41,11 @@ class DomainRequest extends FormRequest
                         new DomainValidationRule,
                         'unique:domains,name',
                     ],
-                    'cname' => 'nullable|string|unique:domains,cname',
+                    'cname' => 'nullable|string',
+                    'label' => 'nullable|string',
                 ];
                 break;
-            case ($routeName == "$prefix.edit"):
+            case ($routeName === "$prefix.edit"):
                 return [
                     'name' => [
                         'nullable',
@@ -52,11 +53,7 @@ class DomainRequest extends FormRequest
                         new DomainValidationRule,
                         Rule::unique('domains')->ignore($this->domain->id),
                     ],
-                    'cname' => [
-                        'nullable',
-                        'string',
-                        Rule::unique('domains')->ignore($this->domain->id),
-                    ],
+                    'label' => 'nullable|string',
                 ];
                 break;
             default:
