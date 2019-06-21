@@ -106,7 +106,7 @@ class CdnRequestTest extends TestCase
      * @test
      * @group cdnRequest
      */
-    public function updateCdnButDomainValidationFails()
+    public function updateCdnCnameButDomainValidationFails()
     {
         $cdn = factory(Cdn::class)->create();
 
@@ -114,10 +114,9 @@ class CdnRequestTest extends TestCase
 
         $requestParams = [
             'cname' => $this->faker->url,
-            'default' => false,
         ];
 
-        $this->put($this->getUri() . "/$cdn->id",
+        $this->patch($this->getUri() . "/$cdn->id/cname",
             $requestParams)->assertStatus(422)->assertJsonFragment(['cname' => ["Domain Verification Error."]]);
     }
 
@@ -132,7 +131,6 @@ class CdnRequestTest extends TestCase
         $this->setUri($cdn->domain_id);
 
         $requestParams = [
-            'cname' => $cdn->cname,
             'default' => false,
         ];
 
@@ -142,7 +140,7 @@ class CdnRequestTest extends TestCase
 
         $this->setUri($cdn->domain_id);
 
-        $this->put($this->getUri() . "/$cdn2->id",
+        $this->patch($this->getUri() . "/$cdn2->id/default",
             $requestParams)->assertStatus(403);
     }
 
@@ -165,25 +163,6 @@ class CdnRequestTest extends TestCase
 
         $this->post($this->getUri(),
             $requestParams)->assertStatus(422)->assertJsonFragment(['cname' => ["The cname has already been taken."]]);
-    }
-
-    /**
-     * @test
-     * @group cdnRequest
-     */
-    public function updateDefaultCdnToNonDefaultFails()
-    {
-        $cdn = factory(Cdn::class)->create(['default' => true]);
-
-        $this->setUri($cdn->domain_id);
-
-        $requestParams = [
-            'name' => $this->faker->name,
-            'cname' => $this->faker->domainName,
-            'default' => false,
-        ];
-
-        $this->put($this->getUri() . "/$cdn->id", $requestParams)->assertStatus(403);
     }
 
     /**

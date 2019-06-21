@@ -8,18 +8,21 @@
 
 namespace Hiero7\Services;
 
-use App\Http\Requests\CdnRequest;
-use Hiero7\Models\Domain;
+use App\Events\CdnWasEdited;
+use App\Http\Requests\CdnCreateRequest;
+use DB;
 use Hiero7\Models\Cdn;
+use Hiero7\Models\Domain;
+use Illuminate\Http\Request;
 
 class CdnService
 {
-    public function setEditedByOfRequest(CdnRequest $request, $uuid)
+    public function setEditedByOfRequest(Request $request, $uuid)
     {
         $request->merge(['edited_by' => $uuid]);
     }
 
-    public function formatRequest(CdnRequest $request, $uuid)
+    public function formatRequest(Request $request, $uuid)
     {
         $this->setEditedByOfRequest($request, $uuid);
 
@@ -27,7 +30,7 @@ class CdnService
             'cdn_provider_id',
             'cname',
             'edited_by',
-            'default'
+            'default',
         ]);
     }
 
@@ -46,5 +49,43 @@ class CdnService
         }
 
         return false;
+    }
+
+    /**
+     * changeDefaultRecord function
+     *
+     * @param Domain $domain
+     * @param Cdn $cdn 要改變 $cdn->default 的目標
+     * @param uuid $edited_by
+     * @return boolean
+     */
+    public function changeDefaultToTrue(Domain $domain, Cdn $cdn, $edited_by = null): bool
+    {
+        if ($this->checkCurrentCdnIsDefault($domain, $cdn)) {
+            return true;
+        }
+
+        DB::beginTransaction();
+
+        $getDefaultRecord = $this->getDefaultRecord($domain);
+        $getDefaultRecord->update(['default' => false]);
+
+        $cdn->update([
+            'provider_record_id' => $getDefaultRecord->provider_record_id,
+            'default' => true,
+            'edited_by' => $edited_by,
+        ]);
+
+        $cdn = $domain->getCdnById($cdn->id)->first();
+
+        if (!event(new CdnWasEdited($domain, $cdn))) {
+
+            DB::rollback();
+            return false;
+        }
+
+        DB::commit();
+
+        return true;
     }
 }
