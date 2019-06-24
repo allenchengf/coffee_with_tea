@@ -5,12 +5,15 @@ namespace App\Http\Controllers\Api\v1;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\DomainRequest as Request;
 use Hiero7\Models\Domain;
+use Hiero7\Services\DomainService;
 
 class DomainController extends Controller
 {
+    protected $domainService;
 
-    public function __construct()
+    public function __construct(DomainService $domainService)
     {
+        $this->domainService = $domainService;
     }
 
     /**
@@ -51,18 +54,27 @@ class DomainController extends Controller
 
     public function create(Request $request, Domain $domain)
     {
+        $ugid = $this->getUgid($request);
         $request->merge([
-            'user_group_id' => $this->getUgid($request),
-            'cname' => $request->get('cname') ?? $request->get('name'),
+            'user_group_id' => $ugid,
+            'cname' => $this->domainService->cnameFormat($request, $ugid),
         ]);
 
-        $domain = $domain->create($request->all());
-        return $this->response('', null, $domain);
+        if (!$errorCode = $this->domainService->checkUniqueCname($request->cname)) {
+            $domain = $domain->create($request->all());
+        }
+
+        return $this->setStatusCode($errorCode ? 400 : 200)->response(
+            '',
+            $errorCode ? $errorCode : null,
+            $errorCode ? [] : $domain
+        );
+
     }
 
     public function editDomain(Request $request, Domain $domain)
     {
-        $domain->update($request->only('name', 'cname', 'label', 'edited_by'));
+        $domain->update($request->only('name', 'label', 'edited_by'));
         $domain->cdns;
         return $this->response('', null, $domain);
     }
