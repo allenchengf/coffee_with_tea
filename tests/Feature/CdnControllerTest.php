@@ -138,36 +138,10 @@ class CdnControllerTest extends TestCase
 
         $this->setUri($cdn->domain_id);
 
-        $this->patch($this->getUri() . "/$cdn->id/default",
-            ['default' => true])
+        $this->patch($this->getUri() . "/$cdn->id/default", ['default' => true])
             ->assertStatus(409);
 
         Event::assertDispatched(CdnWasEdited::class);
-    }
-
-    /**
-     * @test
-     * @group cdn
-     */
-    public function editCdnEventNotDispatched()
-    {
-
-        Event::fake([CdnWasEdited::class]);
-
-        $this->setDaultCdn();
-
-        $cdn = factory(Cdn::class)->create([
-            'domain_id' => $this->domain->id,
-            'cdn_provider_id' => $this->cdnProvider->id,
-            'default' => false,
-        ]);
-
-        $this->setUri($cdn->domain_id);
-
-        $this->patch($this->getUri() . "/$cdn->id/default", ['default' => 0])
-            ->assertStatus(200);
-
-        Event::assertNotDispatched(CdnWasEdited::class);
     }
 
     /**
