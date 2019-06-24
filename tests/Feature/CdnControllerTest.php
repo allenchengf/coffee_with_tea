@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Events\CdnWasBatchEdited;
 use App\Events\CdnWasCreated;
 use App\Events\CdnWasDelete;
 use App\Events\CdnWasEdited;
@@ -137,36 +138,10 @@ class CdnControllerTest extends TestCase
 
         $this->setUri($cdn->domain_id);
 
-        $this->put($this->getUri() . "/$cdn->id",
-            array_merge($this->getRequestBody(), ['default' => true]))
+        $this->patch($this->getUri() . "/$cdn->id/default", ['default' => true])
             ->assertStatus(409);
+
         Event::assertDispatched(CdnWasEdited::class);
-    }
-
-    /**
-     * @test
-     * @group cdn
-     */
-    public function editCdnEventNotDispatched()
-    {
-
-        Event::fake([CdnWasEdited::class]);
-
-        $this->setDaultCdn();
-
-        $cdn = factory(Cdn::class)->create([
-            'domain_id' => $this->domain->id,
-            'cdn_provider_id' => $this->cdnProvider->id,
-            'default' => false,
-        ]);
-
-        $this->setUri($cdn->domain_id);
-
-        $this->put($this->getUri() . "/$cdn->id",
-            array_merge($this->getRequestBody(), ['default' => 0]))
-            ->assertStatus(200);
-
-        Event::assertNotDispatched(CdnWasEdited::class);
     }
 
     /**
@@ -187,10 +162,53 @@ class CdnControllerTest extends TestCase
 
         $this->setUri($cdn->domain_id);
 
-        $this->put($this->getUri() . "/$cdn->id",
-            array_merge($this->getRequestBody(), ['default' => 1]))->assertStatus(409);
+        $this->patch($this->getUri() . "/$cdn->id/default", ['default' => 1])
+            ->assertStatus(409);
 
         Event::assertDispatched(CdnWasEdited::class);
+    }
+
+    /**
+     * @test
+     * @group cdn
+     */
+    public function changeCnameNotEventDispatched()
+    {
+        Event::fake([CdnWasEdited::class]);
+        Event::fake([CdnWasBatchEdited::class]);
+
+        $this->setDaultCdn();
+
+        $cdn = factory(Cdn::class)->create([
+            'domain_id' => $this->domain->id,
+            'cdn_provider_id' => $this->cdnProvider->id,
+            'default' => false,
+        ]);
+
+        $this->setUri($cdn->domain_id);
+
+        $this->patch($this->getUri() . "/$cdn->id/cname", $this->getRequestBody())
+            ->assertStatus(200);
+        // Event::assertDispatched(CdnWasEdited::class);
+        Event::assertDispatched(CdnWasBatchEdited::class);
+    }
+
+    /**
+     * @test
+     * @group cdn
+     */
+    public function changeCnameAndEventDispatched()
+    {
+        Event::fake([CdnWasEdited::class]);
+        // Event::fake([CdnWasBatchEdited::class]);
+
+        $this->setDaultCdn();
+
+        $this->patch($this->getUri() . "/" . $this->defaultCdn->id . "/cname", $this->getRequestBody())
+            ->assertStatus(409);
+
+        Event::assertDispatched(CdnWasEdited::class);
+        // Event::assertDispatched(CdnWasBatchEdited::class);
     }
 
     /**
