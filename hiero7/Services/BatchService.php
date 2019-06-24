@@ -75,7 +75,7 @@ class BatchService{
                 }
 
                 // 新增 cdn
-                list($errorMessage, $isFirstCdn) = $this->storeCdn($domain, $domain_id, $cdn, $user, $isFirstCdn);
+                list($isFirstCdn, $errorMessage) = $this->storeCdn($domain, $domain_id, $cdn, $user, $isFirstCdn);
                 if (! is_null($errorMessage)) {
                     $error[] = $errorMessage;
                 }
@@ -143,7 +143,7 @@ class BatchService{
         } catch (\Exception $e) {
             $errorMessage = $cdn["cname"]." ".$e->getMessage();
         }
-        return $errorMessage;
+        return [$isFirstCdn, $errorMessage];
     }
 
 
@@ -159,9 +159,12 @@ class BatchService{
                     'ttl'        => $cdn["ttl"],
                     'status'     => $cdn["status"]
                 ]);
-            if (! is_null($dnsPodResponse['errorCode']) || ! is_null($dnsPodResponse['errors'])) {
+
+            $success = $this->dnsProviderService->checkAPIOutput($dnsPodResponse);
+            if (! $success) {
                 throw new \Exception($dnsPodResponse['message']." for ".$cdn["cname"], $dnsPodResponse['errorCode']);
             }
+            
             // 成功打 POD 後，改寫 cdn 欄位值
             $cdn["default"] = 1;
             $cdn["provider_record_id"] = $dnsPodResponse['data']['record']['id'];
