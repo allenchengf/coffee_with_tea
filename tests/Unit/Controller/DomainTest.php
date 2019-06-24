@@ -21,7 +21,6 @@ class DomainTest extends TestCase
         app()->call([$this, 'service']);
         $this->controller = new DomainController($this->domainService);
         $this->domain = new Domain();
-
     }
 
     public function service(DomainService $domainService)
@@ -228,7 +227,6 @@ class DomainTest extends TestCase
         $response = $this->controller->create($request, $this->domain);
         $this->assertEquals(200, $response->status());
     }
-
 
     /**
      * Edit Domain

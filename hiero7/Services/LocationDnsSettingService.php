@@ -49,7 +49,7 @@ class LocationDnsSettingService
     public function updateSetting(array $data,Domain $domain,Cdn $cdn, LocationDnsSetting $locationDnsSetting)
     {
         $podResult = $this->dnsProviderService->editRecord([
-            'sub_domain' => $this->formatDomainCname($domain->cname).'.'.$domain->user_group_id,
+            'sub_domain' => $domain->cname,
             'value' => $cdn->cname,
             'record_id' => $locationDnsSetting->provider_record_id,
             'record_line' => $locationDnsSetting->location()->first()->network()->first()->name,
@@ -66,7 +66,7 @@ class LocationDnsSettingService
     public function createSetting(array $data, Domain $domain,Cdn $cdn, LocationNetwork $locationNetwork)
     {
         $podResult = $this->dnsProviderService->createRecord([
-            'sub_domain' => $this->formatDomainCname($domain->cname).'.'.$domain->user_group_id,
+            'sub_domain' => $domain->cname,
             'value' => $cdn->cname,
             'record_line' => $locationNetwork->network()->first()->name,
         ]);
