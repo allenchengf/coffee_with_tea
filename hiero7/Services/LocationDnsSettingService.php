@@ -58,7 +58,7 @@ class LocationDnsSettingService
         }
 
         $podResult = $this->dnsProviderService->editRecord([
-            'sub_domain' => $this->formatDomainCname($domain->cname).'.'.$domain->user_group_id,
+            'sub_domain' => $domain->cname,
             'value' => $cdnResult->cname,
             'record_id' => $this->getPodId($locationNetwork->id, $domain->id),
             'record_line' => $locationNetwork->network()->first()->name,
@@ -81,7 +81,7 @@ class LocationDnsSettingService
         }
 
         $podResult = $this->dnsProviderService->createRecord([
-            'sub_domain' => $this->formatDomainCname($domain->cname).'.'.$domain->user_group_id,
+            'sub_domain' => $domain->cname,
             'value' => $cdnResult->cname,
             'record_line' => $locationNetwork->network()->first()->name,
         ]);

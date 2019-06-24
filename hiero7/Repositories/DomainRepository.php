@@ -20,14 +20,14 @@ class DomainRepository
                 [
                     "user_group_id" => $user["user_group_id"],
                     "name" => $info["name"],
-                    "cname" => $info["name"],
+                    "cname" => $info["cname"],
                     "edited_by" => $user["uuid"],
                     "created_at" => \Carbon\Carbon::now(),
                 ]
             );
         } catch (\Exception $e) {
             if ($e->getCode() == '23000') {
-                return new \Exception(DbError::getDescription(DbError::DUPLICATE_ENTRY), DbError::DUPLICATE_ENTRY);  
+                return new \Exception(DbError::getDescription(DbError::DUPLICATE_ENTRY), DbError::DUPLICATE_ENTRY);
             }
 
             return $e;
@@ -42,5 +42,10 @@ class DomainRepository
     public function getById(int $domain_id)
     {
         return $this->domain->find($domain_id);
+    }
+
+    public function checkUniqueCname(string $cname)
+    {
+        return $this->domain->where('cname', $cname)->exists();
     }
 }

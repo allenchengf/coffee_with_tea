@@ -33,25 +33,25 @@ class BatchService{
         foreach ($domains as $domain) {
             $error = [];
             try {
+                // domain.cname 為 domain.name 去 . 後再補尾綴 `.user_group_id`
+                $domain['cname'] = $this->formatDomainCname($domain["name"]).'.'.$user["user_group_id"];
                 // 新增 domain
                 $domainObj = $this->domainRepository->store($domain, $user);
                 if(is_null($domainObj))
                     throw $domainObj;
                 // 新增 domain 成功
-                $domain_user_group_id = $domainObj->user_group_id;
                 $domain_id = $domainObj->id;
             } catch (\Exception $e) {
                 // 新增 domain 失敗，檢查 (unique) domains.name 已存在 ?
                 $result = $this->domainRepository->getDomainIdIfExist($domain["name"], $user["user_group_id"]);
 
                 // domain 不存在且本次新增失敗
-                if (! $result->exists()) {
+                if (is_null($result) || ! $result->exists()) {
                     $errors[$domain["name"]] = [$e->getMessage()];
                     continue;
                 }
 
                 // domain 早已存在
-                $domain_user_group_id = $result->user_group_id;
                 $domain_id = $result->id;
             }
 
@@ -94,7 +94,7 @@ class BatchService{
                     if ($isFirstCdn) {
                         $dnsPodResponse = $this->dnsProviderService->createRecord(
                             [
-                                'sub_domain' => $this->formatDomainCname($domain["name"]).'.'.$domain_user_group_id,
+                                'sub_domain' => $domain['cname'],
                                 'value'      => $cdn["cname"],
                                 'ttl'        => $cdn["ttl"],
                                 'status'     => true
