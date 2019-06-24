@@ -4,7 +4,7 @@ namespace Hiero7\Services;
 
 use Hiero7\Repositories\DomainGroupRepository;
 use Hiero7\Models\DomainGroup;
-use Hiero7\Models\Domain;
+use Hiero7\Models\{Domain,LocationDnsSetting};
 
 class DomainGroupService
 {
@@ -115,8 +115,10 @@ class DomainGroupService
         return !$different->isEmpty()? false: true;
     }
 
-    private function followSetting()
+    private function followSetting(int $domainId)
     {
-
+        //變更 Default CDN 使用 Leo 給的
+        //變更 iRoute 設定
+        $getOriginDnsSetting = LocationDnsSetting::where('domain_id')->get();
     }
 }

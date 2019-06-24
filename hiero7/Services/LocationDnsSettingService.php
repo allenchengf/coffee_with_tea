@@ -56,7 +56,7 @@ class LocationDnsSettingService
         ]);
 
         if ($podResult['errorCode']) {
-            return 'error';
+            return false;
         }
 
         return $this->locationDnsSettingRepository

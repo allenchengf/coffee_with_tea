@@ -28,15 +28,7 @@ class DomainTableSeeder extends Seeder
                 'user_group_id' => 2,
                 'name' => 'rd.test2.com',
                 'cname' => 'rd.test2.com',
-            ], [
-                'user_group_id' => 3,
-                'name' => 'ops.test1.com',
-                'cname' => 'ops.test1.com',
-            ], [
-                'user_group_id' => 3,
-                'name' => 'ops.test2.com',
-                'cname' => 'ops.test2.com',
-            ],
+            ], 
         ];
 
         foreach ($data as $key => $value) {

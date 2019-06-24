@@ -51,9 +51,9 @@ class LocationDnsSettingController extends Controller
 
         if ($result == false) {
             return $this->setStatusCode(409)->response('please contact the admin', InternalError::INTERNAL_ERROR, []);
-        } else {
-            $data = $this->locationDnsSettingService->getAll($domain->id);
         }
+        
+        $data = $this->locationDnsSettingService->getAll($domain->id);
 
         return $this->response($message,$error,$data);
     }

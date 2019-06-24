@@ -35,7 +35,7 @@ class LocationDnsSettingRepository
 
     public function updateLocationDnsSetting(LocationDnsSetting $locationDnsSetting, array $data)
     {
-        $result = $this->locationDnsSetting->where('id', $locationDnsSetting->id)->update([$data]);
+        $result = $this->locationDnsSetting->where('id', $locationDnsSetting->id)->update($data);
 
         return $result ? true : false;
     }
