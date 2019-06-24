@@ -72,16 +72,16 @@ class DomainGroupService
 
     public function createDomainToGroup(array $request,DomainGroup $domainGroup)
     {
-        $checkDomainSetting = $this->compareDomain($domainGroup,$request['domain_id']);
+        $checkDomainCdnSetting = $this->compareDomainCdnSetting($domainGroup,$request['domain_id']);
         
-        if(!$checkDomainSetting){
+        if(!$checkDomainCdnSetting){
             return false;
         }
         
-        $this->followSetting($request['domain_id']);
-        $result = $this->domainGroupRepository->createDomainToGroup($request,$domainGroup->id);
+        $result1 = $this->followSetting($domainGroup,$request['domain_id']);
+        // $result = $this->domainGroupRepository->createDomainToGroup($request,$domainGroup->id);
 
-        return $checkDomainSetting;
+        return $result1;
     }
 
     public function edit(array $request,DomainGroup $domainGroup)
@@ -104,7 +104,7 @@ class DomainGroupService
         return $this->domainGroupRepository->destroyByDomainId($domainGroupId,$domainId);
     }
 
-    private function compareDomain(DomainGroup $domainGroup,$targetDomainId)
+    private function compareDomainCdnSetting(DomainGroup $domainGroup,$targetDomainId)
     {
         $controlDomain  = $domainGroup->domains; 
         $controlCdnProvider = $controlDomain['0']->cdns()->get(['cdn_provider_id'])->pluck('cdn_provider_id');
@@ -115,10 +115,12 @@ class DomainGroupService
         return !$different->isEmpty()? false: true;
     }
 
-    private function followSetting(int $domainId)
+    private function followSetting(DomainGroup $domainGroup,int $domainId)
     {
-        //變更 Default CDN 使用 Leo 給的
-        //變更 iRoute 設定
-        $getOriginDnsSetting = LocationDnsSetting::where('domain_id')->get();
+        //變更 Default CDN 使用 Leo 給的 (follow 原本的 CDN 設定)
+        //變更 iRoute 設定 ，先做
+        // dd($domainGroup->domains()->first()->cdns()->first()->locationDnsSetting);
+
+        return $getOriginDnsSetting = $domainGroup->domains()->first()->cdns()->first()->locationDnsSetting;
     }
 }
