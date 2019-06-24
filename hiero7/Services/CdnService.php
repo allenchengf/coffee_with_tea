@@ -8,8 +8,8 @@
 
 namespace Hiero7\Services;
 
+use App\Events\CdnWasBatchEdited;
 use App\Events\CdnWasEdited;
-use App\Http\Requests\CdnCreateRequest;
 use DB;
 use Hiero7\Models\Cdn;
 use Hiero7\Models\Domain;
@@ -87,5 +87,33 @@ class CdnService
         DB::commit();
 
         return true;
+    }
+
+    /**
+     * 修改 Dns Provider CNAME function
+     *
+     * @param Domain $domain
+     * @param Cdn $cdn
+     * @return boolean
+     */
+    public function changeDnsProviderCname(Domain $domain, Cdn $cdn): bool
+    {
+        if ($cdn->default) {
+            if (!event(new CdnWasEdited($domain, $cdn))) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /**
+     * 批次修改 Location DNS Setting 同個 $cdn->id 的 CNAME
+     *
+     * @param Cdn $cdn
+     */
+    public function batchChangeDnsCnameForLocationSetting(Cdn $cdn)
+    {
+        $dnsProviderIdArray = $cdn->getlocationDnsSettingDomainId($cdn->id)->toArray();
+        return event(new CdnWasBatchEdited($cdn->cname, $dnsProviderIdArray, 'value'));
     }
 }

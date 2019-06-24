@@ -46,7 +46,7 @@ class CdnUpdateRequest extends FormRequest
         switch ($routeName) {
             case ($routeName === "$prefix.default"):
                 return [
-                    'default' => 'required|integer|boolean',
+                    'default' => 'required|integer|boolean|accepted',
                 ];
                 break;
             case ($routeName === "$prefix.cname"):

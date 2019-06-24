@@ -4,7 +4,6 @@ namespace App\Http\Controllers\Api\v1;
 
 use App\Events\CdnWasCreated;
 use App\Events\CdnWasDelete;
-use App\Events\CdnWasEdited;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\CdnCreateRequest;
 use App\Http\Requests\CdnUpdateRequest;
@@ -91,15 +90,15 @@ class CdnController extends Controller
      */
     public function updateDefault(CdnUpdateRequest $request, Domain $domain, Cdn $cdn)
     {
-        $error = !$request->default ? true :
-        $this->cdnService->changeDefaultToTrue($domain, $cdn, $request->edited_by);
+        $error = $this->cdnService->changeDefaultToTrue($domain, $cdn, $request->edited_by);
 
-        return $this->setStatusCode($error ? 200 : 409)
-            ->response(
-                $error ? 'success' : 'please contact the admin',
-                $error ? null : InternalError::INTERNAL_ERROR,
-                $error ? $cdn : []
+        if (!$error) {
+            return $this->setStatusCode(409)->response(
+                'please contact the admin',
+                InternalError::INTERNAL_ERROR
             );
+        }
+        return $this->response('', null, $cdn);
     }
 
     /**
@@ -111,20 +110,18 @@ class CdnController extends Controller
      */
     public function updateCname(CdnUpdateRequest $request, Domain $domain, Cdn $cdn)
     {
-        $this->cdnService->setEditedByOfRequest($request, $this->getJWTPayload()['uuid']);
-        $data = $request->only(['edited_by', 'cname']);
-
         DB::beginTransaction();
 
-        $cdn->update($data);
+        $cdn->update($request->only('cname', 'edited_by'));
 
-        if ($cdn->default) {
-            if (!event(new CdnWasEdited($domain, $cdn))) {
-                DB::rollback();
+        if (!$this->cdnService->changeDnsProviderCname($domain, $cdn)) {
+            DB::rollback();
 
-                return $this->setStatusCode(409)->response('please contact the admin', InternalError::INTERNAL_ERROR, []);
-            }
+            return $this->setStatusCode(409)->response('please contact the admin', InternalError::INTERNAL_ERROR, []);
         }
+
+        $this->cdnService->batchChangeDnsCnameForLocationSetting($cdn);
+
         DB::commit();
 
         return $this->setStatusCode(200)->response('success', null, $cdn);

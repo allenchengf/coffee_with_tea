@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Events\CdnWasBatchEdited;
 use App\Events\CdnWasCreated;
 use App\Events\CdnWasDelete;
 use App\Events\CdnWasEdited;
@@ -200,6 +201,7 @@ class CdnControllerTest extends TestCase
     public function changeCnameNotEventDispatched()
     {
         Event::fake([CdnWasEdited::class]);
+        Event::fake([CdnWasBatchEdited::class]);
 
         $this->setDaultCdn();
 
@@ -213,6 +215,8 @@ class CdnControllerTest extends TestCase
 
         $this->patch($this->getUri() . "/$cdn->id/cname", $this->getRequestBody())
             ->assertStatus(200);
+        // Event::assertDispatched(CdnWasEdited::class);
+        Event::assertDispatched(CdnWasBatchEdited::class);
     }
 
     /**
@@ -222,6 +226,7 @@ class CdnControllerTest extends TestCase
     public function changeCnameAndEventDispatched()
     {
         Event::fake([CdnWasEdited::class]);
+        // Event::fake([CdnWasBatchEdited::class]);
 
         $this->setDaultCdn();
 
@@ -229,6 +234,7 @@ class CdnControllerTest extends TestCase
             ->assertStatus(409);
 
         Event::assertDispatched(CdnWasEdited::class);
+        // Event::assertDispatched(CdnWasBatchEdited::class);
     }
 
     /**
