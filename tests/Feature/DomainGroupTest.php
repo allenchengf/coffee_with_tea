@@ -5,7 +5,10 @@ namespace Tests\Feature;
 use Tests\TestCase;
 use Illuminate\Foundation\Testing\WithFaker;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\Artisan; 
+use Illuminate\Support\Facades\Artisan;
+use App\Http\Middleware\AuthUserModule;
+use App\Http\Middleware\DomainPermission;
+use App\Http\Middleware\TokenCheck; 
 
 class DomainGroupTest extends TestCase
 {
@@ -14,13 +17,11 @@ class DomainGroupTest extends TestCase
         parent::setUp();
 
         $this->withoutMiddleware([AuthUserModule::class, TokenCheck::class, DomainPermission::class]);
-
         Artisan::call('migrate');
         Artisan::call('db:seed');
 
         $this->uri = "/api/v1/groups";
         $this->login();
-
     }
 
     protected function tearDown()
