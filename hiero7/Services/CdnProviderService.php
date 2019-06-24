@@ -84,7 +84,6 @@ class CdnProviderService
             foreach ($domainId as $k => $v){
                 $domain = Domain::where('id',$v)->first();
                 $default = $this->getDefault($v);
-//                $default = Cdn::where('domain_id',$v)->get()->pluck('default')->flatten()->all();
                 $check = Cdn::where('domain_id',$v)->where('default', 1)->where('cdn_provider_id', $cdnProvider[0]->id)->get();
 
                 if (in_array(0,$default) && count($check) > 0){
