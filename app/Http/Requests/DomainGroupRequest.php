@@ -6,6 +6,7 @@ use Hiero7\Models\Domain;
 
 class DomainGroupRequest extends FormRequest
 {
+    protected $prefix = 'groups';
     /**
      * Determine if the user is authorized to make this request.
      *
@@ -13,7 +14,7 @@ class DomainGroupRequest extends FormRequest
      */
     public function authorize(Domain $domain)
     {
-        if ($this->method() == 'POST') {
+        if ($this->route()->getName() == "$this->prefix.create") {
             if (!$domain->find($this->domain_id)->domainGroup()->get()->isEmpty()) {
                 return false;
             }
@@ -28,22 +29,26 @@ class DomainGroupRequest extends FormRequest
      */
     public function rules()
     {
-        $prefix = 'groups';
         $routeName = $this->route()->getName();
 
         switch ($routeName) {
-            case ($routeName == "$prefix.create"):
+            case ($routeName == "$this->prefix.create"):
                 return [
                     "name" => "required|string",
                     "domain_id" => "required|integer",
                     "label" => "required|string",
                 ];
                 break;
-            case ($routeName == "$prefix.edit"):
+            case ($routeName == "$this->prefix.edit"):
                 return [
                     "name" => "required|string",
                     "default_cdn_provider_id" => "required|integer",
                     "label" => "required|string"
+                ];
+                break;
+            case ($routeName == "$this->prefix.createDomainToGroup"):
+                return [
+                    "domain_id" => "required|integer",
                 ];
                 break;
             default :

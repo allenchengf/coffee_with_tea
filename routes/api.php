@@ -1,14 +1,15 @@
 <?php
 
 Route::group(['middleware' => ['api'], 'namespace' => 'Api\v1', 'prefix' => 'v1'], function () {
-
     Route::group(['prefix' => 'domains'], function () {
         Route::get('', 'DomainController@getDomain')->name('domain.get');
         Route::middleware(['auth.user.module', 'domain.permission'])->group(function () {
             Route::post('', 'DomainController@create')->name('domain.create');
 
             Route::group(['prefix' => '/{domain}'], function () {
-                Route::resource('/cdn', 'CdnController', ['except' => ['create', 'show', 'edit']]);
+                Route::resource('/cdn', 'CdnController', ['only' => ['index', 'store', 'destroy']]);
+                Route::patch('cdn/{cdn}/default', 'CdnController@updateDefault')->name('cdn.default');
+                Route::patch('cdn/{cdn}/cname', 'CdnController@updateCname')->name('cdn.cname');
                 
                 //yuan
                 Route::group(['prefix' => '/iRouteCDN'], function () {

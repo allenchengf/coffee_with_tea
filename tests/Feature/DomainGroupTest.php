@@ -75,9 +75,18 @@ class DomainGroupTest extends TestCase
         $response->assertStatus(200);
     }
 
+    public function testCreateDomainToGroup()
+    {
+        $response = $this->call('POST', $this->uri.'/1');
+        $response->assertStatus(200);
+    }
+
     public function testDestroyByDomainId()
     {
-        $response = $this->call('DELETE', $this->uri.'/1/1');
+        $body =[
+            "domain_id"=> 2
+        ];
+        $response = $this->call('DELETE', $this->uri.'/1/1',$body);
         $response->assertStatus(200);
     }
 }

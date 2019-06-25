@@ -48,9 +48,9 @@ class DomainGroupRepository
 
     public function createDomainToGroup(array $request,int $domainGroupId)
     {
-        return DomainGroupMapping::crete([
+        return DomainGroupMapping::create([
             'domain_id' => $request['domain_id'],
-            'domain_group_id' => $request['domain_group_id']
+            'domain_group_id' => $domainGroupId
         ]);
     }
 

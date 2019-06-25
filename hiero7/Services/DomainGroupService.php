@@ -5,14 +5,18 @@ namespace Hiero7\Services;
 use Hiero7\Repositories\DomainGroupRepository;
 use Hiero7\Models\DomainGroup;
 use Hiero7\Models\{Domain,LocationDnsSetting};
+use Hiero7\Services\{CdnService,LocationDnsSettingService};
+use Illuminate\Database\Eloquent\Collection;
 
 class DomainGroupService
 {
     protected $domainGroupRepository;
 
-    public function __construct(DomainGroupRepository $domainGroupRepository)
+    public function __construct(DomainGroupRepository $domainGroupRepository,CdnService $cdnService,LocationDnsSettingService $locationDnsSettingService)
     {
         $this->domainGroupRepository = $domainGroupRepository;
+        $this->cdnService = $cdnService;
+        $this->locationDnsSettingService = $locationDnsSettingService;
     }
 
     public function index(int $userGroupId)
@@ -78,10 +82,17 @@ class DomainGroupService
             return false;
         }
         
-        $result1 = $this->followSetting($domainGroup,$request['domain_id']);
-        // $result = $this->domainGroupRepository->createDomainToGroup($request,$domainGroup->id);
+        if(!$this->changeCdnDefault($domainGroup,$request)){
+            return false;
+        }
 
-        return $result1;
+        if(!$this->changeIrouteSetting($domainGroup,$request)){
+            return false;
+        }
+        
+        $result = $this->domainGroupRepository->createDomainToGroup($request,$domainGroup->id);
+
+        return $result;
     }
 
     public function edit(array $request,DomainGroup $domainGroup)
@@ -115,12 +126,57 @@ class DomainGroupService
         return !$different->isEmpty()? false: true;
     }
 
-    private function followSetting(DomainGroup $domainGroup,int $domainId)
+    private function changeCdnDefault(DomainGroup $domainGroup,array $request)
     {
-        //變更 Default CDN 使用 Leo 給的 (follow 原本的 CDN 設定)
-        //變更 iRoute 設定 ，先做
-        // dd($domainGroup->domains()->first()->cdns()->first()->locationDnsSetting);
+        $domain = Domain::find($request['domain_id']);
+        $getDomainCdnProviderId = $domainGroup->domains()->first()->cdns()->where('default',1)->first()->cdn_provider_id;
+        $targetCdn = $domain->cdns->where('cdn_provider_id',$getDomainCdnProviderId)->first();
 
-        return $getOriginDnsSetting = $domainGroup->domains()->first()->cdns()->first()->locationDnsSetting;
+        return $this->cdnService->changeDefaultToTrue($domain,$targetCdn, $request['edited_by']);
+    }
+
+    private function changeIrouteSetting(DomainGroup $domainGroup,array $request)
+    {
+
+        $originCdnSetting = $domainGroup->domains()->first()->cdns()->get();
+        $originIrouteSetting= $this->getLocationSetting($originCdnSetting);
+
+        $targetDomain = Domain::find($request['domain_id']);
+
+        foreach($originIrouteSetting as $iRouteSetting){
+            $targetCdn = $targetDomain->cdns()->where('cdn_provider_id',$iRouteSetting->cdn_provider_id)->first();
+            $existLocationDnsSetting = $this->checkExist($targetDomain,$iRouteSetting->location_networks_id);
+
+            $data = ['cdn_id' =>$targetCdn->id ,
+                    'edited_by'=> $request['edited_by']];
+
+            if(!collect($existLocationDnsSetting)->isEmpty()){
+                $result = $this->locationDnsSettingService->updateSetting($data,$targetDomain,$targetCdn, $existLocationDnsSetting);
+            } else {
+                $result = $this->locationDnsSettingService->createSetting($data, $targetDomain, $targetCdn ,$iRouteSetting->location);
+            }
+        }
+
+        return $result;
+    }
+
+    private function getLocationSetting(Collection $cdnSetting)
+    {
+        $targetIrouteSetting = [];
+
+        foreach($cdnSetting as $cdns ){
+            $originLocationDnsSetting = $cdns->locationDnsSetting;
+            if(!$originLocationDnsSetting->isEmpty()){
+                $originLocationDnsSetting[0]->cdn_provider_id = $cdns->cdn_provider_id;
+                array_push($targetIrouteSetting,$originLocationDnsSetting[0]);
+            }
+        }
+        return $targetIrouteSetting;
+    }
+
+    private function checkExist(Domain $domain,int $locationNetworkId)
+    {
+        $cdnId = $domain->cdns->pluck('id');
+        return LocationDnsSetting::where('location_networks_id',$locationNetworkId)->whereIn('cdn_id',$cdnId)->first();
     }
 }
