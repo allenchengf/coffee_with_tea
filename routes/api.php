@@ -59,10 +59,15 @@ Route::group(['middleware' => ['api'], 'namespace' => 'Api\v1', 'prefix' => 'v1'
         Route::get('{cdn_provider}/check', 'CdnProviderController@checkDefault')->name('cdn_providers.check');
     });
 
-    Route::group(['prefix' => 'groups'], function(){
+    Route::group(['middleware' => ['auth.user.module'], 'prefix' => 'groups'], function(){
         Route::get('', 'DomainGroupController@index')->name('groups.index');
+        Route::get('{domainGroup}/iRoute', 'DomainGroupController@indexGroupIroute')->name('groups.indexGroupIroute');
+        Route::get('{domainGroup}', 'DomainGroupController@indexByDomainGroupId')->name('groups.indexByDomainGroupId');
         Route::post('', 'DomainGroupController@create')->name('groups.create');
+        Route::post('{domainGroup}', 'DomainGroupController@createDomainToGroup')->name('groups.createDomainToGroup');
         Route::put('{domainGroup}', 'DomainGroupController@edit')->name('groups.edit');
+        Route::put('{domainGroup}/defaultCdn', 'DomainGroupController@changeDefaultCdn')->name('groups.changeDefaultCdn');
         Route::delete('{domainGroup}', 'DomainGroupController@destroy')->name('groups.destroy');
+        Route::delete('{domainGroup}/domain/{domain}', 'DomainGroupController@destroyByDomainId')->name('groups.destroyByDomainId');
     });
 });

@@ -54,7 +54,7 @@ class CdnService
     /**
      * changeDefaultRecord function
      *
-     * @param Domain $domain
+     * @param Domain $domain 目標
      * @param Cdn $cdn 要改變 $cdn->default 的目標
      * @param uuid $edited_by
      * @return boolean

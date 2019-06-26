@@ -49,7 +49,7 @@ class CdnControllerTest extends TestCase
 
         $this->cdn = Cdn::inRandomOrder()->first();
 
-        $this->cdnProvider = CdnProvider::inRandomOrder()->first();
+        $this->cdnProvider = CdnProvider::where('user_group_id', 1)->inRandomOrder()->first();
 
         $this->uri = "/api/v1/domains/{$this->domain->id}/cdn";
 
@@ -228,8 +228,7 @@ class CdnControllerTest extends TestCase
         ]);
 
         factory(LocationDnsSetting::class)->create([
-            'domain_id' => $this->defaultCdn->domain_id,
-            'cdn_id' => $cdn->id,
+            'cdn_id' => $cdn->id
         ]);
 
         $this->setUri($cdn->domain_id);
@@ -246,7 +245,8 @@ class CdnControllerTest extends TestCase
             'default' => true,
         ]);
 
-        $this->cdnProvider = CdnProvider::whereNotIn('id', [$this->defaultCdn->cdn_provider_id])
+        $this->cdnProvider = CdnProvider::where('user_group_id', 1)
+            ->whereNotIn('id', [$this->defaultCdn->cdn_provider_id])
             ->inRandomOrder()
             ->first();
     }

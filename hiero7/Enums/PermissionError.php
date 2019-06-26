@@ -17,6 +17,8 @@ class PermissionError extends Enum
     const TOKEN_EXPIRED = 3005;
     const TOKEN_INVALID = 3006;
     const TOKEN_ERROR = 3007;
+    const CANT_DELETE_LAST_DOMAIN = 3008;
+    const THIS_DOMAIN_DONT_HAVE_ANY_CDN = 3009;
 
     /**
      * @var array
@@ -30,5 +32,7 @@ class PermissionError extends Enum
         self::TOKEN_EXPIRED => "Token Expired.",
         self::TOKEN_INVALID => "Token invalid.",
         self::TOKEN_ERROR => "Token error occurred.",
+        self::CANT_DELETE_LAST_DOMAIN => "Can't Delete Last Domain At Group.",
+        self::THIS_DOMAIN_DONT_HAVE_ANY_CDN => "This Domain don't have any CDN.",
     ];
 }

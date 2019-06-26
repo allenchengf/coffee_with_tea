@@ -51,7 +51,7 @@ class DomainTest extends TestCase
     {
         $loginUid = 1;
         $user_group_id = 1;
-        $target_user_group_id = 3;
+        $target_user_group_id = 2;
         $request = new Request;
 
         $request->merge([

@@ -8,7 +8,7 @@ use Hiero7\Enums\InternalError;
 use Hiero7\Services\LocationDnsSettingService;
 use Illuminate\Http\Request;
 use Hiero7\Models\LocationNetwork;
-use Hiero7\Models\Domain;
+use Hiero7\Models\{Domain,Cdn,LocationDnsSetting};
 
 class LocationDnsSettingController extends Controller
 {
@@ -35,21 +35,38 @@ class LocationDnsSettingController extends Controller
             'edited_by' => $this->getJWTPayload()['uuid'],
         ]);
 
-        if ($locationNetworkId->locationDnsSetting()->where('domain_id',$domain->id)->first()) {
-            $result = $this->locationDnsSettingService->updateSetting($request->all(), $domain, $locationNetworkId);
-        } else {
-            $result = $this->locationDnsSettingService->createSetting($request->all(), $domain, $locationNetworkId);
+        $cdnModel = $this->checkCdnIfExist($request->get('cdn_id'), $domain);
+
+        if (!$cdnModel) {
+            return $this->response($message,InputError::WRONG_PARAMETER_ERROR,'');
         }
 
-        if ($result === 'error') {
-            return $this->setStatusCode(409)->response('please contact the admin', InternalError::INTERNAL_ERROR, []);
-        } elseif ($result == false) {
-            $error = InputError::WRONG_PARAMETER_ERROR;
-            $data = $result;
+        $existLocationDnsSetting = $this->checkExist($domain, $locationNetworkId);
+
+        if (!collect($existLocationDnsSetting)->isEmpty()) {
+            $result = $this->locationDnsSettingService->updateSetting($request->all(),$domain,$cdnModel, $existLocationDnsSetting);
         } else {
-            $data = $this->locationDnsSettingService->getAll($domain->id);
+            $result = $this->locationDnsSettingService->createSetting($request->all(), $domain, $cdnModel ,$locationNetworkId);
         }
+
+        if ($result == false) {
+            return $this->setStatusCode(409)->response('please contact the admin', InternalError::INTERNAL_ERROR, []);
+        }
+        
+        $data = $this->locationDnsSettingService->getAll($domain->id);
 
         return $this->response($message,$error,$data);
+    }
+
+    private function checkCdnIfExist(int $cdnId, Domain $domain)
+    {
+        return $domain->cdns()->where('id', $cdnId)->first();
+    }
+
+    private function checkExist(Domain $domain,LocationNetwork $locationNetwork)
+    {
+        $cdnId = Cdn::where('domain_id',$domain->id)->pluck('id');
+        return LocationDnsSetting::where('location_networks_id',$locationNetwork->id)->whereIn('cdn_id',$cdnId)->first();
+        
     }
 }
