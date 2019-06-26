@@ -58,16 +58,23 @@ class CdnProviderService
         if (!empty($domainId)){
             foreach ($domainId as $k => $v){
                 $domain = Domain::where('id',$v)->get()->pluck('name')->all();
-                $default = Cdn::where('domain_id',$v)->get()->pluck('default')->flatten()->all();
+                $default = $this->getDefault($v);
                 $check = Cdn::where('domain_id',$v)->where('default', 1)->where('cdn_provider_id', $cdnProvider[0]->id)->get();
-                if (in_array(0,$default) && count($check) > 0){
-                    array_push($situation['have_multi_cdn'],$domain[0]);
-                }else if(count($check) > 0){
-                    array_push($situation['only_default'],$domain[0]);
+                if(count($check) > 0){
+                    if (in_array(0,$default)){
+                        array_push($situation['have_multi_cdn'],$domain[0]);
+                    }else{
+                        array_push($situation['only_default'],$domain[0]);
+                    }
                 }
             }
         }
         return $situation;
+    }
+
+    public function getDefault($domainId)
+    {
+        return $this->cdnProviderRepository->getDefault($domainId);
     }
 
     public function changeDefaultCDN($cdnProvider)
@@ -76,7 +83,7 @@ class CdnProviderService
         if (!empty($domainId)){
             foreach ($domainId as $k => $v){
                 $domain = Domain::where('id',$v)->first();
-                $default = Cdn::where('domain_id',$v)->get()->pluck('default')->flatten()->all();
+                $default = $this->getDefault($v);
                 $check = Cdn::where('domain_id',$v)->where('default', 1)->where('cdn_provider_id', $cdnProvider[0]->id)->get();
 
                 if (in_array(0,$default) && count($check) > 0){
