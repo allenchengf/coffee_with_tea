@@ -103,9 +103,9 @@ class CdnProviderController extends Controller
             }
 
             if (isset($v['locationDnsSetting'])) {
-                $recordList[] = collect($v['locationDnsSetting'])->map(function ($item, $key){
-                   return $item['provider_record_id'];
-               })->first();
+                foreach ($v['locationDnsSetting'] as $key => $value){
+                    $recordList[] = $value['provider_record_id'];
+                }
             }
         }
         $recordList = array_filter($recordList);
