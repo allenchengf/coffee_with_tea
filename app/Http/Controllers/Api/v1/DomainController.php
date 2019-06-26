@@ -53,7 +53,7 @@ class DomainController extends Controller
     }
 
     public function create(Request $request, Domain $domain)
-    {
+    {dd($request);
         $ugid = $this->getUgid($request);
         $request->merge([
             'user_group_id' => $ugid,

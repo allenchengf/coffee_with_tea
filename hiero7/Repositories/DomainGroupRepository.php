@@ -38,7 +38,7 @@ class DomainGroupRepository
         $domainGroupId = $this->domainGroupModel->create([
             'user_group_id' => $request['user_group_id'],
             'name' => $request['name'],
-            'label' => $request['label'],
+            // 'label' => $request['label'],
             'edited_by' => $request['edited_by']
         ])->id;
         

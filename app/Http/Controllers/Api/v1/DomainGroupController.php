@@ -72,6 +72,11 @@ class DomainGroupController extends Controller
             $result = [];
         }
 
+        if($result == 'NoneCdn'){
+            $this->error = PermissionError::THIS_DOMAIN_DONT_HAVE_ANY_CDN;
+            $result = [];
+        }
+
         if ($result == 'differentGroup') {
             $this->error = InputError::PARAMETERS_IN_DIFFERENT_USERGROUP;
             $result = [];
@@ -94,7 +99,12 @@ class DomainGroupController extends Controller
             $this->error = InputError::DOMAIN_CDNPROVIDER_DIFFERENT;
             $result = [];
         }
-        
+
+        if ($result == 'cdnError' || $result == 'iRouteError') {
+            $this->error = InternalError::INTERNAL_SERVICE_ERROR;
+            $result = [];
+        }
+
         // $result = $this->domainGroupService->indexByDomainGroupId($domainGroup);
         
         return $this->response($this->message, $this->error, $result);
@@ -133,9 +143,14 @@ class DomainGroupController extends Controller
     public function destroyByDomainId(DomainGroupRequest $request, DomainGroup $domainGroup ,Domain $domain)
     {
         $this->formatRequestAndThis($request);
-        $this->domainGroupService->destroyByDomainId($domainGroup->id,$domain->id);
+        $result = $this->domainGroupService->destroyByDomainId($domainGroup,$domain);
+        
+        if($result ==false){
+            $this->error = PermissionError::CANT_DELETE_LAST_DOMAIN;
+            $result = [];
+        }
 
-        return $this->response();
+        return $this->response($this->message, $this->error, $result);
     }
 
     public function changeDefaultCdn(DomainGroupRequest $request, DomainGroup $domainGroup)

@@ -36,13 +36,13 @@ class DomainGroupRequest extends FormRequest
                 return [
                     "name" => "required|string",
                     "domain_id" => "required|integer",
-                    "label" => "required|string",
+                    "label" => "nullable|string",
                 ];
                 break;
             case ($routeName == "$this->prefix.edit"):
                 return [
                     "name" => "required|string",
-                    "label" => "required|string"
+                    "label" => "nullable|string"
                 ];
                 break;
             case ($routeName == "$this->prefix.createDomainToGroup"):
