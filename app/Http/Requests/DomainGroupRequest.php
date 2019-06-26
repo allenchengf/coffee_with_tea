@@ -42,13 +42,17 @@ class DomainGroupRequest extends FormRequest
             case ($routeName == "$this->prefix.edit"):
                 return [
                     "name" => "required|string",
-                    "default_cdn_provider_id" => "required|integer",
                     "label" => "required|string"
                 ];
                 break;
             case ($routeName == "$this->prefix.createDomainToGroup"):
                 return [
                     "domain_id" => "required|integer",
+                ];
+                break;
+            case ($routeName == "$this->prefix.changeDefaultCdn"):
+                return [
+                    "cdn_provider_id" => "required|integer"
                 ];
                 break;
             default :

@@ -23,7 +23,7 @@ class LocationDnsSettingService
 
     }
 
-    public function getAll($domainId)
+    public function getAll(int $domainId)
     {
         $cdnModel = new Cdn;
         $lineResult = $this->lineRepository->getLinesById();

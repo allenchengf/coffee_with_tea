@@ -33,4 +33,12 @@ class Domain extends Model
     {
         return $this->belongsToMany(DomainGroup::class, 'domain_group_mapping')->as('domain_group_mapping');
     }
+
+    public function locationDnsSetting()
+    {
+        return $this->belongsToMany(LocationDnsSetting::class,'cdns','domain_id','id')
+                ->as('locationDnsSetting')
+                ->withPivot('id', 'cname', 'default')
+                ->withTimestamps();
+    }
 }

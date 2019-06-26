@@ -7,7 +7,7 @@ use App\Http\Requests\DomainGroupRequest;
 use Hiero7\Enums\InputError;
 use Hiero7\Enums\PermissionError;
 use Hiero7\Models\{DomainGroup,Domain};
-use Hiero7\Services\DomainGroupService;
+use Hiero7\Services\{DomainGroupService,CdnService};
 use Illuminate\Http\Request;
 
 class DomainGroupController extends Controller
@@ -18,9 +18,10 @@ class DomainGroupController extends Controller
     protected $userGroupId;
     protected $uuid;
 
-    public function __construct(DomainGroupService $domainGroupService)
+    public function __construct(DomainGroupService $domainGroupService, CdnService $cdnService)
     {
         $this->domainGroupService = $domainGroupService;
+        $this->cdnService = $cdnService;
     }
 /**
  * Grouping 頁面
@@ -33,6 +34,15 @@ class DomainGroupController extends Controller
         $this->formatRequestAndThis($request);
 
         $result = $this->domainGroupService->index($this->userGroupId);
+
+        return $this->response('', null, $result);
+    }
+
+    public function indexGroupIroute(DomainGroupRequest $request, DomainGroup $domainGroup)
+    {
+        $this->formatRequestAndThis($request);
+
+        $result = $this->domainGroupService->indexGroupIroute($domainGroup);
 
         return $this->response('', null, $result);
     }
@@ -126,6 +136,23 @@ class DomainGroupController extends Controller
         $this->domainGroupService->destroyByDomainId($domainGroup->id,$domain->id);
 
         return $this->response();
+    }
+
+    public function changeDefaultCdn(DomainGroupRequest $request, DomainGroup $domainGroup)
+    {
+        $domainModel = $domainGroup->domains;
+
+        foreach($domainModel as $domain){
+            $cdn = $domain->cdns()->where('cdn_provider_id',$request['cdn_provider_id'])->first();
+            $result = $this->cdnService->changeDefaultToTrue($domain,$cdn, $this->getJWTPayload()['uuid']);
+        }
+
+        if ($result == false) {
+            $this->error = InternalError::INTERNAL_ERROR;
+            $result = [];
+        }
+
+        return $this->response($this->message, $this->error, $result);
     }
 
     private function formatRequestAndThis(DomainGroupRequest $request)

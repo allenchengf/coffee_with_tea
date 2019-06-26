@@ -36,6 +36,12 @@ class DomainGroupService
 
         return $groupLists;
     }
+
+    public function indexGroupIroute(DomainGroup $domainGroup)
+    {
+        $domainGroup->location_Dns_Setting = $this->locationDnsSettingService->getAll($domainGroup->domains()->first()->id);
+        return $domainGroup;
+    }
 /**
  * 取得 DomainGroup 和 Domain 的關聯。在各自從 Domain 找 Cdn，再找 Cdn Provider 的名字。
  *
@@ -118,7 +124,7 @@ class DomainGroupService
     private function compareDomainCdnSetting(DomainGroup $domainGroup,$targetDomainId)
     {
         $controlDomain  = $domainGroup->domains; 
-        $controlCdnProvider = $controlDomain['0']->cdns()->get(['cdn_provider_id'])->pluck('cdn_provider_id');
+        $controlCdnProvider = $controlDomain[0]->cdns()->get(['cdn_provider_id'])->pluck('cdn_provider_id');
         $targetCdnProvider = Domain::find($targetDomainId)->cdns()->get(['cdn_provider_id'])->pluck('cdn_provider_id');
 
         $different = $controlCdnProvider->diff($targetCdnProvider);
@@ -142,6 +148,7 @@ class DomainGroupService
         $originIrouteSetting= $this->getLocationSetting($originCdnSetting);
 
         $targetDomain = Domain::find($request['domain_id']);
+        $result = '';
 
         foreach($originIrouteSetting as $iRouteSetting){
             $targetCdn = $targetDomain->cdns()->where('cdn_provider_id',$iRouteSetting->cdn_provider_id)->first();
@@ -166,10 +173,11 @@ class DomainGroupService
 
         foreach($cdnSetting as $cdns ){
             $originLocationDnsSetting = $cdns->locationDnsSetting;
-            if(!$originLocationDnsSetting->isEmpty()){
-                $originLocationDnsSetting[0]->cdn_provider_id = $cdns->cdn_provider_id;
-                array_push($targetIrouteSetting,$originLocationDnsSetting[0]);
+            if($originLocationDnsSetting->isEmpty()){
+                continue;
             }
+            $originLocationDnsSetting[0]->cdn_provider_id = $cdns->cdn_provider_id;
+            array_push($targetIrouteSetting,$originLocationDnsSetting[0]);
         }
         return $targetIrouteSetting;
     }
