@@ -90,45 +90,37 @@ class CdnProviderController extends Controller
      */
     public function changeStatus(Request $request, CdnProvider $cdnProvider)
     {
-        $request->merge([
-            'edited_by' => $this->getJWTPayload()['uuid'],
-        ]);
+        $request->merge(['edited_by' => $this->getJWTPayload()['uuid']]);
         $recordList =[];
         $status = $request->get('status')?'active':'stop';
+        DB::beginTransaction();
+        $cdnProvider->update(['status' => $status, 'edited_by' => $request->get('edited_by')]);
+        $cdn = Cdn::where('cdn_provider_id', $cdnProvider->id)->with('locationDnsSetting')->get();
+        foreach ($cdn as $k => $v) {
+            $check = Cdn::where('provider_record_id',$v['provider_record_id'])->where('cdn_provider_id', $cdnProvider->id)->get();
+            if(count($check) > 0 && $v['default'] == 1){
+                $recordList[] = $v['provider_record_id'];
+            }
 
-        if((boolean)$request->get('status') != (boolean)$cdnProvider->status) {
-            DB::beginTransaction();
-            $cdnProvider->update(['status' => $status, 'edited_by' => $request->get('edited_by')]);
-            $cdn = Cdn::where('cdn_provider_id', $cdnProvider->id)->with('locationDnsSetting')->get();
-            foreach ($cdn as $k => $v) {
-                $default = Cdn::where('domain_id',$v['domain_id'])->get()->pluck('default')->flatten()->all();
-                $check = Cdn::where('provider_record_id',$v['provider_record_id'])->where('default', 1)->where('cdn_provider_id', $cdnProvider->id)->get();
-//                if (!in_array(0,$default) && count($check) > 0){
-                if (count($check) > 0){
-                    $recordList[] = $v['provider_record_id'];
-                    if (isset($v['locationDnsSetting']['provider_record_id'])) {
-                        $recordList[] = $v['locationDnsSetting']['provider_record_id'];
-                    }
+            if (isset($v['locationDnsSetting'])) {
+                foreach ($v['locationDnsSetting'] as $key => $value){
+                    $recordList[] = $value['provider_record_id'];
                 }
             }
-            $recordList = array_filter($recordList);
-
-            if (!empty($recordList)) {
-                $BatchEditedDnsProviderRecordResult = $this->cdnProviderService->updateDnsProviderStatus($recordList,
-                    $status);
-                if (array_key_exists('errors', $BatchEditedDnsProviderRecordResult[0])) {
-                    DB::rollback();
-                    return $this->setStatusCode(409)->response('please contact the admin',
-                        InternalError::INTERNAL_ERROR,
-                        []);
-                }
-            }
-            if ($status == 'stop') {
-                $cdnProvider = CdnProvider::with('domains')->where('id', $cdnProvider->id)->get();
-                $this->cdnProviderService->changeDefaultCDN($cdnProvider);
-            }
-            DB::commit();
         }
+        $recordList = array_filter($recordList);
+        if (!empty($recordList)) {
+            $BatchEditedDnsProviderRecordResult = $this->cdnProviderService->updateDnsProviderStatus($recordList, $status);
+            if (array_key_exists('errors', $BatchEditedDnsProviderRecordResult[0])) {
+                DB::rollback();
+                return $this->setStatusCode(409)->response('please contact the admin', InternalError::INTERNAL_ERROR, []);
+            }
+        }
+        if ($status == 'stop') {
+            $cdnProvider = CdnProvider::with('domains')->where('id', $cdnProvider->id)->get();
+            $this->cdnProviderService->changeDefaultCDN($cdnProvider);
+        }
+        DB::commit();
         return $this->response();
     }
 
