@@ -33,6 +33,6 @@ class PermissionError extends Enum
         self::TOKEN_INVALID => "Token invalid.",
         self::TOKEN_ERROR => "Token error occurred.",
         self::CANT_DELETE_LAST_DOMAIN => "Can't Delete Last Domain At Group.",
-        self::THIS_DOMAIN_DONT_HAVE_CDN => "This Domain don't have any CDN.",
+        self::THIS_DOMAIN_DONT_HAVE_ANY_CDN => "This Domain don't have any CDN.",
     ];
 }
