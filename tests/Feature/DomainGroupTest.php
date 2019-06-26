@@ -82,7 +82,7 @@ class DomainGroupTest extends TestCase
         $body =[
             "domain_id"=> 2
         ];
-        $response = $this->call('DELETE', $this->uri.'/1/1',$body);
+        $response = $this->call('DELETE', $this->uri.'/1/domain/1',$body);
         $response->assertStatus(200);
     }
 

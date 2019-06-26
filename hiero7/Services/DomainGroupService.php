@@ -97,7 +97,6 @@ class DomainGroupService
         }
         
         $result = $this->domainGroupRepository->createDomainToGroup($request,$domainGroup->id);
-
         return $result;
     }
 
@@ -146,6 +145,10 @@ class DomainGroupService
 
         $originCdnSetting = $domainGroup->domains()->first()->cdns()->get();
         $originIrouteSetting= $this->getLocationSetting($originCdnSetting);
+        
+        if(empty($originIrouteSetting)){
+            return true; //如果 cdn 沒有設定 iroute 就不做更改。
+        }
 
         $targetDomain = Domain::find($request['domain_id']);
         $result = '';

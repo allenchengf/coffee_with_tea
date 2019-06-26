@@ -68,6 +68,6 @@ Route::group(['middleware' => ['api'], 'namespace' => 'Api\v1', 'prefix' => 'v1'
         Route::put('{domainGroup}', 'DomainGroupController@edit')->name('groups.edit');
         Route::put('{domainGroup}/defaultCdn', 'DomainGroupController@changeDefaultCdn')->name('groups.changeDefaultCdn');
         Route::delete('{domainGroup}', 'DomainGroupController@destroy')->name('groups.destroy');
-        Route::delete('{domainGroup}/{domain}', 'DomainGroupController@destroyByDomainId')->name('groups.destroyByDomainId');
+        Route::delete('{domainGroup}/domain/{domain}', 'DomainGroupController@destroyByDomainId')->name('groups.destroyByDomainId');
     });
 });
