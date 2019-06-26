@@ -4,9 +4,7 @@ namespace Hiero7\Services;
 
 use Hiero7\Models\Domain;
 use Hiero7\Models\DomainGroup;
-
 use Hiero7\Models\LocationDnsSetting;use Hiero7\Repositories\DomainGroupRepository;
-
 use Hiero7\Services\CdnService;
 use Hiero7\Services\LocationDnsSettingService;
 use Illuminate\Database\Eloquent\Collection;
