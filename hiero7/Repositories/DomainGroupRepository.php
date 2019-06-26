@@ -35,15 +35,15 @@ class DomainGroupRepository
             return false;
         }
 
-        $domainGroupId = $this->domainGroupModel->create([
+        $domainGroup = $this->domainGroupModel->create([
             'user_group_id' => $request['user_group_id'],
             'name' => $request['name'],
             'label' => $request['label'],
             'edited_by' => $request['edited_by']
-        ])->id;
+        ]);
         
-        $this->domainGroupModel->find($domainGroupId)->domains()->attach($request['domain_id']);
-        return  true;      
+        $this->domainGroupModel->find($domainGroup->id)->domains()->attach($request['domain_id']);
+        return  $domainGroup;      
     }
 
     public function createDomainToGroup(array $request,int $domainGroupId)

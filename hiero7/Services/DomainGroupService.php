@@ -79,11 +79,13 @@ class DomainGroupService
             return 'differentGroup';
         }
 
-        if (!$this->domainGroupRepository->create($request)) {
+        $result = $this->domainGroupRepository->create($request);
+
+        if (!$result) {
             return 'exist';
         }
 
-        return 'done';
+        return $result;
     }
 
     public function createDomainToGroup(array $request, DomainGroup $domainGroup)

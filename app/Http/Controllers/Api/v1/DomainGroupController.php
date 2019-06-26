@@ -82,10 +82,6 @@ class DomainGroupController extends Controller
             $result = [];
         }
 
-        if ($result == 'done') {
-            $result = $this->domainGroupService->index($this->userGroupId);
-        }
-
         return $this->response($this->message, $this->error, $result);
     }
 
