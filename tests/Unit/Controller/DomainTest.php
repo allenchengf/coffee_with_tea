@@ -17,7 +17,7 @@ class DomainTest extends TestCase
     protected function setUp()
     {
         parent::setUp();
-        $this->seed();
+        $this->seed('DomainTableSeeder');
         app()->call([$this, 'service']);
         $this->controller = new DomainController($this->domainService);
         $this->domain = new Domain();

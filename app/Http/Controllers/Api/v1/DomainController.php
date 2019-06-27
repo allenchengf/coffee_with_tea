@@ -90,6 +90,10 @@ class DomainController extends Controller
 
     public function destroy(Domain $domain)
     {
+        if($domain->domainGroup->count() == 1){
+            return $this->response('',PermissionError::CANT_DELETE_LAST_DOMAIN,[]);
+        }
+        
         $domain->delete();
         return $this->response();
     }

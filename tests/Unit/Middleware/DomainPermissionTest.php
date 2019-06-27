@@ -21,7 +21,7 @@ class DomainPermissionTest extends TestCase
     protected function setUp()
     {
         parent::setUp();
-        $this->seed();
+        $this->seed('DomainTableSeeder');
         app()->call([$this, 'service']);
         $this->domain = new Domain();
         $this->middleware = new DomainPermission($this->domainService);
