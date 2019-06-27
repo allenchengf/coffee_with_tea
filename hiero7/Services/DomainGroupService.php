@@ -31,8 +31,7 @@ class DomainGroupService
                 return false;
             }
 
-            $cdn = $domainModel->cdns()->where('default', 1)->first()->cdnProvider()->first();
-            $item->setAttribute('default_cdn_name', $cdn->name);
+            $item->setAttribute('default_cdn_name', $domainModel->getDefaultCdnProvider()->name);
         });
 
         return $groupLists;
@@ -54,7 +53,7 @@ class DomainGroupService
         foreach ($domainGroup->domains as $key => $domain) {
             $domain->cdnProvider;
         }
-
+        $domainGroup->setAttribute('default_cdn_name',$domain->getDefaultCdnProvider()->name);
         return $domainGroup;
     }
 

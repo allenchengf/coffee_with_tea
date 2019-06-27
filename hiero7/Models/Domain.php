@@ -41,4 +41,9 @@ class Domain extends Model
                 ->withPivot('id', 'cname', 'default')
                 ->withTimestamps();
     }
+
+    public function getDefaultCdnProvider()
+    {
+        return $this->cdns()->where('default', 1)->first()->cdnProvider()->first();
+    }
 }
