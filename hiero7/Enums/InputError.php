@@ -39,6 +39,7 @@ class InputError extends Enum
     const PARAMETERS_IN_DIFFERENT_USERGROUP = 4027;
     const GROUP_EXIST = 4028;
     const DOMAIN_CDNPROVIDER_DIFFERENT = 4029;
+    const DOMAIN_ALREADY_EXIST_GROUP = 4030;
     /**
      * @var array
      */
@@ -72,8 +73,8 @@ class InputError extends Enum
         self::THE_NETWORK_ID_EXIST => 'The network id exist',
         self::THE_SCHEME_NAME_EXIST => 'The scheme name exist',
         self::PARAMETERS_IN_DIFFERENT_USERGROUP => 'Parameters are in different user_group',
-        self::GROUP_EXIST => 'Group Exist',
-        self::DOMAIN_CDNPROVIDER_DIFFERENT => 'Domain\'s Cdn Provider are different with Group\'s.'
-
+        self::GROUP_EXIST => 'Group Already Exist',
+        self::DOMAIN_CDNPROVIDER_DIFFERENT => 'Domain\'s Cdn Provider are different with Group\'s.',
+        self::DOMAIN_ALREADY_EXIST_GROUP => 'Domain Already Exist At this Group.'
     ];
 }

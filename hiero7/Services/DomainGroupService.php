@@ -85,9 +85,15 @@ class DomainGroupService
             return 'exist';
         }
 
-        return $result;
+        return $result->domains;
     }
-
+/**
+ * 新增 Domain 進 Group，會先檢查 Domain 本身的 Cdn Provider 是否相同，再去修改 Domain 的 Default CDN 和 iRoute 設定。
+ *
+ * @param array $request
+ * @param DomainGroup $domainGroup
+ * @return void
+ */
     public function createDomainToGroup(array $request, DomainGroup $domainGroup)
     {
         $checkDomainCdnSetting = $this->compareDomainCdnSetting($domainGroup, $request['domain_id']);
