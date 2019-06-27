@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\DomainRequest as Request;
 use Hiero7\Models\Domain;
 use Hiero7\Services\DomainService;
+use Hiero7\Enums\PermissionError;
 
 class DomainController extends Controller
 {
@@ -93,8 +94,11 @@ class DomainController extends Controller
         if($domain->domainGroup->count() == 1){
             return $this->response('',PermissionError::CANT_DELETE_LAST_DOMAIN,[]);
         }
-        
+
+        // if(!$domain->cdns->isEmpty()){
+        //     $result = $this->domainService->deleteCdn();
+        // }
         $domain->delete();
-        return $this->response();
+        return $this->response('','',$result);
     }
 }
