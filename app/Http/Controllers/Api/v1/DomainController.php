@@ -91,14 +91,17 @@ class DomainController extends Controller
 
     public function destroy(Domain $domain)
     {
+        $result = [];
         if($domain->domainGroup->count() == 1){
             return $this->response('',PermissionError::CANT_DELETE_LAST_DOMAIN,[]);
         }
 
         // if(!$domain->cdns->isEmpty()){
-        //     $result = $this->domainService->deleteCdn();
+        //     dd($domain->cdns);
+        //     $result = $this->domainService->deleteCdn($domain->cdns);
         // }
         $domain->delete();
+        
         return $this->response('','',$result);
     }
 }
