@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Api\v1;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\DomainGroupRequest;
-use Hiero7\Enums\InputError;
+use Hiero7\Enums\{InputError,InternalError};
 use Hiero7\Enums\PermissionError;
 use Hiero7\Models\{DomainGroup,Domain};
 use Hiero7\Services\{DomainGroupService,CdnService};
@@ -82,7 +82,7 @@ class DomainGroupController extends Controller
             $result = [];
         }
 
-        return $this->response($this->message, $this->error, $result);
+        return $this->setStatusCode($this->error ? 400 : 200)->response($this->message, $this->error, $result);
     }
 
     public function createDomainToGroup(DomainGroupRequest $request, DomainGroup $domainGroup)
@@ -90,7 +90,7 @@ class DomainGroupController extends Controller
         $request = $this->formatRequestAndThis($request);
 
         if(!$domainGroup->mapping->where('domain_id',$request['domain_id'])->isEmpty()){
-            return $this->response($this->message, InputError::DOMAIN_ALREADY_EXIST_GROUP, []);
+            return $this->setStatusCode(400)->response($this->message, InputError::DOMAIN_ALREADY_EXIST_GROUP, []);
         }
 
 
@@ -106,7 +106,7 @@ class DomainGroupController extends Controller
             $result = [];
         }
 
-        return $this->response($this->message, $this->error, $result);
+        return $this->setStatusCode($this->error ? 400 : 200)->response($this->message, $this->error, $result);
     }
 
     public function edit(DomainGroupRequest $request, DomainGroup $domainGroup)
@@ -122,7 +122,7 @@ class DomainGroupController extends Controller
 
         $result = $this->domainGroupService->index($this->userGroupId);
 
-        return $this->response($this->message, $this->error, $result);
+        return $this->setStatusCode($this->error ? 400 : 200)->response($this->message, $this->error, $result);
     }
 
     public function destroy(DomainGroupRequest $request, DomainGroup $domainGroup)
@@ -143,13 +143,13 @@ class DomainGroupController extends Controller
     {
         $this->formatRequestAndThis($request);
         $result = $this->domainGroupService->destroyByDomainId($domainGroup,$domain);
-        
+
         if($result ==false){
             $this->error = PermissionError::CANT_DELETE_LAST_DOMAIN;
             $result = [];
         }
 
-        return $this->response($this->message, $this->error, $result);
+        return $this->setStatusCode($this->error ? 400 : 200)->response($this->message, $this->error, $result);
     }
 
     public function changeDefaultCdn(DomainGroupRequest $request, DomainGroup $domainGroup)
@@ -166,7 +166,7 @@ class DomainGroupController extends Controller
             $result = [];
         }
 
-        return $this->response($this->message, $this->error, $result);
+        return $this->setStatusCode($this->error ? 409 : 200)->response($this->message, $this->error, $result);
     }
 
     private function formatRequestAndThis(DomainGroupRequest $request)

@@ -39,7 +39,7 @@ class LocationDnsSettingController extends Controller
         $cdnModel = $this->checkCdnIfExist($request->get('cdn_id'), $domain);
 
         if (!$cdnModel) {
-            return $this->response($message,InputError::WRONG_PARAMETER_ERROR,'');
+            return $this->setStatusCode(400)->response($message,InputError::WRONG_PARAMETER_ERROR,'');
         }
 
         $existLocationDnsSetting = $this->checkExist($domain, $locationNetworkId);
