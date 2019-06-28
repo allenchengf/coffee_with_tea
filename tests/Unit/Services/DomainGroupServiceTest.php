@@ -9,6 +9,8 @@ use Hiero7\Services\{LocationDnsSettingService,CdnService,DomainGroupService};
 use Hiero7\Repositories\DomainGroupRepository;
 use Hiero7\Models\{DomainGroup};
 use Illuminate\Support\Facades\Artisan;
+use App\Http\Requests\DomainGroupRequest;
+
 
 
 class DomainGroupServiceTest extends TestCase
@@ -51,8 +53,9 @@ class DomainGroupServiceTest extends TestCase
 
     public function testCreateDomainToGroup()
     {
-        $request = ['domain_id' => 2,
-                    'edited_by' => 'de20afd0-d009-4fbf-a3b0-2c3257915d10'];
+        $request = new DomainGroupRequest;
+        $request->merge(['domain_id' => 2,
+                        'edited_by' => 'de20afd0-d009-4fbf-a3b0-2c3257915d10']);
         $response = $this->service->createDomainToGroup($request,$this->domainGroup);
 
         $this->assertNotEmpty($response);
