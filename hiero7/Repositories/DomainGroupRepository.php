@@ -48,12 +48,11 @@ class DomainGroupRepository
         return  $domainGroup;      
     }
 
-    public function createDomainToGroup(array $request,int $domainGroupId)
+    public function createDomainToGroup(DomainGroupRequest $request,int $domainGroupId)
     {
         return DomainGroupMapping::create([
-            'domain_id' => $request['domain_id'],
-            'domain_group_id' => $domainGroupId,
-            'created_at' => \Carbon\Carbon::now()
+            'domain_id' => $request->domain_id,
+            'domain_group_id' => $domainGroupId
         ]);
     }
 
