@@ -66,7 +66,7 @@ class DomainGroupController extends Controller
     {
         $request = $this->formatRequestAndThis($request);
 
-        $result = $this->domainGroupService->create($request->all());
+        $result = $this->domainGroupService->create($request);
         if ($result == 'exist') {
             $this->error = InputError::GROUP_EXIST;
             $result = [];
@@ -94,7 +94,7 @@ class DomainGroupController extends Controller
         }
 
 
-        $result = $this->domainGroupService->createDomainToGroup($request->all(),$domainGroup);
+        $result = $this->domainGroupService->createDomainToGroup($request,$domainGroup);
 
         if ($result == false) {
             $this->error = InputError::DOMAIN_CDNPROVIDER_DIFFERENT;
@@ -113,7 +113,7 @@ class DomainGroupController extends Controller
     {
         $request = $this->formatRequestAndThis($request);
 
-        $result = $this->domainGroupService->edit($request->all(), $domainGroup);
+        $result = $this->domainGroupService->edit($request, $domainGroup);
 
         if ($result == false) {
             $this->error = PermissionError::PERMISSION_DENIED;

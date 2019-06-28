@@ -3,6 +3,8 @@
 namespace Hiero7\Repositories;
 
 use Hiero7\Models\{DomainGroup,DomainGroupMapping};
+use App\Http\Requests\DomainGroupRequest;
+
 class DomainGroupRepository
 {
     protected $domainGroupModel;
@@ -28,22 +30,21 @@ class DomainGroupRepository
  * 先新增 domain_group table ，再新增中間表(domain_group_mapping)。
  * @param array $request
  */
-    public function create(array $request)
+    public function create(DomainGroupRequest $request)
     {
-        $checkExist = $this->domainGroupModel->where('name',$request['name'])->where('user_group_id',$request['user_group_id'])->get()->isEmpty();
+        $checkExist = $this->domainGroupModel->where('name',$request->name)->where('user_group_id',$request->user_group_id)->get()->isEmpty();
         if (!$checkExist){
             return false;
         }
 
         $domainGroup = $this->domainGroupModel->create([
-            'user_group_id' => $request['user_group_id'],
-            'name' => $request['name'],
-            'label' => $request['label'],
-            'edited_by' => $request['edited_by'],
-            'created_at' => \Carbon\Carbon::now()
+            'user_group_id' => $request->user_group_id,
+            'name' => $request->name,
+            'label' => $request->label,
+            'edited_by' => $request->edited_by,
         ]);
         
-        $this->domainGroupModel->find($domainGroup->id)->domains()->attach($request['domain_id']);
+        $this->domainGroupModel->find($domainGroup->id)->domains()->attach($request->domain_id);
         return  $domainGroup;      
     }
 
@@ -56,11 +57,11 @@ class DomainGroupRepository
         ]);
     }
 
-    public function update(array $request,int $domainGroupId)
+    public function update(DomainGroupRequest $request,int $domainGroupId)
     {
         return $this->domainGroupModel->where('id',$domainGroupId)->update([
-            "name" => $request['name'],
-            "label" => $request['label']
+            "name" => $request->name,
+            "label" => $request->label
         ]);
     }
 

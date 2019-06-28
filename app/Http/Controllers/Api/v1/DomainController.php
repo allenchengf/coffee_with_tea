@@ -35,9 +35,10 @@ class DomainController extends Controller
      * Get Domain function
      *
      * $request->user_group_id，預設為 login user_group_id (可選)
-     * $request->without_group (可選)
+     * $request->domain_group_id，預設為 all (可選) 
      *
      * 如果 login user_group_id == 1 && $request->user_group_id == null，則會得到 All Domain
+     * 如果 domain_group_id == 0 會得到沒有 Group 的 Domain
      * @param Request $request
      * @param Domain $domain
      */
@@ -50,13 +51,24 @@ class DomainController extends Controller
         $domain->with('cdns', 'domainGroup')->where(compact('user_group_id'))->get();
         $domains->toArray();
 
-        if($request->has('without_group')){
-            $domains = $domains->filter(function ($item) {
+        if($request->has('domain_group_id') && $request->domain_group_id >= 0){
+            //取孤兒domain
+            if($request->domain_group_id == 0){
+                $domains = $domains->filter(function ($item) {
 
-                return $item->domainGroup->isEmpty();
-            });
+                    return $item->domainGroup->isEmpty();
+                });
+            }
+            
+            if($request->domain_group_id > 0){
+                $domains = $domains->filter(function ($item) use ($request){
+                    $domainGroupId = $item->domainGroup()->pluck('domain_group_id');
+                    return $domainGroupId->isEmpty() ? 0 : $domainGroupId[0] == $request->domain_group_id;
+                });
+            }
             $domains = $domains->values();
         }
+
         $dnsPodDomain = env('DNS_POD_DOMAIN');
 
         return $this->response('', null, compact('domains', 'dnsPodDomain'));
