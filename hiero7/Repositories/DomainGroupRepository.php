@@ -39,7 +39,8 @@ class DomainGroupRepository
             'user_group_id' => $request['user_group_id'],
             'name' => $request['name'],
             'label' => $request['label'],
-            'edited_by' => $request['edited_by']
+            'edited_by' => $request['edited_by'],
+            'created_at' => \Carbon\Carbon::now()
         ]);
         
         $this->domainGroupModel->find($domainGroup->id)->domains()->attach($request['domain_id']);
@@ -50,7 +51,8 @@ class DomainGroupRepository
     {
         return DomainGroupMapping::create([
             'domain_id' => $request['domain_id'],
-            'domain_group_id' => $domainGroupId
+            'domain_group_id' => $domainGroupId,
+            'created_at' => \Carbon\Carbon::now()
         ]);
     }
 

@@ -31,8 +31,7 @@ class DomainGroupService
                 return false;
             }
 
-            $cdn = $domainModel->cdns()->where('default', 1)->first()->cdnProvider()->first();
-            $item->setAttribute('default_cdn_name', $cdn->name);
+            $item->setAttribute('default_cdn_name', $domainModel->getDefaultCdnProvider()->name);
         });
 
         return $groupLists;
@@ -54,7 +53,7 @@ class DomainGroupService
         foreach ($domainGroup->domains as $key => $domain) {
             $domain->cdnProvider;
         }
-
+        $domainGroup->setAttribute('default_cdn_name',$domain->getDefaultCdnProvider()->name);
         return $domainGroup;
     }
 
@@ -85,9 +84,15 @@ class DomainGroupService
             return 'exist';
         }
 
-        return $result;
+        return $result->domains;
     }
-
+/**
+ * 新增 Domain 進 Group，會先檢查 Domain 本身的 Cdn Provider 是否相同，再去修改 Domain 的 Default CDN 和 iRoute 設定。
+ *
+ * @param array $request
+ * @param DomainGroup $domainGroup
+ * @return void
+ */
     public function createDomainToGroup(array $request, DomainGroup $domainGroup)
     {
         $checkDomainCdnSetting = $this->compareDomainCdnSetting($domainGroup, $request['domain_id']);

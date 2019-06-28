@@ -17,10 +17,14 @@ class DomainGroupServiceTest extends TestCase
     {
         parent::setUp();
         Artisan::call('migrate');
-        Artisan::call('db:seed');
+        $this->seed();
+        $this->seed('LocationDnsSettingSeeder');
+        $this->seed('DomainGroupTableSeeder');
+        $this->seed('DomainGroupMappingTableSeeder');
+        $this->seed('DomainTableSeeder');
+        $this->seed('CdnTableSeeder');
         app()->call([$this, 'repository']);
         app()->call([$this, 'serviceMock']);
-        $this->seed('LocationDnsSettingSeeder');
         $this->service = new DomainGroupService($this->domainGroupRepository, $this->cdnService, $this->locationDnsSettingService);
         $this->domainGroup = DomainGroup::find(1);
     }

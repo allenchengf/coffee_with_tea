@@ -40,4 +40,9 @@ class DomainService
     {
         return $this->domainRepository->checkUniqueCname($cname) ? InputError::CNAME_EXIST : null;
     }
+
+    public function deleteCdn()
+    {
+        return $this;
+    }
 }

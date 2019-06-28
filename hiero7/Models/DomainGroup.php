@@ -16,4 +16,8 @@ class DomainGroup extends Model
         return $this->belongsToMany(Domain::class,'domain_group_mapping')->as('domain_group_mapping');
     }
 
+    public function mapping()
+    {
+        return $this->hasMany(DomainGroupMapping::class,'domain_group_id');
+    }
 }

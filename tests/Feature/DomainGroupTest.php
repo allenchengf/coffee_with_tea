@@ -19,8 +19,12 @@ class DomainGroupTest extends TestCase
 
         $this->withoutMiddleware([AuthUserModule::class, TokenCheck::class, DomainPermission::class]);
         Artisan::call('migrate');
-        Artisan::call('db:seed');
+        $this->seed();
         $this->seed('LocationDnsSettingSeeder');
+        $this->seed('DomainGroupTableSeeder');
+        $this->seed('DomainGroupMappingTableSeeder');
+        $this->seed('DomainTableSeeder');
+        $this->seed('CdnTableSeeder');
         $this->uri = "/api/v1/groups";
         $this->login();
         $this->cdnService = $this->initMock(CdnService::class);

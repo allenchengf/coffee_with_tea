@@ -8,14 +8,18 @@ class DomainGroupRequest extends FormRequest
 {
     protected $prefix = 'groups';
     /**
-     * Determine if the user is authorized to make this request.
-     *
+     * 如果 沒有這個 domain 就會 403
+     * 如果 在 mapping 表內有資料也會是 403
      * @return bool
      */
     public function authorize(Domain $domain)
     {
         if ($this->route()->getName() == "$this->prefix.create") {
-            if (!$domain->find($this->domain_id)->domainGroup()->get()->isEmpty()) {
+            $domainModel = $domain->find($this->domain_id);
+            if(!$domainModel){
+                return false;
+            }
+            if (!$domainModel->domainGroup()->get()->isEmpty()) {
                 return false;
             }
         }

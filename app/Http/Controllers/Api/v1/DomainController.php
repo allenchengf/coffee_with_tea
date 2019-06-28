@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\DomainRequest as Request;
 use Hiero7\Models\Domain;
 use Hiero7\Services\DomainService;
+use Hiero7\Enums\PermissionError;
 
 class DomainController extends Controller
 {
@@ -34,6 +35,7 @@ class DomainController extends Controller
      * Get Domain function
      *
      * $request->user_group_id，預設為 login user_group_id (可選)
+     * $request->without_group (可選)
      *
      * 如果 login user_group_id == 1 && $request->user_group_id == null，則會得到 All Domain
      * @param Request $request
@@ -46,9 +48,17 @@ class DomainController extends Controller
         $domains = !$request->has('user_group_id') && $user_group_id == 1 ?
         $domain->with('cdns', 'domainGroup')->get() :
         $domain->with('cdns', 'domainGroup')->where(compact('user_group_id'))->get();
-
         $domains->toArray();
+
+        if($request->has('without_group')){
+            $domains = $domains->filter(function ($item) {
+
+                return $item->domainGroup->isEmpty();
+            });
+            $domains = $domains->values();
+        }
         $dnsPodDomain = env('DNS_POD_DOMAIN');
+
         return $this->response('', null, compact('domains', 'dnsPodDomain'));
     }
 
@@ -81,7 +91,17 @@ class DomainController extends Controller
 
     public function destroy(Domain $domain)
     {
+        $result = [];
+        if($domain->domainGroup->count() == 1){
+            return $this->response('',PermissionError::CANT_DELETE_LAST_DOMAIN,[]);
+        }
+
+        // if(!$domain->cdns->isEmpty()){
+        //     dd($domain->cdns);
+        //     $result = $this->domainService->deleteCdn($domain->cdns);
+        // }
         $domain->delete();
-        return $this->response();
+        
+        return $this->response('','',$result);
     }
 }

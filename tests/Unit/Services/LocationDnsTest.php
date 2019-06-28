@@ -17,8 +17,10 @@ class LocationDnsTest extends TestCase
     {
         parent::setUp();
         Artisan::call('migrate');
-        Artisan::call('db:seed');
+        $this->seed();
         $this->seed('LocationDnsSettingSeeder');
+        $this->seed('DomainTableSeeder');
+        $this->seed('CdnTableSeeder');
         $this->dnsprovider = $this->initMock(DnsProviderService::class);
         app()->call([$this, 'repository']);
         app()->call([$this, 'dnsPodMock']);

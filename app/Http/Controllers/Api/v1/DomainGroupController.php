@@ -89,6 +89,11 @@ class DomainGroupController extends Controller
     {
         $request = $this->formatRequestAndThis($request);
 
+        if(!$domainGroup->mapping->where('domain_id',$request['domain_id'])->isEmpty()){
+            return $this->response($this->message, InputError::DOMAIN_ALREADY_EXIST_GROUP, []);
+        }
+
+
         $result = $this->domainGroupService->createDomainToGroup($request->all(),$domainGroup);
 
         if ($result == false) {
@@ -101,8 +106,6 @@ class DomainGroupController extends Controller
             $result = [];
         }
 
-        // $result = $this->domainGroupService->indexByDomainGroupId($domainGroup);
-        
         return $this->response($this->message, $this->error, $result);
     }
 
