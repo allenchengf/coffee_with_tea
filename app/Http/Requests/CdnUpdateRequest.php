@@ -18,6 +18,10 @@ class CdnUpdateRequest extends FormRequest
         $prefix = 'cdn';
         $routeName = $this->route()->getName() ?? $prefix;
 
+        if(!$this->domain->domainGroup->isEmpty()){
+            return false;
+        }
+
         if ($routeName === "$prefix.default") {
 
             if ($cdnService->checkCurrentCdnIsDefault($this->domain, $this->cdn) and !$this->request->get('default')) {
