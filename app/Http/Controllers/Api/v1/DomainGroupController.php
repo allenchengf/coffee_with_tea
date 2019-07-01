@@ -165,7 +165,7 @@ class DomainGroupController extends Controller
             $this->error = InternalError::INTERNAL_ERROR;
             $result = [];
         }
-
+dd($this->error );
         return $this->setStatusCode($this->error ? 409 : 200)->response($this->message, $this->error, $result);
     }
 

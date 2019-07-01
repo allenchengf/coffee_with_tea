@@ -28,14 +28,31 @@ class BatchRequest extends FormRequest
      */
     public function rules()
     {
-        return [
-            'domains' => 'required|array',
-            'domains.*.name' => ['required', env('DOMAIN_REGULAR')],
-            'domains.*.cdns' => 'array',
-            'domains.*.cdns.*.name' => ['required', 'string'],
-            'domains.*.cdns.*.cname' => ['required', env('DOMAIN_REGULAR')],
-            'domains.*.cdns.*.ttl' => ['integer', 'min:'.env('CDN_TTL'), 'max:604800'],
-        ];
+        $action = 'batch';
+        $routeName = $this->route()->getName();
+
+        switch($routeName){
+            case ($routeName == "domains.$action"):
+                return [
+                    'domains' => 'required|array',
+                    'domains.*.name' => ['required', env('DOMAIN_REGULAR')],
+                    'domains.*.cdns' => 'array',
+                    'domains.*.cdns.*.name' => ['required', 'string'],
+                    'domains.*.cdns.*.cname' => ['required', env('DOMAIN_REGULAR')],
+                    'domains.*.cdns.*.ttl' => ['integer', 'min:'.env('CDN_TTL'), 'max:604800'],
+                ];
+                break;
+            case ($routeName == "groups.$action"):
+                return [
+                    'domains' => 'required|array',
+                    'domains.*.name' => ['required', env('DOMAIN_REGULAR')]
+                ];
+                break;
+            default :
+                return [];
+                break;
+        }
+
     }
     
     public function attributes()

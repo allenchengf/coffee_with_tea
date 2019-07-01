@@ -20,7 +20,7 @@ Route::group(['middleware' => ['api'], 'namespace' => 'Api\v1', 'prefix' => 'v1'
                 });
             });
 
-            Route::post('batch', 'BatchController@store');
+            Route::post('batch', 'BatchController@store')->name('domains.batch');
         });
 
         Route::middleware(['domain.permission'])->group(function () {
@@ -69,5 +69,8 @@ Route::group(['middleware' => ['api'], 'namespace' => 'Api\v1', 'prefix' => 'v1'
         Route::put('{domainGroup}/defaultCdn', 'DomainGroupController@changeDefaultCdn')->name('groups.changeDefaultCdn');
         Route::delete('{domainGroup}', 'DomainGroupController@destroy')->name('groups.destroy');
         Route::delete('{domainGroup}/domain/{domain}', 'DomainGroupController@destroyByDomainId')->name('groups.destroyByDomainId');
+
+        Route::post('{domainGroup}/batch', 'BatchController@storeDomainToGroup')->name('groups.batch');
+
     });
 });

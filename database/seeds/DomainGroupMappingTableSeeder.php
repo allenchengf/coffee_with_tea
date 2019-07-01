@@ -18,6 +18,12 @@ class DomainGroupMappingTableSeeder extends Seeder
                 'domain_group_id' => 1,
                 'created_at' => \Carbon\Carbon::now(),
                 'updated_at' => \Carbon\Carbon::now(),
+            ],[
+                'id' => 2,
+                'domain_id' => 3,
+                'domain_group_id' => 1,
+                'created_at' => \Carbon\Carbon::now(),
+                'updated_at' => \Carbon\Carbon::now(),
             ]];
         
         DB::table('domain_group_mapping')->insert($data);

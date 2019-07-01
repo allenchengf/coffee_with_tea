@@ -10,6 +10,7 @@ class DomainGroupMapping extends Model
     protected $primaryKey = 'id';
     protected $fillable = ['domain_id','domain_group_id'];
     protected $hidden = ['created_at','updated_at'];
+    public $timestamps = true;
 
     public function domain()
     {
