@@ -21,6 +21,12 @@ class DomainGroupMappingTableSeeder extends Seeder
             ],[
                 'id' => 2,
                 'domain_id' => 3,
+                'domain_group_id' => 2,
+                'created_at' => \Carbon\Carbon::now(),
+                'updated_at' => \Carbon\Carbon::now(),
+            ],[
+                'id' => 3,
+                'domain_id' => 2,
                 'domain_group_id' => 1,
                 'created_at' => \Carbon\Carbon::now(),
                 'updated_at' => \Carbon\Carbon::now(),

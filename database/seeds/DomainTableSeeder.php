@@ -20,10 +20,6 @@ class DomainTableSeeder extends Seeder
                 'user_group_id' => 1,
                 'name' => 'hiero7.test2.com',
                 'cname' => 'hiero7test2com.1',
-            ],[
-                'user_group_id' => 1,
-                'name' => 'hiero7.test3.com',
-                'cname' => 'hiero7test3com.1',
             ], [
                 'user_group_id' => 2,
                 'name' => 'rd.test1.com',

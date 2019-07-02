@@ -146,8 +146,9 @@ class DomainGroupController extends Controller
 
         if($result ==false){
             $this->error = PermissionError::CANT_DELETE_LAST_DOMAIN;
-            $result = [];
         }
+        
+        $result = [];
 
         return $this->setStatusCode($this->error ? 400 : 200)->response($this->message, $this->error, $result);
     }
@@ -165,7 +166,7 @@ class DomainGroupController extends Controller
             $this->error = InternalError::INTERNAL_ERROR;
             $result = [];
         }
-dd($this->error );
+
         return $this->setStatusCode($this->error ? 409 : 200)->response($this->message, $this->error, $result);
     }
 

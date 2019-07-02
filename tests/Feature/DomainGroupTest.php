@@ -49,9 +49,9 @@ class DomainGroupTest extends TestCase
     public function testCreate()
     {
         $body =[
-            "name"=> "Group2",
-            "domain_id"=>2,
-            "label"=> "LabelForGroup1"
+            "name"=> "Group3",
+            "domain_id"=>4,
+            "label"=> "LabelForGroup3"
         ];
         $response = $this->call('POST', $this->uri ,$body);
         $response->assertStatus(200);
@@ -82,7 +82,7 @@ class DomainGroupTest extends TestCase
 
     public function testDestroyByDomainId()
     {
-        $response = $this->call('DELETE', $this->uri.'/1/domain/3');
+        $response = $this->call('DELETE', $this->uri.'/1/domain/2');
         $response->assertStatus(200);
     }
 
@@ -90,10 +90,9 @@ class DomainGroupTest extends TestCase
     {
         $this->cdnService->shouldReceive('changeDefaultToTrue')->withAnyArgs()->andReturn(true);
         $body =[
-            "cdn_provider_id"=> 2
+            "cdn_provider_id"=> 3
         ];
         $response = $this->call('PUT', $this->uri.'/1/defaultCdn',$body);
-        dd($response);
         $response->assertStatus(200);
     }
 
