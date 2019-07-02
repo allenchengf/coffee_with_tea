@@ -123,7 +123,7 @@ class CdnProviderService
         if($cdns->count() > 0){
             $result =  $this->deleteCdnByCdnProviderId($cdns);
         }
-//        CdnProvider::where('id', $cdnProvider->id)->delete();
+        CdnProvider::where('id', $cdnProvider->id)->delete();
         DB::commit();
         return $result;
     }
