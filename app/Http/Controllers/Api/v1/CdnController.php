@@ -7,7 +7,7 @@ use App\Events\CdnWasDelete;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\CdnCreateRequest;
 use App\Http\Requests\CdnUpdateRequest;
-use App\Http\Requests\DeleteCdnRequest;
+use App\Http\Requests\CdnDeleteRequest;
 use DB;
 use Hiero7\Enums\InternalError;
 use Hiero7\Models\Cdn;
@@ -128,13 +128,13 @@ class CdnController extends Controller
     }
 
     /**
-     * @param \App\Http\Requests\DeleteCdnRequest $request
+     * @param \App\Http\Requests\CdnDeleteRequest $request
      * @param \Hiero7\Models\Domain               $domain
      * @param \Hiero7\Models\Cdn                  $cdn
      *
      * @return \App\Http\Controllers\Api\v1\CdnController
      */
-    public function destroy(DeleteCdnRequest $request, Domain $domain, Cdn $cdn)
+    public function destroy(CdnDeleteRequest $request, Domain $domain, Cdn $cdn)
     {
         $deleteDnsPodRecord = event(new CdnWasDelete($cdn));
         $cdn->delete();

@@ -79,22 +79,18 @@ class DomainTest extends TestCase
     {
         $loginUid = 4;
         $user_group_id = 2;
-        $target_domain_id = 3;
-        $request = new Request;
-
-        $request->merge([
-            'domain_id' => $target_domain_id,
-        ]);
+        $target_domain_id = 4;
 
         $this->addUuidforPayload()
             ->addUserGroupId($user_group_id)
             ->setJwtTokenPayload($loginUid, $this->jwtPayload);
 
-        $response = $this->controller->getDomain($request, $this->domain);
+        $response = $this->controller->getDomainById($this->domain->where('id',$target_domain_id)->first());
         $this->assertEquals(200, $response->status());
 
         $data = json_decode($response->getContent(), true);
-        $this->assertEquals($target_domain_id, $data['data']['domains'][0]['id']);
+
+        $this->assertEquals($target_domain_id, $data['data']['domain']['id']);
     }
 
     /**

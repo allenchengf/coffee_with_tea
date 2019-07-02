@@ -37,8 +37,7 @@ class DomainGroupTest extends TestCase
 
     private function login()
     {
-        $this->addUuidforPayload()->addUserGroupId(random_int(1, 5))->setJwtTokenPayload(random_int(1, 5),
-            $this->jwtPayload);
+        $this->addUuidforPayload()->addUserGroupId(1)->setJwtTokenPayload(1,$this->jwtPayload);
     }
 
     public function testIndex()
@@ -51,7 +50,7 @@ class DomainGroupTest extends TestCase
     {
         $body =[
             "name"=> "Group3",
-            "domain_id"=>"3",
+            "domain_id"=>4,
             "label"=> "LabelForGroup3"
         ];
         $response = $this->call('POST', $this->uri ,$body);
@@ -83,10 +82,7 @@ class DomainGroupTest extends TestCase
 
     public function testDestroyByDomainId()
     {
-        $body =[
-            "domain_id"=> 2
-        ];
-        $response = $this->call('DELETE', $this->uri.'/1/domain/1',$body);
+        $response = $this->call('DELETE', $this->uri.'/1/domain/2');
         $response->assertStatus(200);
     }
 
@@ -94,7 +90,7 @@ class DomainGroupTest extends TestCase
     {
         $this->cdnService->shouldReceive('changeDefaultToTrue')->withAnyArgs()->andReturn(true);
         $body =[
-            "cdn_provider_id"=> 2
+            "cdn_provider_id"=> 3
         ];
         $response = $this->call('PUT', $this->uri.'/1/defaultCdn',$body);
         $response->assertStatus(200);

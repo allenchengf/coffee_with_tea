@@ -11,6 +11,10 @@ class CdnCreateRequest extends FormRequest
 {
     public function authorize()
     {
+        if(!$this->domain->domainGroup->isEmpty()){
+            return false;
+        }
+
         return true;
     }
 
