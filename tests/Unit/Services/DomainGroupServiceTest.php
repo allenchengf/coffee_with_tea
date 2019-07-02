@@ -7,18 +7,17 @@ use Illuminate\Foundation\Testing\WithFaker;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Hiero7\Services\{LocationDnsSettingService,CdnService,DomainGroupService};
 use Hiero7\Repositories\DomainGroupRepository;
-use Hiero7\Models\{DomainGroup};
-use Illuminate\Support\Facades\Artisan;
+use Hiero7\Models\DomainGroup;
 use App\Http\Requests\DomainGroupRequest;
 
 
 
 class DomainGroupServiceTest extends TestCase
-{
+{   
     protected function setUp()
     {
         parent::setUp();
-        Artisan::call('migrate');
+        $this->artisan('migrate');
         $this->seed();
         $this->seed('LocationDnsSettingSeeder');
         $this->seed('DomainGroupTableSeeder');
@@ -33,6 +32,8 @@ class DomainGroupServiceTest extends TestCase
 
     protected function tearDown()
     {
+        $this->service = null;
+        $this->domainGroup = null;
         parent::tearDown();
     }
 

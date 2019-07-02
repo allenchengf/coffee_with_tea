@@ -2,13 +2,14 @@
 
 namespace Hiero7\Services;
 
+use App\Http\Requests\DomainGroupRequest;
 use Hiero7\Models\Domain;
 use Hiero7\Models\DomainGroup;
-use Hiero7\Models\LocationDnsSetting;use Hiero7\Repositories\DomainGroupRepository;
+use Hiero7\Models\LocationDnsSetting;
+use Hiero7\Repositories\DomainGroupRepository;
 use Hiero7\Services\CdnService;
 use Hiero7\Services\LocationDnsSettingService;
 use Illuminate\Database\Eloquent\Collection;
-use App\Http\Requests\DomainGroupRequest;
 
 class DomainGroupService
 {
@@ -54,7 +55,7 @@ class DomainGroupService
         foreach ($domainGroup->domains as $key => $domain) {
             $domain->cdnProvider;
         }
-        $domainGroup->setAttribute('default_cdn_name',$domain->getDefaultCdnProvider()->name);
+        $domainGroup->setAttribute('default_cdn_name', $domain->getDefaultCdnProvider()->name);
         return $domainGroup;
     }
 
@@ -68,8 +69,8 @@ class DomainGroupService
     public function create(DomainGroupRequest $request)
     {
         $domainModle = Domain::where('id', $request->domain_id)->first();
-        
-        if($domainModle->cdns->isEmpty()){
+
+        if ($domainModle->cdns->isEmpty()) {
             return 'NoneCdn';
         }
 
@@ -102,11 +103,11 @@ class DomainGroupService
             return false;
         }
 
-        if (!$this->changeCdnDefault($domainGroup, $request)) {
+        if (!$this->changeCdnDefault($domainGroup, $request->domain_id, $request->edited_by)) {
             return 'cdnError';
         }
 
-        if (!$this->changeIrouteSetting($domainGroup, $request)) {
+        if (!$this->changeIrouteSetting($domainGroup, $request->domain_id, $request->edited_by)) {
             return 'iRouteError';
         }
 
@@ -139,27 +140,31 @@ class DomainGroupService
         return $this->domainGroupRepository->destroyByDomainId($domainGroup->id, $domain->id);
     }
 
-    private function compareDomainCdnSetting(DomainGroup $domainGroup, $targetDomainId)
+    public function compareDomainCdnSetting(DomainGroup $domainGroup, $targetDomainId)
     {
         $controlDomain = $domainGroup->domains;
         $controlCdnProvider = $controlDomain[0]->cdns()->get(['cdn_provider_id'])->pluck('cdn_provider_id');
-        $targetCdnProvider = Domain::find($targetDomainId)->cdns()->get(['cdn_provider_id'])->pluck('cdn_provider_id');
 
+        try {
+            $targetCdnProvider = Domain::find($targetDomainId)->cdns()->get(['cdn_provider_id'])->pluck('cdn_provider_id');
+        } catch (\Exception $e) {
+            $errorMessage = $e->getMessage();
+            $targetCdnProvider = [];
+        }
         $different = $controlCdnProvider->diff($targetCdnProvider);
-
         return !$different->isEmpty() ? false : true;
     }
 
-    private function changeCdnDefault(DomainGroup $domainGroup, DomainGroupRequest $request)
+    public function changeCdnDefault(DomainGroup $domainGroup, int $domainId, string $editedBy)
     {
-        $domain = Domain::find($request->domain_id);
+        $domain = Domain::find($domainId);
         $getDomainCdnProviderId = $domainGroup->domains()->first()->cdns()->where('default', 1)->first()->cdn_provider_id;
         $targetCdn = $domain->cdns->where('cdn_provider_id', $getDomainCdnProviderId)->first();
 
-        return $this->cdnService->changeDefaultToTrue($domain, $targetCdn, $request->edited_by);
+        return $this->cdnService->changeDefaultToTrue($domain, $targetCdn, $editedBy);
     }
 
-    private function changeIrouteSetting(DomainGroup $domainGroup, DomainGroupRequest $request)
+    public function changeIrouteSetting(DomainGroup $domainGroup, int $domainId, string $editedBy)
     {
 
         $originCdnSetting = $domainGroup->domains()->first()->cdns()->get();
@@ -169,7 +174,7 @@ class DomainGroupService
             return true; //如果 cdn 沒有設定 iroute 就不做更改。
         }
 
-        $targetDomain = Domain::find($request->domain_id);
+        $targetDomain = Domain::find($domainId);
         $result = '';
 
         foreach ($originIrouteSetting as $iRouteSetting) {
@@ -177,7 +182,7 @@ class DomainGroupService
             $existLocationDnsSetting = $this->checkExist($targetDomain, $iRouteSetting->location_networks_id);
 
             $data = ['cdn_id' => $targetCdn->id,
-                'edited_by' => $request->edited_by];
+                'edited_by' => $editedBy];
 
             if (!collect($existLocationDnsSetting)->isEmpty()) {
                 $result = $this->locationDnsSettingService->updateSetting($data, $targetDomain, $targetCdn, $existLocationDnsSetting);

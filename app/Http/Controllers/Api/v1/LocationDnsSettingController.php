@@ -9,6 +9,7 @@ use Hiero7\Services\LocationDnsSettingService;
 use Illuminate\Http\Request;
 use Hiero7\Models\LocationNetwork;
 use Hiero7\Models\{Domain,Cdn,LocationDnsSetting};
+use App\Http\Requests\LocatinDnsSettingRequest;
 
 class LocationDnsSettingController extends Controller
 {
@@ -26,7 +27,7 @@ class LocationDnsSettingController extends Controller
 
     }
 
-    public function editSetting(Request $request, Domain $domain, LocationNetwork $locationNetworkId)
+    public function editSetting(LocatinDnsSettingRequest $request, Domain $domain, LocationNetwork $locationNetworkId)
     {
         $message = '';
         $error = '';
@@ -38,7 +39,7 @@ class LocationDnsSettingController extends Controller
         $cdnModel = $this->checkCdnIfExist($request->get('cdn_id'), $domain);
 
         if (!$cdnModel) {
-            return $this->response($message,InputError::WRONG_PARAMETER_ERROR,'');
+            return $this->setStatusCode(400)->response($message,InputError::WRONG_PARAMETER_ERROR,'');
         }
 
         $existLocationDnsSetting = $this->checkExist($domain, $locationNetworkId);
