@@ -3,7 +3,10 @@
 namespace App\Http\Controllers\Api\v1;
 
 use App\Events\CdnWasBatchEdited;
+use Hiero7\Enums\AuthError;
+use Hiero7\Enums\InputError;
 use Hiero7\Enums\InternalError;
+use Hiero7\Enums\PermissionError;
 use Hiero7\Models\Cdn;
 use Hiero7\Models\CdnProvider;
 use App\Http\Controllers\Controller;
@@ -135,11 +138,16 @@ class CdnProviderController extends Controller
         return $this->response('', null, $defaultInfo);
     }
 
-    public function destroy(CdnProvider $cdnProvider)
+    public function destroy(Request $request,CdnProvider $cdnProvider)
     {
-        $error = $this->cdnProviderService->deleteCDNProvider($cdnProvider);
+        $user_group_id = $this->getUgid($request);
 
-        if (!$error) {
+        if($user_group_id != $cdnProvider->user_group_id){
+            return $this->setStatusCode(403)->response('', PermissionError::CANT_OPERATIONS_OTHER_USER,'');
+        }
+
+        $error = $this->cdnProviderService->deleteCDNProvider($cdnProvider);
+        if ($error) {
             return $this->setStatusCode(409)->response(
                 'please contact the admin',
                 InternalError::INTERNAL_ERROR

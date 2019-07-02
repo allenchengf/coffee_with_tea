@@ -117,13 +117,13 @@ class CdnProviderService
 
     public function deleteCDNProvider(CdnProvider $cdnProvider)
     {
-        $result = true;
+        $result = false;
         DB::beginTransaction();
         $cdns = Cdn::with('locationDnsSetting')->where('cdn_provider_id',$cdnProvider->id)->get();
         if($cdns->count() > 0){
             $result =  $this->deleteCdnByCdnProviderId($cdns);
         }
-        CdnProvider::where('id', $cdnProvider->id)->delete();
+//        CdnProvider::where('id', $cdnProvider->id)->delete();
         DB::commit();
         return $result;
     }
@@ -141,24 +141,22 @@ class CdnProviderService
                 LocationDnsSetting::where('cdn_id', $oldDefault->id)->delete();
                 if (!event(new CdnWasEdited($domain, $newDefault))) {
                     DB::rollback();
-                    return false;
+                    return true;
                 }
                 if (!event(new CdnProviderWasDelete($oldDefault))) {
                     event(new CdnWasEdited($domain, $oldDefault));
                     DB::rollback();
-                    return false;
+                    return true;
                 }
                 $oldDefault->delete();
-                return true;
             }else{
                 $cdn = Cdn::with('locationDnsSetting')->where('domain_id', $v['domain_id'])->where('default', 1)->first();
                 LocationDnsSetting::where('cdn_id', $cdn->id)->delete();
                 if (!event(new CdnProviderWasDelete($cdn))) {
                     DB::rollback();
-                    return false;
+                    return true;
                 }
                 $cdn->delete();
-                return true;
             }
         }
     }
