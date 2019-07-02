@@ -143,7 +143,7 @@ class CdnProviderController extends Controller
         $user_group_id = $this->getUgid($request);
 
         if($user_group_id != $cdnProvider->user_group_id){
-            return $this->setStatusCode(403)->response('', PermissionError::CANT_OPERATIONS_OTHER_USER,'');
+            return $this->setStatusCode(403)->response('', PermissionError::THIS_GROUP_ID_NOT_MATCH,'');
         }
 
         $error = $this->cdnProviderService->deleteCDNProvider($cdnProvider);
