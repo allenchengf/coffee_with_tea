@@ -8,6 +8,7 @@ use Hiero7\Models\LocationDnsSetting;use Hiero7\Repositories\DomainGroupReposito
 use Hiero7\Services\CdnService;
 use Hiero7\Services\LocationDnsSettingService;
 use Illuminate\Database\Eloquent\Collection;
+use App\Http\Requests\DomainGroupRequest;
 
 class DomainGroupService
 {
@@ -64,17 +65,17 @@ class DomainGroupService
  * 若 user_group_id = 1 會依照欲加入的 Domain 的 user_group_id 給與新建立的 Group 相同 user_group_id。
  * @param array $request
  */
-    public function create(array $request)
+    public function create(DomainGroupRequest $request)
     {
-        $domainModle = Domain::where('id', $request['domain_id'])->first();
+        $domainModle = Domain::where('id', $request->domain_id)->first();
         
         if($domainModle->cdns->isEmpty()){
             return 'NoneCdn';
         }
 
-        $request['user_group_id'] == 1 ? $request['user_group_id'] = $domainModle->user_group_id : $request['user_group_id'];
+        $request->user_group_id == 1 ? $request->user_group_id = $domainModle->user_group_id : $request->user_group_id;
 
-        if ($request['user_group_id'] != $domainModle->user_group_id) {
+        if ($request->user_group_id != $domainModle->user_group_id) {
             return 'differentGroup';
         }
 
@@ -93,9 +94,9 @@ class DomainGroupService
  * @param DomainGroup $domainGroup
  * @return void
  */
-    public function createDomainToGroup(array $request, DomainGroup $domainGroup)
+    public function createDomainToGroup(DomainGroupRequest $request, DomainGroup $domainGroup)
     {
-        $checkDomainCdnSetting = $this->compareDomainCdnSetting($domainGroup, $request['domain_id']);
+        $checkDomainCdnSetting = $this->compareDomainCdnSetting($domainGroup, $request->domain_id);
 
         if (!$checkDomainCdnSetting) {
             return false;
@@ -113,10 +114,10 @@ class DomainGroupService
         return $result;
     }
 
-    public function edit(array $request, DomainGroup $domainGroup)
+    public function edit(DomainGroupRequest $request, DomainGroup $domainGroup)
     {
         $domain = $domainGroup->domains()->first();
-        if ($request['user_group_id'] != 1 && $request['user_group_id'] != $domain->user_group_id) {
+        if ($request->user_group_id != 1 && $request->user_group_id != $domain->user_group_id) {
             return false;
         }
 
@@ -149,16 +150,16 @@ class DomainGroupService
         return !$different->isEmpty() ? false : true;
     }
 
-    private function changeCdnDefault(DomainGroup $domainGroup, array $request)
+    private function changeCdnDefault(DomainGroup $domainGroup, DomainGroupRequest $request)
     {
-        $domain = Domain::find($request['domain_id']);
+        $domain = Domain::find($request->domain_id);
         $getDomainCdnProviderId = $domainGroup->domains()->first()->cdns()->where('default', 1)->first()->cdn_provider_id;
         $targetCdn = $domain->cdns->where('cdn_provider_id', $getDomainCdnProviderId)->first();
 
-        return $this->cdnService->changeDefaultToTrue($domain, $targetCdn, $request['edited_by']);
+        return $this->cdnService->changeDefaultToTrue($domain, $targetCdn, $request->edited_by);
     }
 
-    private function changeIrouteSetting(DomainGroup $domainGroup, array $request)
+    private function changeIrouteSetting(DomainGroup $domainGroup, DomainGroupRequest $request)
     {
 
         $originCdnSetting = $domainGroup->domains()->first()->cdns()->get();
@@ -168,7 +169,7 @@ class DomainGroupService
             return true; //如果 cdn 沒有設定 iroute 就不做更改。
         }
 
-        $targetDomain = Domain::find($request['domain_id']);
+        $targetDomain = Domain::find($request->domain_id);
         $result = '';
 
         foreach ($originIrouteSetting as $iRouteSetting) {
@@ -176,7 +177,7 @@ class DomainGroupService
             $existLocationDnsSetting = $this->checkExist($targetDomain, $iRouteSetting->location_networks_id);
 
             $data = ['cdn_id' => $targetCdn->id,
-                'edited_by' => $request['edited_by']];
+                'edited_by' => $request->edited_by];
 
             if (!collect($existLocationDnsSetting)->isEmpty()) {
                 $result = $this->locationDnsSettingService->updateSetting($data, $targetDomain, $targetCdn, $existLocationDnsSetting);
