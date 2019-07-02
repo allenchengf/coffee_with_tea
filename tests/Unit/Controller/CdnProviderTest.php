@@ -274,4 +274,41 @@ class CdnProviderTest extends TestCase
         $this->assertArrayHasKey('have_multi_cdn', $data['data']);
         $this->assertArrayHasKey('only_default', $data['data']);
     }
+
+    /** @test */
+    public function delete_cdn_provider()
+    {
+        $loginUid = 1;
+        $user_group_id = 1;
+        $this->seed();
+
+        $this->addUuidforPayload()
+            ->addUserGroupId($user_group_id)
+            ->setJwtTokenPayload($loginUid, $this->jwtPayload);
+
+        $cdnProvider = $this->cdnProvider->find(1);
+
+        $this->dnsprovider->shouldReceive('editRecord')->withAnyArgs()
+            ->andReturn(["message" => "Success", "errorCode" => null, "data" => [
+                "record" => [
+                    "id" => "426278576",
+                    "name" => "hiero7.test1.com",
+                    "value" => "cCnPjg.com.",
+                    "status" => "enable",
+                    "weight" => null,
+                ]]]);
+
+        $this->dnsprovider->shouldReceive('deleteRecord')
+            ->withAnyArgs()
+            ->andReturn([
+                "errorCode"=>null,"data"=>[
+                    "job_id"=>["id"=>1],
+                    "detail"=>[
+                        "domain_id"=>1
+                    ]
+                ]
+            ]);
+        $response = $this->controller->destroy($cdnProvider);
+        $this->assertEquals(200, $response->status());
+    }
 }
