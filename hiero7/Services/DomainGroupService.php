@@ -168,14 +168,15 @@ class DomainGroupService
     {
 
         $originCdnSetting = $domainGroup->domains()->first()->cdns()->get();
-        $originIrouteSetting = $this->getLocationSetting($originCdnSetting);
+        list($originIrouteSetting,$nonSettingCdn) = $this->getLocationSetting($originCdnSetting);
 
         if (empty($originIrouteSetting)) {
-            return true; //如果 cdn 沒有設定 iroute 就不做更改。
+            return true; //如果 Group 內 cdn 沒有設定 iroute 就不做更改。
         }
 
         $targetDomain = Domain::find($domainId);
         $result = '';
+        $locationNetworkId = []; 
 
         foreach ($originIrouteSetting as $iRouteSetting) {
             $targetCdn = $targetDomain->cdns()->where('cdn_provider_id', $iRouteSetting->cdn_provider_id)->first();
@@ -189,7 +190,22 @@ class DomainGroupService
             } else {
                 $result = $this->locationDnsSettingService->createSetting($data, $targetDomain, $targetCdn, $iRouteSetting->location);
             }
+            array_push($locationNetworkId,$existLocationDnsSetting->location_networks_id);
         }
+
+        foreach($nonSettingCdn as $cdnProviderId ){
+            $targetCdn = $targetDomain->cdns()->where('cdn_provider_id', $cdnProviderId)->first();
+            $targetLocationSetting = $targetCdn->locationDnsSetting;
+
+            if($targetLocationSetting->isEmpty()){
+                continue;
+            }
+
+            foreach($targetLocationSetting as $locationDnsSetting){
+                $this->locationDnsSettingService->destroy($locationDnsSetting);
+            }
+        }
+
 
         return $result;
     }
@@ -197,16 +213,20 @@ class DomainGroupService
     private function getLocationSetting(Collection $cdnSetting)
     {
         $targetIrouteSetting = [];
+        $nonSettingCdn = [];
 
         foreach ($cdnSetting as $cdns) {
             $originLocationDnsSetting = $cdns->locationDnsSetting;
             if ($originLocationDnsSetting->isEmpty()) {
+                $nonSettingCdnProviderId = $cdns->cdn_provider_id;
+                array_push($nonSettingCdn, $nonSettingCdnProviderId);
                 continue;
             }
             $originLocationDnsSetting[0]->cdn_provider_id = $cdns->cdn_provider_id;
             array_push($targetIrouteSetting, $originLocationDnsSetting[0]);
         }
-        return $targetIrouteSetting;
+
+        return [$targetIrouteSetting, $nonSettingCdn];
     }
 
     private function checkExist(Domain $domain, int $locationNetworkId)
