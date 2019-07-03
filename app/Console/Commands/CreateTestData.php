@@ -19,7 +19,7 @@ class CreateTestData extends Command
      *
      * @var string
      */
-    protected $signature = 'db:test-data {--name=leo} {--count=12}';
+    protected $signature = 'db:test-data {--name= : DomainName} {--count=12 : Domain Count}';
 
     /**
      * The console command description.
@@ -47,10 +47,18 @@ class CreateTestData extends Command
      */
     public function handle()
     {
-        $domainName = $this->option('name');
+        if (Domain::count()) {
+            print_r('Please Reset All Data (DB & DNS Provider Data)' . "\n");
+            print_r('Please Use This Command' . "\n\n");
+            print_r('php artisan migrate:fresh --seed' . "\n");
+
+            return;
+        }
+
+        $domainName = $this->option('name') ?? $this->ask('Please Input DomainName!');
         $dataCount = $this->option('count');
 
-        print_r("Input Name is " . $domainName . "\n");
+        print_r("Input DomainName is " . $domainName . "\n");
         print_r("Input Count is " . $dataCount . "\n\n");
 
         $uid = 1;
