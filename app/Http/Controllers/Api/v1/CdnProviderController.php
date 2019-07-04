@@ -69,6 +69,12 @@ class CdnProviderController extends Controller
         $request->merge([
             'edited_by' => $this->getJWTPayload()['uuid'],
         ]);
+        
+        $user_group_id = $this->getUgid($request);
+
+        if($user_group_id != $cdnProvider->user_group_id){
+            return $this->setStatusCode(403)->response('', PermissionError::THIS_GROUP_ID_NOT_MATCH,'');
+        }
 
         DB::beginTransaction();
         $cdnProvider->update($request->only('name','ttl', 'edited_by'));

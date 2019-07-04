@@ -43,7 +43,10 @@ class CdnProviderRequest extends FormRequest
                 return [
                     'name'  => [
                         'required',
-                        Rule::unique('cdn_providers')->ignore($this->cdn_provider->id),
+                        Rule::unique('cdn_providers')->where(function ($query) {
+                            $query->where('name', $this->name)
+                                ->where('user_group_id',$this->request->get('user_group_id'));
+                        }),
                     ],
                     'ttl'   => 'integer' . '|min:' . env('CDN_TTL') . '|max:604800',
                 ];
