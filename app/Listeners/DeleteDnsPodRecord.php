@@ -41,6 +41,12 @@ class DeleteDnsPodRecord
             }
         }
 
+        if($event->deleteDefault = 1 && $event->cdn->default == 1){
+            $deletePodRecord = $this->dnsProviderService->deleteRecord([
+                'record_id' => $event->cdn->provider_record_id,
+            ]);
+        }
+
         $event->cdn->delete();
 
         if ($this->deleteErrorCount) {

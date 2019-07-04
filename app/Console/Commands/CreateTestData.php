@@ -74,8 +74,8 @@ class CreateTestData extends Command
 
         if ($this->createBatchDomianAndCdn($domainName, $dataCount)) {
             $this->createIRoute();
-            $this->createDomainGroup($domainName);
-            $this->createDomainToGroup();
+            // $this->createDomainGroup($domainName);
+            // $this->createDomainToGroup();
 
             print_r("All Success" . "\n");
         }
@@ -159,7 +159,7 @@ class CreateTestData extends Command
                     ->withData(compact('cdn_id'))
                     ->asJson(true)
                     ->put();
-
+dd($this->api . "/domains/$domain->id/iRouteCDN/$location_network_id");
             }
         }
         print_r('Create Domains IRoute Success' . "\n\n");

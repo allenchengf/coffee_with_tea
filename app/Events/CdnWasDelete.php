@@ -22,8 +22,9 @@ class CdnWasDelete
      * @param \Hiero7\Models\Domain $domain
      * @param \Hiero7\Models\Cdn    $cdn
      */
-    public function __construct(Cdn $cdn)
+    public function __construct(Cdn $cdn, int  $deleteDefault = 0)
     {
         $this->cdn = $cdn;
+        $this->deleteDefault = $deleteDefault;
     }
 }

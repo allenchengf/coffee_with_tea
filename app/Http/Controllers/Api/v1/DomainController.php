@@ -113,7 +113,7 @@ class DomainController extends Controller
         //有 cdn 設定才要刪掉
         if(!$domain->cdns->isEmpty()){
             foreach($domain->cdns as $cdnModel){              
-                event(new CdnWasDelete($cdnModel));
+                event(new CdnWasDelete($cdnModel,1));
             }
         }
         $domain->delete();

@@ -176,7 +176,6 @@ class DomainGroupService
 
         $targetDomain = Domain::find($domainId);
         $result = '';
-        $locationNetworkId = []; 
 
         foreach ($originIrouteSetting as $iRouteSetting) {
             $targetCdn = $targetDomain->cdns()->where('cdn_provider_id', $iRouteSetting->cdn_provider_id)->first();
@@ -190,7 +189,6 @@ class DomainGroupService
             } else {
                 $result = $this->locationDnsSettingService->createSetting($data, $targetDomain, $targetCdn, $iRouteSetting->location);
             }
-            array_push($locationNetworkId,$existLocationDnsSetting->location_networks_id);
         }
 
         foreach($nonSettingCdn as $cdnProviderId ){
