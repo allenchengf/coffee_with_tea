@@ -107,7 +107,7 @@ class DomainController extends Controller
     {
         //有 DomainGroup 並且 不能是 Group 內唯一的 Domain
         if(!$domain->domainGroup->isEmpty() && $domain->domainGroup->first()->domains->count() == 1){
-            return $this->response('',PermissionError::CANT_DELETE_LAST_DOMAIN,[]);
+            return $this->setStatusCode(400)->response('',PermissionError::CANT_DELETE_LAST_DOMAIN,[]);
         }
 
         //有 cdn 設定才要刪掉
