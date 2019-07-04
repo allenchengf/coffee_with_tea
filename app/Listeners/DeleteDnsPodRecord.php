@@ -36,7 +36,7 @@ class DeleteDnsPodRecord
                 'record_id' => $value->provider_record_id,
             ]);
             if ($this->dnsProviderService->checkAPIOutput($deletePodRecord)) {
-                $value->delete;
+                $value->delete();
             } else {
                 $this->deleteErrorCount = true;
             }

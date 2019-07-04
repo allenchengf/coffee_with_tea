@@ -104,16 +104,18 @@ class DomainController extends Controller
     public function destroy(Domain $domain)
     {
         $result = [];
-        if($domain->domainGroup->count() == 1){
+        //有 DomainGroup 並且 不能是 Group 內唯一的 Domain
+        if(!$domain->domainGroup->isEmpty() && $domain->domainGroup->first()->domains->count() == 1){
             return $this->response('',PermissionError::CANT_DELETE_LAST_DOMAIN,[]);
         }
 
-        // if(!$domain->cdns->isEmpty()){
-        //     dd($domain->cdns);
-        //     $result = $this->domainService->deleteCdn($domain->cdns);
-        // }
+        //有 cdn 設定才要刪掉
+        if(!$domain->cdns->isEmpty()){
+            $result = $this->domainService->deleteAllSetting($domain->cdns);
+        }
+
         $domain->delete();
         
-        return $this->response('','',$result);
+        return $this->response('','',$result==true ? []: $result);
     }
 }

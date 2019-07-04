@@ -14,9 +14,16 @@ use DB;
 use Hiero7\Models\Cdn;
 use Hiero7\Models\Domain;
 use Illuminate\Http\Request;
+use Hiero7\Services\DomainGroupService;
 
 class CdnService
 {
+    public function __construct(DnsProviderService $dnsProviderService)
+    {
+        $this->dnsProviderService = $dnsProviderService;
+        
+    }
+
     public function setEditedByOfRequest(Request $request, $uuid)
     {
         $request->merge(['edited_by' => $uuid]);
@@ -115,5 +122,20 @@ class CdnService
     {
         $dnsProviderIdArray = $cdn->getlocationDnsSettingDomainId($cdn->id)->toArray();
         return event(new CdnWasBatchEdited($cdn->cname, $dnsProviderIdArray, 'value'));
+    }
+
+    public function destroy(Cdn $cdn)
+    {
+        if($cdn->provider_record_id){
+            $podResult = $this->dnsProviderService->deleteRecord([
+                'record_id' => $cdn->provider_record_id,
+            ]);
+    
+            if ($podResult['errorCode']) {
+                return false;
+            }
+        }
+
+        return $cdn->delete();
     }
 }
