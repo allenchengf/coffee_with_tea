@@ -57,6 +57,7 @@ Route::group(['middleware' => ['api'], 'namespace' => 'Api\v1', 'prefix' => 'v1'
         Route::patch('{cdn_provider}', 'CdnProviderController@update')->name('cdn_providers.update');
         Route::patch('{cdn_provider}/status', 'CdnProviderController@changeStatus')->name('cdn_providers.status');
         Route::get('{cdn_provider}/check', 'CdnProviderController@checkDefault')->name('cdn_providers.check');
+        Route::delete('{cdn_provider}', 'CdnProviderController@destroy')->name('cdn_providers.destroy');
     });
 
     Route::group(['middleware' => ['auth.user.module'], 'prefix' => 'groups'], function(){

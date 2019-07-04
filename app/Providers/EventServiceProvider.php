@@ -31,6 +31,9 @@ class EventServiceProvider extends ServiceProvider
             \App\Events\CdnWasDelete::class  => [
                 \App\Listeners\DeleteDnsPodRecord::class,
             ],
+            \App\Events\CdnProviderWasDelete::class  => [
+                \App\Listeners\DeleteFullDnsPodRecord::class,
+            ],
         ];
 
     /**

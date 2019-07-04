@@ -12,6 +12,8 @@ namespace Hiero7\Repositories;
 use Hiero7\Models\Cdn;
 use Hiero7\Models\CdnProvider;
 use \DB;
+use Hiero7\Models\LocationDnsSetting;
+
 class CdnProviderRepository
 {
     protected $cdnProvider;

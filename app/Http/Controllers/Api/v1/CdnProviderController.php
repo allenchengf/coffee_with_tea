@@ -3,7 +3,10 @@
 namespace App\Http\Controllers\Api\v1;
 
 use App\Events\CdnWasBatchEdited;
+use Hiero7\Enums\AuthError;
+use Hiero7\Enums\InputError;
 use Hiero7\Enums\InternalError;
+use Hiero7\Enums\PermissionError;
 use Hiero7\Models\Cdn;
 use Hiero7\Models\CdnProvider;
 use App\Http\Controllers\Controller;
@@ -71,7 +74,7 @@ class CdnProviderController extends Controller
         $cdnProvider->update($request->only('name','ttl', 'edited_by'));
         $cdn = Cdn::where('cdn_provider_id', $cdnProvider->id)->pluck('provider_record_id')->all();
         if(!empty($cdn)){
-            $BatchEditedDnsProviderRecordResult = $this->cdnProviderService->updateDnsProviderTTL($cdnProvider, $cdn);
+            $BatchEditedDnsProviderRecordResult = $this->cdnProviderService->updateCdnProviderTTL($cdnProvider, $cdn);
             if (array_key_exists('errors', $BatchEditedDnsProviderRecordResult[0])) {
                 DB::rollback();
                 return $this->setStatusCode(409)->response('please contact the admin', InternalError::INTERNAL_ERROR, []);
@@ -110,7 +113,7 @@ class CdnProviderController extends Controller
         }
         $recordList = array_filter($recordList);
         if (!empty($recordList)) {
-            $BatchEditedDnsProviderRecordResult = $this->cdnProviderService->updateDnsProviderStatus($recordList, $status);
+            $BatchEditedDnsProviderRecordResult = $this->cdnProviderService->updateCdnProviderStatus($recordList, $status);
             if (array_key_exists('errors', $BatchEditedDnsProviderRecordResult[0])) {
                 DB::rollback();
                 return $this->setStatusCode(409)->response('please contact the admin', InternalError::INTERNAL_ERROR, []);
@@ -133,5 +136,23 @@ class CdnProviderController extends Controller
         $cdnProvider = CdnProvider::with('domains')->where('id', $cdnProvider->id)->get();
         $defaultInfo = $this->cdnProviderService->cdnDefaultInfo($cdnProvider);
         return $this->response('', null, $defaultInfo);
+    }
+
+    public function destroy(Request $request,CdnProvider $cdnProvider)
+    {
+        $user_group_id = $this->getUgid($request);
+
+        if($user_group_id != $cdnProvider->user_group_id){
+            return $this->setStatusCode(403)->response('', PermissionError::THIS_GROUP_ID_NOT_MATCH,'');
+        }
+
+        $error = $this->cdnProviderService->deleteCDNProvider($cdnProvider);
+        if ($error) {
+            return $this->setStatusCode(409)->response(
+                'please contact the admin',
+                InternalError::INTERNAL_ERROR
+            );
+        }
+        return $this->response();
     }
 }

@@ -13,7 +13,6 @@ use Hiero7\Repositories\DomainRepository;
 use Hiero7\Traits\DomainHelperTrait;
 use Illuminate\Http\Request;
 use Hiero7\Services\{LocationDnsSettingService,cdnService};
-use App\Events\CdnWasDelete;
 
 
 
@@ -46,17 +45,4 @@ class DomainService
     {
         return $this->domainRepository->checkUniqueCname($cname) ? InputError::CNAME_EXIST : null;
     }
-
-    public function deleteAllSetting($cdn)
-    {
-        foreach($cdn as $cdnModel){              
-
-            event(new CdnWasDelete($cdnModel));
-            $result = $this->cdnService->destroy($cdnModel);
-        }
-
-        return $result;
-    }
-
-
 }

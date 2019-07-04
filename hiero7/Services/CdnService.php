@@ -123,19 +123,4 @@ class CdnService
         $dnsProviderIdArray = $cdn->getlocationDnsSettingDomainId($cdn->id)->toArray();
         return event(new CdnWasBatchEdited($cdn->cname, $dnsProviderIdArray, 'value'));
     }
-
-    public function destroy(Cdn $cdn)
-    {
-        if($cdn->provider_record_id){
-            $podResult = $this->dnsProviderService->deleteRecord([
-                'record_id' => $cdn->provider_record_id,
-            ]);
-    
-            if ($podResult['errorCode']) {
-                return false;
-            }
-        }
-
-        return $cdn->delete();
-    }
 }
