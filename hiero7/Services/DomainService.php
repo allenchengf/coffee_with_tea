@@ -12,9 +12,7 @@ use Hiero7\Enums\InputError;
 use Hiero7\Repositories\DomainRepository;
 use Hiero7\Traits\DomainHelperTrait;
 use Illuminate\Http\Request;
-use Hiero7\Services\{LocationDnsSettingService,cdnService};
-
-
+use Hiero7\Services\{LocationDnsSettingService,CdnService};
 
 class DomainService
 {
