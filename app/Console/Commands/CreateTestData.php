@@ -7,8 +7,6 @@ use Hiero7\Models\Domain;
 use Hiero7\Models\DomainGroup;
 use Illuminate\Console\Command;
 use Ixudra\Curl\Facades\Curl;
-use Tymon\JWTAuth\Facades\JWTAuth;
-use Tymon\JWTAuth\Facades\JWTFactory;
 
 class CreateTestData extends Command
 {
@@ -37,7 +35,7 @@ class CreateTestData extends Command
     {
         parent::__construct();
         $this->api = url('/api/v1');
-
+        $this->userModule = env('USER_MODULE');
     }
 
     /**
@@ -61,14 +59,9 @@ class CreateTestData extends Command
         print_r("Input DomainName is " . $domainName . "\n");
         print_r("Input Count is " . $dataCount . "\n\n");
 
-        $uid = 1;
-        $payload = [
-            "uuid" => "111-11-1-11-111",
-            "user_group_id" => 1,
-            "platformKey" => "eu7nxsfttc",
-        ];
-
-        $this->setJwtTokenPayload($uid, $payload);
+        if (!$this->login()) {
+            return;
+        }
 
         print_r('Create Test Data Start' . "\n\n");
 
@@ -81,20 +74,26 @@ class CreateTestData extends Command
         }
     }
 
-    private function setJwtTokenPayload($uid = 1, $data = ['platformKey' => 'u9fiaplome'])
+    private function login($email = "brian@123.com", $password = "1qaz@WSX", $unique_id = "hiero7")
     {
-        JWTFactory::sub($uid);
-        foreach ($data as $key => $value) {
-            JWTFactory::$key($value);
+        $key = "eu7nxsfttc";
+
+        $response = Curl::to($this->userModule . '/login')
+            ->withData(compact('email', 'password', 'unique_id', 'key'))
+            ->asJson(true)
+            ->post();
+
+        if (empty($response['error'])) {
+            print_r('Login Success' . "\n\n");
+
+            $this->authorization = "bearer " . (string) $response['data']['token'];
+
+            return true;
         }
 
-        $payload = JWTFactory::make();
+        print_r('Login Fail' . "\n\n");
 
-        $token = JWTAuth::encode($payload);
-        JWTAuth::setToken($token);
-        $this->authorization = "bearer " . (string) $token;
-
-        return $token;
+        return false;
     }
 
     private function createBatchDomianAndCdn($domainName = 'leo', $dataCount = 10)
