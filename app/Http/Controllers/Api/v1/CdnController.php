@@ -136,8 +136,8 @@ class CdnController extends Controller
      */
     public function destroy(CdnDeleteRequest $request, Domain $domain, Cdn $cdn)
     {
-        $deleteDnsPodRecord = event(new CdnWasDelete($cdn));
-        $cdn->delete();
+        event(new CdnWasDelete($cdn));
+
         return $this->setStatusCode(200)->response('success', null, []);
     }
 }

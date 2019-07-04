@@ -12,6 +12,9 @@ use Hiero7\Enums\InputError;
 use Hiero7\Repositories\DomainRepository;
 use Hiero7\Traits\DomainHelperTrait;
 use Illuminate\Http\Request;
+use Hiero7\Services\{LocationDnsSettingService,cdnService};
+
+
 
 class DomainService
 {
@@ -19,9 +22,11 @@ class DomainService
 
     protected $domainRepository;
 
-    public function __construct(DomainRepository $domainRepository)
+    public function __construct(DomainRepository $domainRepository, LocationDnsSettingService $locationDnsSettingService, CdnService $cdnService)
     {
         $this->domainRepository = $domainRepository;
+        $this->locationDnsSettingService = $locationDnsSettingService;
+        $this->cdnService = $cdnService;
     }
 
     public function getDomainById(int $domain_id)
@@ -39,10 +44,5 @@ class DomainService
     public function checkUniqueCname(string $cname)
     {
         return $this->domainRepository->checkUniqueCname($cname) ? InputError::CNAME_EXIST : null;
-    }
-
-    public function deleteCdn()
-    {
-        return $this;
     }
 }

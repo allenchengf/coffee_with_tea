@@ -84,6 +84,19 @@ class LocationDnsSettingService
         return $this->locationDnsSettingRepository->updateToDefaultCdnId($targetCdn->id, $defaultCdn->id);
     }
 
+    public function destroy(LocationDnsSetting $locationDnsSetting)
+    {
+        $podResult = $this->dnsProviderService->deleteRecord([
+            'record_id' => $locationDnsSetting->provider_record_id,
+        ]);
+
+        if ($podResult['errorCode']) {
+            return false;
+        }
+
+        return $locationDnsSetting->delete();
+    }
+
     private function getDnsSettingAll($lineModel, Cdn $cdnModel, int $domainId, $locationDnsSetting)
     {
         if (!$locationDnsSetting) {

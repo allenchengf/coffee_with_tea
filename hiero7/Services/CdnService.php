@@ -14,9 +14,16 @@ use DB;
 use Hiero7\Models\Cdn;
 use Hiero7\Models\Domain;
 use Illuminate\Http\Request;
+use Hiero7\Services\DomainGroupService;
 
 class CdnService
 {
+    public function __construct(DnsProviderService $dnsProviderService)
+    {
+        $this->dnsProviderService = $dnsProviderService;
+        
+    }
+
     public function setEditedByOfRequest(Request $request, $uuid)
     {
         $request->merge(['edited_by' => $uuid]);
