@@ -281,6 +281,7 @@ class CdnProviderTest extends TestCase
         $loginUid = 1;
         $user_group_id = 1;
         $this->seed();
+        $request = new Request;
 
         $this->addUuidforPayload()
             ->addUserGroupId($user_group_id)
@@ -308,7 +309,7 @@ class CdnProviderTest extends TestCase
                     ]
                 ]
             ]);
-        $response = $this->controller->destroy($cdnProvider);
+        $response = $this->controller->destroy($request, $cdnProvider);
         $this->assertEquals(200, $response->status());
     }
 }
