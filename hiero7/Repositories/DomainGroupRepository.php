@@ -2,7 +2,8 @@
 
 namespace Hiero7\Repositories;
 
-use Hiero7\Models\DomainGroup;
+use Hiero7\Models\{DomainGroup,DomainGroupMapping};
+use App\Http\Requests\DomainGroupRequest;
 
 class DomainGroupRepository
 {
@@ -13,7 +14,7 @@ class DomainGroupRepository
         $this->domainGroupModel = $domainGroupModel;
     }
 
-    public function index(int $userGroupId)
+    public function indexByUserGroup(int $userGroupId)
     {
         if($userGroupId == 1){
             return  $this->domainGroupModel->with('domains')->get();
@@ -21,6 +22,7 @@ class DomainGroupRepository
 
         return $this->domainGroupModel->with('domains')->where('user_group_id',$userGroupId)->get();
     }
+
 /**
  * Create function
  *
@@ -28,35 +30,49 @@ class DomainGroupRepository
  * 先新增 domain_group table ，再新增中間表(domain_group_mapping)。
  * @param array $request
  */
-    public function create(array $request)
+    public function create(DomainGroupRequest $request)
     {
-        $checkExist = $this->domainGroupModel->where('name',$request['name'])->where('user_group_id',$request['user_group_id'])->get()->isEmpty();
+        $checkExist = $this->domainGroupModel->where('name',$request->name)->where('user_group_id',$request->user_group_id)->get()->isEmpty();
         if (!$checkExist){
             return false;
         }
 
-        $domainGroupId = $this->domainGroupModel->create([
-            'user_group_id' => $request['user_group_id'],
-            'name' => $request['name'],
-            'label' => $request['label'],
-            'edited_by' => $request['edited_by']
-        ])->id;
+        $domainGroup = $this->domainGroupModel->create([
+            'user_group_id' => $request->user_group_id,
+            'name' => $request->name,
+            'label' => $request->label,
+            'edited_by' => $request->edited_by,
+        ]);
         
-        $this->domainGroupModel->find($domainGroupId)->domains()->attach($request['domain_id']);
-        return  true;      
+        $this->domainGroupModel->find($domainGroup->id)->domains()->attach($request->domain_id);
+        return  $domainGroup;      
     }
 
-    public function update(array $request,int $domainGroupId)
+    public function createDomainToGroup(DomainGroupRequest $request,int $domainGroupId)
+    {
+        return DomainGroupMapping::create([
+            'domain_id' => $request->domain_id,
+            'domain_group_id' => $domainGroupId
+        ]);
+    }
+
+    public function update(DomainGroupRequest $request,int $domainGroupId)
     {
         return $this->domainGroupModel->where('id',$domainGroupId)->update([
-            "name" => $request['name'],
-            "label" => $request['label']
+            "name" => $request->name,
+            "label" => $request->label
         ]);
     }
 
     public function destroy(int $domainGroupId)
     {
         return $this->domainGroupModel->find($domainGroupId)->delete();
+        
+    }
+
+    public function destroyByDomainId(int $domainGroupId,int $domainId)
+    {
+        return DomainGroupMapping::where('domain_group_id',$domainGroupId)->where('domain_id',$domainId)->delete();
         
     }
 }

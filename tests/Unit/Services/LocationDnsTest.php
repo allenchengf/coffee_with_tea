@@ -1,12 +1,12 @@
 <?php
 
-namespace Tests\Unit;
+namespace Tests\Unit\Services;
 
 use Hiero7\Repositories\LineRepository;
 use Hiero7\Repositories\LocationDnsSettingRepository;
 use Hiero7\Services\DnsProviderService;
 use Hiero7\Services\LocationDnsSettingService;
-use Hiero7\Models\LocationNetwork;
+use Hiero7\Models\{LocationNetwork,cdn};
 use Hiero7\Models\{Domain,LocationDnsSetting};
 use Illuminate\Support\Facades\Artisan;
 use Tests\TestCase;
@@ -17,12 +17,16 @@ class LocationDnsTest extends TestCase
     {
         parent::setUp();
         Artisan::call('migrate');
-        Artisan::call('db:seed');
+        $this->seed();
         $this->seed('LocationDnsSettingSeeder');
+        $this->seed('DomainTableSeeder');
+        $this->seed('CdnTableSeeder');
         $this->dnsprovider = $this->initMock(DnsProviderService::class);
         app()->call([$this, 'repository']);
         app()->call([$this, 'dnsPodMock']);
         $this->domain = Domain::inRandomOrder()->first();
+        $this->cdnId = $this->domain->cdns()->first()->id;
+        $this->cdn = $this->domain->cdns()->where('id', $this->cdnId)->first();
         $this->locationNetwork = LocationNetwork::inRandomOrder()->first();
         $this->locationDnsSetting = LocationDnsSetting::first();
         $this->service = new LocationDnsSettingService($this->locationDnsSettingRepository, $this->dnsprovider, $this->lineRepository);
@@ -65,41 +69,24 @@ class LocationDnsTest extends TestCase
     public function testCreateRecord()
     {
         $data = [
-            "cdn_id" => $this->domain->cdns()->first()->id,
+            "cdn_id" => $this->cdnId,
             "edited_by" => "de20afd0-d009-4fbf-a3b0-2c3257915d10",
         ];
 
-        $response = $this->service->createSetting($data, $this->domain, $this->locationNetwork);
+        $response = $this->service->createSetting($data, $this->domain, $this->cdn ,$this->locationNetwork);
 
         $this->assertEquals($response, true);
 
     }
 
-    public function testUpdateDataNotExist()
+    public function testUpdateDataExist()
     {
         $data = [
-            "cdn_id" => $this->domain->cdns()->first()->id,
+            "cdn_id" => $this->cdnId,
             "edited_by" => "de20afd0-d009-4fbf-a3b0-2c3257915d10",
         ];
 
-        $response = $this->service->updateSetting($data, $this->domain, $this->locationNetwork);
-
-        $this->assertEquals($response, false);
-
-    }
-
-    public function testUpdateDataExist()
-    {   
-        $this->domain = new Domain;
-        $this->domain = $this->domain->where('id',$this->locationDnsSetting->domain_id)->first();
-        $this->locationNetwork = new LocationNetwork;
-        $this->locationNetwork = $this->locationNetwork->where('id',$this->locationDnsSetting->location_networks_id)->first();
-        $data = [
-            "cdn_id" => $this->domain->cdns()->first()->id,
-            "edited_by" => "de20afd0-d009-4fbf-a3b0-2c3257915d10",
-        ];
-
-        $response = $this->service->updateSetting($data, $this->domain, $this->locationNetwork);
+        $response = $this->service->updateSetting($data, $this->domain,$this->cdn ,$this->locationDnsSetting);
 
         $this->assertEquals($response, true);
 

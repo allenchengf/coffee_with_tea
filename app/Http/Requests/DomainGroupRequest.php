@@ -6,15 +6,20 @@ use Hiero7\Models\Domain;
 
 class DomainGroupRequest extends FormRequest
 {
+    protected $prefix = 'groups';
     /**
-     * Determine if the user is authorized to make this request.
-     *
+     * 如果 沒有這個 domain 就會 403
+     * 如果 在 mapping 表內有資料也會是 403
      * @return bool
      */
     public function authorize(Domain $domain)
     {
-        if ($this->method() == 'POST') {
-            if (!$domain->find($this->domain_id)->domainGroup()->get()->isEmpty()) {
+        if ($this->route()->getName() == "$this->prefix.create") {
+            $domainModel = $domain->find($this->domain_id);
+            if(!$domainModel){
+                return false;
+            }
+            if (!$domainModel->domainGroup()->get()->isEmpty()) {
                 return false;
             }
         }
@@ -28,22 +33,30 @@ class DomainGroupRequest extends FormRequest
      */
     public function rules()
     {
-        $prefix = 'groups';
         $routeName = $this->route()->getName();
 
         switch ($routeName) {
-            case ($routeName == "$prefix.create"):
+            case ($routeName == "$this->prefix.create"):
                 return [
                     "name" => "required|string",
                     "domain_id" => "required|integer",
-                    "label" => "required|string",
+                    "label" => "nullable|string",
                 ];
                 break;
-            case ($routeName == "$prefix.edit"):
+            case ($routeName == "$this->prefix.edit"):
                 return [
                     "name" => "required|string",
-                    "default_cdn_provider_id" => "required|integer",
-                    "label" => "required|string"
+                    "label" => "nullable|string"
+                ];
+                break;
+            case ($routeName == "$this->prefix.createDomainToGroup"):
+                return [
+                    "domain_id" => "required|integer",
+                ];
+                break;
+            case ($routeName == "$this->prefix.changeDefaultCdn"):
+                return [
+                    "cdn_provider_id" => "required|integer"
                 ];
                 break;
             default :

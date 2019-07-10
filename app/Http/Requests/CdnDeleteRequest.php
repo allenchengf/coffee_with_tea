@@ -4,9 +4,10 @@ namespace App\Http\Requests;
 
 use Hiero7\Services\CdnService;
 
+
 //use Illuminate\Foundation\Http\FormRequest;
 
-class DeleteCdnRequest extends FormRequest
+class CdnDeleteRequest extends FormRequest
 {
     /**
      * @param \Hiero7\Services\CdnService $cdnService
@@ -15,6 +16,9 @@ class DeleteCdnRequest extends FormRequest
      */
     public function authorize(CdnService $cdnService)
     {
+        if(!$this->domain->domainGroup->isEmpty()){
+            return false;
+        }
         if ($this->cdn->domain_id != $this->domain->id) {
             return false;
         }

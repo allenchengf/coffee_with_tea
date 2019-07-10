@@ -24,8 +24,7 @@ class DomainTest extends TestRequest
     public function setUp()
     {
         parent::setUp();
-        $this->seed();
-
+        $this->seed('DomainTableSeeder');
         $this->request = new FakeDomainRequest();
         $this->validator = $this->app['validator'];
         $this->domain = Domain::inRandomOrder()->first();

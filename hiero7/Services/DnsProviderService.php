@@ -148,7 +148,7 @@ class DnsProviderService
 
     public function checkAPIOutput(array $response): bool
     {
-        if (!is_null($response['errorCode']) || array_key_exists('errors', $response)) {
+        if (array_key_exists('errors', $response) || !is_null($response['errorCode'])) {
             return false;
         }
         return true;

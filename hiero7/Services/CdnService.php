@@ -8,18 +8,28 @@
 
 namespace Hiero7\Services;
 
-use App\Http\Requests\CdnRequest;
-use Hiero7\Models\Domain;
+use App\Events\CdnWasBatchEdited;
+use App\Events\CdnWasEdited;
+use DB;
 use Hiero7\Models\Cdn;
+use Hiero7\Models\Domain;
+use Illuminate\Http\Request;
+use Hiero7\Services\DomainGroupService;
 
 class CdnService
 {
-    public function setEditedByOfRequest(CdnRequest $request, $uuid)
+    public function __construct(DnsProviderService $dnsProviderService)
+    {
+        $this->dnsProviderService = $dnsProviderService;
+        
+    }
+
+    public function setEditedByOfRequest(Request $request, $uuid)
     {
         $request->merge(['edited_by' => $uuid]);
     }
 
-    public function formatRequest(CdnRequest $request, $uuid)
+    public function formatRequest(Request $request, $uuid)
     {
         $this->setEditedByOfRequest($request, $uuid);
 
@@ -27,7 +37,7 @@ class CdnService
             'cdn_provider_id',
             'cname',
             'edited_by',
-            'default'
+            'default',
         ]);
     }
 
@@ -46,5 +56,71 @@ class CdnService
         }
 
         return false;
+    }
+
+    /**
+     * changeDefaultRecord function
+     *
+     * @param Domain $domain 目標
+     * @param Cdn $cdn 要改變 $cdn->default 的目標
+     * @param uuid $edited_by
+     * @return boolean
+     */
+    public function changeDefaultToTrue(Domain $domain, Cdn $cdn, $edited_by = null): bool
+    {
+        if ($this->checkCurrentCdnIsDefault($domain, $cdn)) {
+            return true;
+        }
+
+        DB::beginTransaction();
+
+        $getDefaultRecord = $this->getDefaultRecord($domain);
+        $getDefaultRecord->update(['default' => false]);
+
+        $cdn->update([
+            'provider_record_id' => $getDefaultRecord->provider_record_id,
+            'default' => true,
+            'edited_by' => $edited_by,
+        ]);
+
+        $cdn = $domain->getCdnById($cdn->id)->first();
+
+        if (!event(new CdnWasEdited($domain, $cdn))) {
+
+            DB::rollback();
+            return false;
+        }
+
+        DB::commit();
+
+        return true;
+    }
+
+    /**
+     * 修改 Dns Provider CNAME function
+     *
+     * @param Domain $domain
+     * @param Cdn $cdn
+     * @return boolean
+     */
+    public function changeDnsProviderCname(Domain $domain, Cdn $cdn): bool
+    {
+        if ($cdn->default) {
+            if (!event(new CdnWasEdited($domain, $cdn))) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /**
+     * 批次修改 Location DNS Setting 同個 $cdn->id 的 CNAME
+     *
+     * @param Cdn $cdn
+     */
+    public function batchChangeDnsCnameForLocationSetting(Cdn $cdn)
+    {
+        $dnsProviderIdArray = $cdn->getlocationDnsSettingDomainId($cdn->id)->toArray();
+        return event(new CdnWasBatchEdited($cdn->cname, $dnsProviderIdArray, 'value'));
     }
 }
