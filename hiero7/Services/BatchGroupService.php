@@ -1,8 +1,8 @@
 <?php
 namespace Hiero7\Services;
 
-use Hiero7\Services\{CdnService,DomainGroupService};
-use Hiero7\Models\{Domain,DomainGroupMapping};
+use Hiero7\Services\DomainGroupService;
+use Hiero7\Models\DomainGroupMapping;
 use Hiero7\Repositories\DomainRepository;
 use Exception;
 

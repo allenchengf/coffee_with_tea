@@ -7,6 +7,8 @@ use App\Http\Requests\DomainRequest as Request;
 use Hiero7\Models\Domain;
 use Hiero7\Services\DomainService;
 use Hiero7\Enums\PermissionError;
+use App\Events\CdnWasDelete;
+
 
 class DomainController extends Controller
 {
@@ -103,17 +105,19 @@ class DomainController extends Controller
 
     public function destroy(Domain $domain)
     {
-        $result = [];
-        if($domain->domainGroup->count() == 1){
-            return $this->response('',PermissionError::CANT_DELETE_LAST_DOMAIN,[]);
+        //有 DomainGroup 並且 不能是 Group 內唯一的 Domain
+        if(!$domain->domainGroup->isEmpty() && $domain->domainGroup->first()->domains->count() == 1){
+            return $this->setStatusCode(400)->response('',PermissionError::CANT_DELETE_LAST_DOMAIN,[]);
         }
 
-        // if(!$domain->cdns->isEmpty()){
-        //     dd($domain->cdns);
-        //     $result = $this->domainService->deleteCdn($domain->cdns);
-        // }
+        //有 cdn 設定才要刪掉
+        if(!$domain->cdns->isEmpty()){
+            foreach($domain->cdns as $cdnModel){              
+                event(new CdnWasDelete($cdnModel,1));
+            }
+        }
         $domain->delete();
         
-        return $this->response('','',$result);
+        return $this->response('','',[]);
     }
 }
