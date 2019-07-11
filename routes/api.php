@@ -2,6 +2,12 @@
 
 Route::group(['middleware' => ['api'], 'namespace' => 'Api\v1', 'prefix' => 'v1'], function () {
     Route::group(['prefix' => 'domains'], function () {
+        
+        Route::get('check', 'DnsPodRecordSyncController@index');
+        Route::get('{domain}/check', 'DnsPodRecordSyncController@getDomain');
+        Route::get('check-diff', 'DnsPodRecordSyncController@checkDataDiff');
+        Route::post('sync', 'DnsPodRecordSyncController@syncDnsData');
+        
         Route::get('', 'DomainController@getDomain')->name('domain.get');
         Route::middleware(['auth.user.module', 'domain.permission'])->group(function () {
             Route::post('', 'DomainController@create')->name('domain.create');
