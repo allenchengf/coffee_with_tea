@@ -3,27 +3,27 @@
 namespace App\Http\Controllers\Api\v1;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\DnsPodRecordSyncRequest as Request;
+use DB;
+use Hiero7\Models\Cdn;
 use Hiero7\Models\CdnProvider;
 use Hiero7\Models\Domain;
+use Hiero7\Models\LocationDnsSetting;
 use Hiero7\Services\DnsProviderService;
 use Hiero7\Services\DomainService;
-// use Illuminate\Http\Request;
-use App\Http\Requests\DnsPodRecordSyncRequest as Request;
-
 
 class DnsPodRecordSyncController extends Controller
 {
     protected $dnsProviderService, $domainService, $domainName, $cdnProvider, $cdns;
-    protected $record = [], $diffData = [],$createData = [];
+    protected $record = [], $diffData = [], $createData = [];
 
     public function __construct(DnsProviderService $dnsProviderService, DomainService $domainService)
     {
         $this->dnsProviderService = $dnsProviderService;
         $this->domainService = $domainService;
-        $diffData = $createData = collect([]);
     }
 
-    public function index(Request $request, Domain $domain)
+    public function index(Domain $domain)
     {
         $domainAll = $domain->all();
 
@@ -46,32 +46,35 @@ class DnsPodRecordSyncController extends Controller
 
         $this->getDefaultCdn($domain->cdns);
 
-        $iRouteSetting = $this->getIRouteSetting($domain->locationDnsSettings);
+        $this->getIRouteSetting($domain->locationDnsSettings);
 
         return $this->response('', null, $this->record);
     }
 
     public function checkDataDiff(Request $request, Domain $domain)
     {
-        $name = $request->get('name', null);
+        $this->diffData = $this->createData = collect([]);
 
-        if ($name) {
+        if ($name = $request->get('name', null)) {
 
             $domain = $domain->where('name', $name)->first();
-            $this->getDomain($domain);
-            $podRecord = collect($this->getDnsPodRecord($domain->cname))->keyBy('hash') ;
-        } else {
             
+            $this->getDomain($domain);
+            
+            $podRecord = collect($this->getDnsPodRecord($domain->cname))->keyBy('hash');
+        } else {
+
             app()->call([$this, 'index']);
+            
             $podRecord = collect($this->getDnsPodRecord())->keyBy('hash');
         }
 
         $dbRecord = collect($this->record)->keyBy('hash');
-        
-        $this->needCreatePodData($podRecord);
-        
+
+        $this->needCreateDnsPodData($podRecord);
+
         $this->diffData = $dbRecord->diffKeys($podRecord);
-        
+
         $matchData = $dbRecord->diffKeys($this->diffData)->values();
 
         $this->diffData = $this->diffData->diffKeys($this->createData->keyBy('hash'));
@@ -89,29 +92,42 @@ class DnsPodRecordSyncController extends Controller
     public function syncDnsData(Request $request, Domain $domain)
     {
         $this->checkDataDiff($request, $domain);
-        
-        // foreach($this->diffData as $record){
-        //     $this->dnsProviderService->editRecord([
-        //         'sub_domain' => $record['name'],
-        //         'value' => $record['value'],
-        //         'record_id' => $record['id'],
-        //         'record_line' => $record['line'],
-        //         'ttl' => $record['ttl'],
-        //         'status' =>$record['enabled'],
-        //     ]);
-        // }
 
-        // foreach($this->createData as $record){
-        //     $this->dnsProviderService->createRecord([
-        //         'sub_domain' => $record['name'],
-        //         'value' => $record['value'],
-        //         'record_line' => $record['line'],
-        //         'ttl' => $record['ttl'],
-        //         'status' => $record['enabled'],
-        //     ]);
-        // }
+        foreach ($this->diffData as $record) {
+            $this->dnsProviderService->editRecord([
+                'sub_domain' => $record['name'],
+                'value' => $record['value'],
+                'record_id' => $record['id'],
+                'record_line' => $record['line'],
+                'ttl' => $record['ttl'],
+                'status' => $record['enabled'],
+            ]);
+        }
 
-        return $this->checkDataDiff($request, $domain);
+        foreach ($this->createData as $record) {
+            DB::beginTransaction();
+
+            $response = $this->dnsProviderService->createRecord([
+                'sub_domain' => $record['name'],
+                'value' => $record['value'],
+                'record_line' => $record['line'],
+                'ttl' => $record['ttl'],
+                'status' => $record['enabled'],
+            ]);
+
+            if ($this->dnsProviderService->checkAPIOutput($response)) {
+                app()->call([$this, 'updateProviderRecordId'],
+                    [
+                        'record' => $record,
+                        'dnsResponse' => $response,
+                    ]);
+
+                DB::commit();
+            }
+            DB::rollback();
+        }
+
+        return $this->response();
     }
 
     public function getCdnProvider(CdnProvider $cdnProvider, $ugid)
@@ -137,7 +153,7 @@ class DnsPodRecordSyncController extends Controller
             'name' => $this->domainName,
             'line' => "默认",
         ];
-        
+
         $record['hash'] = $this->hashRecord($record);
 
         $this->record[] = $record;
@@ -145,6 +161,12 @@ class DnsPodRecordSyncController extends Controller
         return $record;
     }
 
+    /**
+     * Get Location DNS Setting To Record Data
+     *
+     * @param array $locationDnsSettings
+     * @return array
+     */
     private function getIRouteSetting($locationDnsSettings)
     {
         $record = [];
@@ -180,6 +202,12 @@ class DnsPodRecordSyncController extends Controller
         return sha1(json_encode($data));
     }
 
+    /**
+     * 取得 DNS Pod Record 資料
+     *
+     * @param string $domain
+     * @return void
+     */
     private function getDnsPodRecord(string $domain = null)
     {
         $record = [];
@@ -187,12 +215,14 @@ class DnsPodRecordSyncController extends Controller
         $search = [
             'record_type' => 'CNAME',
             'sub_domain' => $domain,
+            'length' => 3000,
         ];
 
         $response = $this->dnsProviderService->getRecords($search);
 
         if ($this->dnsProviderService->checkAPIOutput($response)) {
 
+            // 將 Response Data 格式統一
             collect($response['data']['records'])->map(function ($value, $key) use (&$record) {
 
                 $data = [
@@ -203,9 +233,9 @@ class DnsPodRecordSyncController extends Controller
                     'name' => $value['name'],
                     'line' => $value['line'],
                 ];
-                
+
                 $data['hash'] = $this->hashRecord($data);
-    
+
                 $record[] = $data;
 
             });
@@ -215,18 +245,41 @@ class DnsPodRecordSyncController extends Controller
     }
 
     /**
-     * 需要 新增在 Pod 上面資料
+     * 比對後需要 新增在 Pod 上面資料
      *
      * @param array $podRecord
      * @return array
      */
-    public function needCreatePodData($podRecord)
+    public function needCreateDnsPodData($podRecord)
     {
         $dbRecord = collect($this->record)->keyBy('id');
+
         $podRecord = $podRecord->values()->keyBy('id');
 
         $this->createData = $dbRecord->diffKeys($podRecord);
-        
+
         return $this->createData;
+    }
+
+    /**
+     * 比對後需要更新 DB Provider Record ID
+     *
+     * @param Cdn $cdn
+     * @param LocationDnsSetting $locationDnsSetting
+     * @param array $record
+     * @param array $dnsResponse
+     * @return void
+     */
+    public function updateProviderRecordId(Cdn $cdn, LocationDnsSetting $locationDnsSetting, $record, $dnsResponse)
+    {
+
+        if ($record["line"] == "默认") {
+            $cdn->where('provider_record_id', $record['id'])
+                ->update(['provider_record_id' => $dnsResponse['data']['record']['id']]);
+
+        } else {
+            $locationDnsSetting->where('provider_record_id', $record['id'])
+                ->update(['provider_record_id' => $dnsResponse['data']['record']['id']]);
+        }
     }
 }
