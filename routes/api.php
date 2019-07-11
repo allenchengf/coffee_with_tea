@@ -79,4 +79,8 @@ Route::group(['middleware' => ['api'], 'namespace' => 'Api\v1', 'prefix' => 'v1'
         Route::get('/lists', 'LocationDnsSettingController@indexByGroup')->name('iRoute.indexByGroup');
     });
 
+    Route::group(['prefix' => 'config'], function () {
+        Route::get('', 'ConfigController@get')->name('config.get');
+    });
+
 });

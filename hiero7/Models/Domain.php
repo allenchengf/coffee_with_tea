@@ -38,4 +38,16 @@ class Domain extends Model
     {
         return $this->cdns()->where('default', 1)->first()->cdnProvider()->first();
     }
+
+    public function locationDnsSettings()
+    {
+        return $this->hasManyThrough(
+            LocationDnsSetting::class,
+            Cdn::class,
+            'domain_id',
+            'cdn_id',
+            'id',
+            'id'
+        );
+    }
 }
