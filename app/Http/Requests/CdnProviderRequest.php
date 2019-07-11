@@ -42,9 +42,9 @@ class CdnProviderRequest extends FormRequest
             case ($routeName == "$prefix.update"):
                 return [
                     'name'  => [
-                        'required',
                         Rule::unique('cdn_providers')->where(function ($query) {
                             $query->where('name', $this->name)
+                                ->where('id', '!=',$this->id)
                                 ->where('user_group_id',$this->request->get('user_group_id'));
                         }),
                     ],
