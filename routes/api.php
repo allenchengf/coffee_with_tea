@@ -75,7 +75,7 @@ Route::group(['middleware' => ['api'], 'namespace' => 'Api\v1', 'prefix' => 'v1'
 
     });
 
-    Route::group(['prefix' => 'iRouteCDN'], function () {
+    Route::group(['prefix' => 'routing-rules'], function () {
         Route::get('/lists', 'LocationDnsSettingController@indexByGroup')->name('iRoute.indexByGroup');
     });
 
