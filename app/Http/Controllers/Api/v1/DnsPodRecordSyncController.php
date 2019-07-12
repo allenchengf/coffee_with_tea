@@ -10,17 +10,15 @@ use Hiero7\Models\CdnProvider;
 use Hiero7\Models\Domain;
 use Hiero7\Models\LocationDnsSetting;
 use Hiero7\Services\DnsProviderService;
-use Hiero7\Services\DomainService;
 
 class DnsPodRecordSyncController extends Controller
 {
     protected $dnsProviderService, $domainService, $domainName, $cdnProvider, $cdns;
     protected $record = [], $diffData = [], $createData = [];
 
-    public function __construct(DnsProviderService $dnsProviderService, DomainService $domainService)
+    public function __construct(DnsProviderService $dnsProviderService)
     {
         $this->dnsProviderService = $dnsProviderService;
-        $this->domainService = $domainService;
     }
 
     public function index(Domain $domain)
@@ -58,14 +56,14 @@ class DnsPodRecordSyncController extends Controller
         if ($name = $request->get('name', null)) {
 
             $domain = $domain->where('name', $name)->first();
-            
+
             $this->getDomain($domain);
-            
+
             $podRecord = collect($this->getDnsPodRecord($domain->cname))->keyBy('hash');
         } else {
 
-            app()->call([$this, 'index']);
-            
+            $this->index($domain);
+
             $podRecord = collect($this->getDnsPodRecord())->keyBy('hash');
         }
 
@@ -123,6 +121,7 @@ class DnsPodRecordSyncController extends Controller
                     ]);
 
                 DB::commit();
+                continue;
             }
             DB::rollback();
         }
@@ -272,7 +271,6 @@ class DnsPodRecordSyncController extends Controller
      */
     public function updateProviderRecordId(Cdn $cdn, LocationDnsSetting $locationDnsSetting, $record, $dnsResponse)
     {
-
         if ($record["line"] == "默认") {
             $cdn->where('provider_record_id', $record['id'])
                 ->update(['provider_record_id' => $dnsResponse['data']['record']['id']]);
