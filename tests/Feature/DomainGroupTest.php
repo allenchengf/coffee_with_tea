@@ -5,11 +5,11 @@ namespace Tests\Feature;
 use Tests\TestCase;
 use Illuminate\Foundation\Testing\WithFaker;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\Artisan;
 use App\Http\Middleware\AuthUserModule;
 use App\Http\Middleware\DomainPermission;
 use App\Http\Middleware\TokenCheck;
 use Hiero7\Services\CdnService; 
+
 
 class DomainGroupTest extends TestCase
 {
@@ -18,7 +18,7 @@ class DomainGroupTest extends TestCase
         parent::setUp();
 
         $this->withoutMiddleware([AuthUserModule::class, TokenCheck::class, DomainPermission::class]);
-        Artisan::call('migrate');
+        $this->artisan('migrate');        
         $this->seed();
         $this->seed('LocationDnsSettingSeeder');
         $this->seed('DomainGroupTableSeeder');

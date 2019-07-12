@@ -8,8 +8,8 @@ use Hiero7\Enums\InternalError;
 use Hiero7\Services\LocationDnsSettingService;
 use Illuminate\Http\Request;
 use Hiero7\Models\LocationNetwork;
-use Hiero7\Models\{Domain,Cdn,LocationDnsSetting};
-use App\Http\Requests\LocatinDnsSettingRequest;
+use Hiero7\Models\{Domain,Cdn,LocationDnsSetting,DomainGroup};
+use App\Http\Requests\LocationDnsSettingRequest;
 
 class LocationDnsSettingController extends Controller
 {
@@ -20,14 +20,32 @@ class LocationDnsSettingController extends Controller
         $this->locationDnsSettingService = $locationDnsSettingService;
     }
 
-    public function getAll(Domain $domain)
+    public function indexByDomain(Domain $domain)
     {
-        $result = $this->locationDnsSettingService->getAll($domain->id);
+        $result = $this->locationDnsSettingService->indexByDomain($domain->id);
         return $this->response('',null,$result);
 
     }
 
-    public function editSetting(LocatinDnsSettingRequest $request, Domain $domain, LocationNetwork $locationNetworkId)
+    public function indexByGroup(Request $request,Domain $domain)
+    {
+        $user_group_id = $this->getUgid($request);
+
+        $domainGroup = DomainGroup::where(compact('user_group_id'))->get();
+        
+        $domains = $domain->with('domainGroup')->where(compact('user_group_id'))->get();
+
+        $domains = $domains->filter(function ($item) {
+            return $item->domainGroup->isEmpty();
+        });
+
+        $domains = $domains->flatten();
+
+        return $this->response('',null,compact('domainGroup','domains'));
+
+    }
+
+    public function editSetting(LocationDnsSettingRequest $request, Domain $domain, LocationNetwork $locationNetworkId)
     {
         $message = '';
         $error = '';
@@ -54,7 +72,7 @@ class LocationDnsSettingController extends Controller
             return $this->setStatusCode(409)->response('please contact the admin', InternalError::INTERNAL_ERROR, []);
         }
         
-        $data = $this->locationDnsSettingService->getAll($domain->id);
+        $data = $this->locationDnsSettingService->indexByDomain($domain->id);
 
         return $this->response($message,$error,$data);
     }
