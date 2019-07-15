@@ -44,9 +44,27 @@ class LocationDnsSettingTest extends TestCase
         $response->assertStatus(200);
     }
 
-     public function testIndexByGroup()
+    public function testIndexByGroup()
     {
-        $response = $this->call('GET', 'api/v1/iRouteCDN/lists');
+        $response = $this->call('GET', 'api/v1/routing-rules/lists');
         $response->assertStatus(200);
+
+        $data = json_decode($response->getContent(), true);
+        $this->assertArrayHasKey('domainGroup',$data['data']);
+        $this->assertArrayHasKey('domains',$data['data']);
+
+    }
+
+    public function testIndexAll()
+    {
+        $response = $this->call('GET', 'api/v1/routing-rules/all');
+        $response->assertStatus(200);
+
+        $data = json_decode($response->getContent(), true);
+
+        $this->assertArrayHasKey('domainGroup',$data['data']);
+        $this->assertArrayHasKey('location_network',$data['data']['domainGroup'][0]);
+        $this->assertArrayHasKey('domains',$data['data']);
+        $this->assertArrayHasKey('location_network',$data['data']['domains'][0]);
     }
 }

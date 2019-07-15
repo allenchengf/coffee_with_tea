@@ -5,7 +5,7 @@ namespace App\Http\Controllers\Api\v1;
 use App\Http\Controllers\Controller;
 use Hiero7\Enums\InputError;
 use Hiero7\Enums\InternalError;
-use Hiero7\Services\LocationDnsSettingService;
+use Hiero7\Services\{LocationDnsSettingService,DomainGroupService};
 use Illuminate\Http\Request;
 use Hiero7\Models\LocationNetwork;
 use Hiero7\Models\{Domain,Cdn,LocationDnsSetting,DomainGroup};
@@ -15,9 +15,10 @@ class LocationDnsSettingController extends Controller
 {
     protected $locationDnsSettingService;
 
-    public function __construct(LocationDnsSettingService $locationDnsSettingService)
+    public function __construct(LocationDnsSettingService $locationDnsSettingService,DomainGroupService $domainGroupService)
     {
         $this->locationDnsSettingService = $locationDnsSettingService;
+        $this->domainGroupService = $domainGroupService;
     }
 
     public function indexByDomain(Domain $domain)
@@ -43,6 +44,33 @@ class LocationDnsSettingController extends Controller
 
         return $this->response('',null,compact('domainGroup','domains'));
 
+    }
+
+    public function indexAll(Request $request,Domain $domain)
+    {
+        $user_group_id = $this->getUgid($request);
+
+        $domainGroupCollection = DomainGroup::where(compact('user_group_id'))->get();
+
+
+        foreach($domainGroupCollection as $domainGroupModel){
+            $domainGroup[] = $this->domainGroupService->indexGroupIroute($domainGroupModel);
+        }
+
+        $domainsCollection = $domain->with('domainGroup')->where(compact('user_group_id'))->get();
+
+        $domainsCollection = $domainsCollection->filter(function ($item) {
+            return $item->domainGroup->isEmpty();
+        });
+
+        foreach($domainsCollection as $domainModel){
+            $domainModel->location_network = $this->locationDnsSettingService->indexByDomain($domainModel->id);
+        }
+        
+        $domains = $domainsCollection->flatten();
+
+
+        return $this->response('',null,compact('domainGroup','domains'));
     }
 
     public function editSetting(LocationDnsSettingRequest $request, Domain $domain, LocationNetwork $locationNetworkId)

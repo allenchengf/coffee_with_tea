@@ -37,10 +37,11 @@ class ConfigTest extends TestCase
         $response = $this->call('GET', $this->uri);
         $response->assertStatus(200);
         $data = json_decode($response->getContent(), true);
-        
-        $this->assertArrayHasKey('cdns',$data['data'][0]);
-        $this->assertArrayHasKey('cdn_provider',$data['data'][0]);
-        $this->assertArrayHasKey('location_dns_settings',$data['data'][0]);
-        $this->assertArrayHasKey('domain_group',$data['data'][0]);
+
+        $this->assertArrayHasKey('domains',$data['data']);
+        $this->assertArrayHasKey('cdns',$data['data']['domains'][0]);
+        $this->assertArrayHasKey('location_dns_settings',$data['data']['domains'][0]);
+        $this->assertArrayHasKey('cdnProviders',$data['data']);
+        $this->assertArrayHasKey('domainGroups',$data['data']);
     }
 }

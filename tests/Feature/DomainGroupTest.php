@@ -80,10 +80,10 @@ class DomainGroupTest extends TestCase
         $response->assertStatus(200);
     }
 
-    public function testDestroyByDomainId()
+    public function testDestroyLastDomainByDomainId()
     {
-        $response = $this->call('DELETE', $this->uri.'/1/domain/2');
-        $response->assertStatus(200);
+        $response = $this->call('DELETE', $this->uri.'/1/domain/2'); 
+        $response->assertStatus(400);
     }
 
     public function testChangeDefaultCdn()
