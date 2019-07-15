@@ -14,7 +14,8 @@ use Hiero7\Services\DnsProviderService;
 class DnsPodRecordSyncController extends Controller
 {
     protected $dnsProviderService, $domainService, $domainName, $cdnProvider, $cdns;
-    protected $record = [], $diffData = [], $createData = [];
+
+    protected $record = [], $matchData = [], $diffData = [], $createData = [], $deleteData = [];
 
     public function __construct(DnsProviderService $dnsProviderService)
     {
@@ -51,7 +52,7 @@ class DnsPodRecordSyncController extends Controller
 
     public function checkDataDiff(Request $request, Domain $domain)
     {
-        $this->diffData = $this->createData = collect([]);
+        $this->diffData = $this->createData = $this->deleteData = collect([]);
 
         if ($name = $request->get('name', null)) {
 
@@ -60,6 +61,7 @@ class DnsPodRecordSyncController extends Controller
             $this->getDomain($domain);
 
             $podRecord = collect($this->getDnsPodRecord($domain->cname))->keyBy('hash');
+
         } else {
 
             $this->index($domain);
@@ -67,29 +69,87 @@ class DnsPodRecordSyncController extends Controller
             $podRecord = collect($this->getDnsPodRecord())->keyBy('hash');
         }
 
+        $data = [
+            'dbRecord' => $this->record,
+            'podRecord' => $podRecord
+        ];
+
         $dbRecord = collect($this->record)->keyBy('hash');
 
-        $this->needCreateDnsPodData($podRecord);
+        $this->getCreateAndDeleteDnsPodData($podRecord);
 
         $this->diffData = $dbRecord->diffKeys($podRecord);
 
-        $matchData = $dbRecord->diffKeys($this->diffData)->values();
+        $this->getMatchData($dbRecord, $podRecord);
+        
+        $this->createData = $this->createData->diffKeys($this->matchData->keyBy('hash'));
 
         $this->diffData = $this->diffData->diffKeys($this->createData->keyBy('hash'));
 
         $data = [
             'diff' => $this->diffData->values(),
             'create' => $this->createData->values(),
-            'match' => $matchData,
+            'delele' => $this->deleteData->values(),
+            'match' => $this->matchData->values(),
         ];
 
         return $this->response('', null, $data);
+    }
 
+    public function getMatchData($dbRecord, $podRecord)
+    {
+        $matchData = $dbRecord->diffKeys($this->diffData);
+        
+        $podMatchData = $podRecord->diffKeys($this->diffData);
+
+        $record = [];
+
+        foreach ($matchData as $key => $value) {
+
+            if( $value['id'] != $podMatchData[$key]['id']){
+                app()->call([$this, 'updateProviderRecordId'],
+                [
+                    'record' => $value,
+                    'dnsRecordId' => $podMatchData[$key]['id'],
+                ]);
+                
+                $value['id'] = $podMatchData[$key]['id'];
+            }
+
+            $record[] = $value;
+
+        }
+
+        $this->matchData = collect($record)->keyBy('hash');
+        
+        return $this->matchData;
+    }
+
+    /**
+     * 比對後需要 新增在 Pod 上面資料
+     *
+     * @param array $podRecord
+     */
+    public function getCreateAndDeleteDnsPodData($podRecord)
+    {
+        $dbRecord = collect($this->record)->keyBy('id');
+
+        $podRecord = $podRecord->values()->keyBy('id');
+
+        $this->createData = $dbRecord->diffKeys($podRecord)->keyBy('hash');
+        
+        $this->deleteData = $podRecord->diffKeys($dbRecord)->keyBy('hash');
     }
 
     public function syncDnsData(Request $request, Domain $domain)
     {
         $this->checkDataDiff($request, $domain);
+
+        foreach ($this->deleteData as $record) {
+            $this->dnsProviderService->deleteRecord([
+                'record_id' => $record['id'],
+            ]);
+        }
 
         foreach ($this->diffData as $record) {
             $this->dnsProviderService->editRecord([
@@ -112,12 +172,12 @@ class DnsPodRecordSyncController extends Controller
                 'ttl' => $record['ttl'],
                 'status' => $record['enabled'],
             ]);
-
+            
             if ($this->dnsProviderService->checkAPIOutput($response)) {
                 app()->call([$this, 'updateProviderRecordId'],
                     [
                         'record' => $record,
-                        'dnsResponse' => $response,
+                        'dnsRecordId' => $response['data']['record']['id'],
                     ]);
 
                 DB::commit();
@@ -198,6 +258,7 @@ class DnsPodRecordSyncController extends Controller
 
     private function hashRecord(array $data)
     {
+        unset($data['id']);
         return sha1(json_encode($data));
     }
 
@@ -210,54 +271,48 @@ class DnsPodRecordSyncController extends Controller
     private function getDnsPodRecord(string $domain = null)
     {
         $record = [];
+        $length = 3000;
+        $round = 1;
+        $offset = 0;
 
-        $search = [
-            'record_type' => 'CNAME',
-            'sub_domain' => $domain,
-            'length' => 3000,
-        ];
+        for ($i=1; $i <= $round; $i++) { 
+            
+            $search = [
+                'record_type' => 'CNAME',
+                'sub_domain' => $domain,
+                'length' => $length,
+                'offset' => $offset,
+            ];
 
-        $response = $this->dnsProviderService->getRecords($search);
+            $response = $this->dnsProviderService->getRecords($search);
 
-        if ($this->dnsProviderService->checkAPIOutput($response)) {
+            if ($this->dnsProviderService->checkAPIOutput($response)) {
+                
+                $round = ceil($response['data']['info']['record_total'] / $length); //計算要幾次迴圈
+                
+                $offset = $length*$i; //計算偏移量
 
-            // 將 Response Data 格式統一
-            collect($response['data']['records'])->map(function ($value, $key) use (&$record) {
-
-                $data = [
-                    'id' => (int) $value['id'],
-                    'ttl' => (int) $value['ttl'],
-                    'value' => rtrim($value['value'], "."),
-                    'enabled' => (bool) $value['enabled'],
-                    'name' => $value['name'],
-                    'line' => $value['line'],
-                ];
-
-                $data['hash'] = $this->hashRecord($data);
-
-                $record[] = $data;
-
-            });
+                // 將 Response Data 格式統一
+                collect($response['data']['records'])->map(function ($value, $key) use (&$record) {
+    
+                    $data = [
+                        'id' => (int) $value['id'],
+                        'ttl' => (int) $value['ttl'],
+                        'value' => rtrim($value['value'], "."),
+                        'enabled' => (bool) $value['enabled'],
+                        'name' => $value['name'],
+                        'line' => $value['line'],
+                    ];
+    
+                    $data['hash'] = $this->hashRecord($data);
+    
+                    $record[] = $data;
+    
+                });
+            }
         }
 
         return $record;
-    }
-
-    /**
-     * 比對後需要 新增在 Pod 上面資料
-     *
-     * @param array $podRecord
-     * @return array
-     */
-    public function needCreateDnsPodData($podRecord)
-    {
-        $dbRecord = collect($this->record)->keyBy('id');
-
-        $podRecord = $podRecord->values()->keyBy('id');
-
-        $this->createData = $dbRecord->diffKeys($podRecord);
-
-        return $this->createData;
     }
 
     /**
@@ -269,15 +324,15 @@ class DnsPodRecordSyncController extends Controller
      * @param array $dnsResponse
      * @return void
      */
-    public function updateProviderRecordId(Cdn $cdn, LocationDnsSetting $locationDnsSetting, $record, $dnsResponse)
+    public function updateProviderRecordId(Cdn $cdn, LocationDnsSetting $locationDnsSetting, $record, $dnsRecordId)
     {
         if ($record["line"] == "默认") {
             $cdn->where('provider_record_id', $record['id'])
-                ->update(['provider_record_id' => $dnsResponse['data']['record']['id']]);
+                ->update(['provider_record_id' => $dnsRecordId]);
 
         } else {
             $locationDnsSetting->where('provider_record_id', $record['id'])
-                ->update(['provider_record_id' => $dnsResponse['data']['record']['id']]);
+                ->update(['provider_record_id' => $dnsRecordId]);
         }
     }
 }
