@@ -74,4 +74,8 @@ Route::group(['middleware' => ['api'], 'namespace' => 'Api\v1', 'prefix' => 'v1'
         Route::post('{domainGroup}/batch', 'BatchController@storeDomainToGroup')->name('groups.batch');
 
     });
+
+    Route::group(['middleware' => ['auth.user.module'], 'prefix' => 'operation_log'], function () {
+        Route::get('', 'OperationLogController@index')->name('operation_log.index');
+    });
 });

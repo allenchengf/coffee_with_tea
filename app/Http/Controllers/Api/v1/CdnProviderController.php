@@ -13,12 +13,15 @@ use App\Http\Controllers\Controller;
 use Hiero7\Services\CdnProviderService;
 use App\Http\Requests\CdnProviderRequest as Request;
 use DB;
+use Hiero7\Traits\OperationLogTrait;
+
 /**
  * Class CdnProviderController
  * @package App\Http\Controllers\Api\v1
  */
 class CdnProviderController extends Controller
 {
+    use OperationLogTrait;
     protected $cdnProviderService;
     /**
      * CdnProviderController constructor.
@@ -54,6 +57,7 @@ class CdnProviderController extends Controller
             'status' => 'active'
         ]);
         $cdnProvider = $cdnProvider->create($request->all());
+        $this->createEsLog($this->getJWTPayload()['sub'], "CDN", "create", "CDN Provider");
         return $this->response('', null, $cdnProvider);
     }
 
@@ -87,7 +91,7 @@ class CdnProviderController extends Controller
             }
         }
         DB::commit();
-
+        $this->createEsLog($this->getJWTPayload()['sub'], "CDN", "update", "CDN Provider");
         return $this->response("Success", null, $cdnProvider);
     }
 
@@ -130,6 +134,7 @@ class CdnProviderController extends Controller
             $this->cdnProviderService->changeDefaultCDN($cdnProvider);
         }
         DB::commit();
+        $this->createEsLog($this->getJWTPayload()['sub'], "CDN", "change", "CDN Provider status");
         return $this->response();
     }
 
@@ -141,6 +146,7 @@ class CdnProviderController extends Controller
 
         $cdnProvider = CdnProvider::with('domains')->where('id', $cdnProvider->id)->get();
         $defaultInfo = $this->cdnProviderService->cdnDefaultInfo($cdnProvider);
+        $this->createEsLog($this->getJWTPayload()['sub'], "CDN", "check", "CDN Provider");
         return $this->response('', null, $defaultInfo);
     }
 
@@ -159,6 +165,7 @@ class CdnProviderController extends Controller
                 InternalError::INTERNAL_ERROR
             );
         }
+        $this->createEsLog($this->getJWTPayload()['sub'], "CDN", "delete", "CDN Provider");
         return $this->response();
     }
 }

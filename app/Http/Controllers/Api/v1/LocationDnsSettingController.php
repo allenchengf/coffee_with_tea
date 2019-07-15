@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Hiero7\Enums\InputError;
 use Hiero7\Enums\InternalError;
 use Hiero7\Services\LocationDnsSettingService;
+use Hiero7\Traits\OperationLogTrait;
 use Illuminate\Http\Request;
 use Hiero7\Models\LocationNetwork;
 use Hiero7\Models\{Domain,Cdn,LocationDnsSetting};
@@ -13,6 +14,7 @@ use App\Http\Requests\LocatinDnsSettingRequest;
 
 class LocationDnsSettingController extends Controller
 {
+    use OperationLogTrait;
     protected $locationDnsSettingService;
 
     public function __construct(LocationDnsSettingService $locationDnsSettingService)
@@ -55,7 +57,7 @@ class LocationDnsSettingController extends Controller
         }
         
         $data = $this->locationDnsSettingService->getAll($domain->id);
-
+        $this->createEsLog($this->getJWTPayload()['sub'], "IRoute", "update", "IRouteCDN");
         return $this->response($message,$error,$data);
     }
 
