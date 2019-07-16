@@ -10,6 +10,7 @@ use Hiero7\Models\CdnProvider;
 use Hiero7\Models\Domain;
 use Hiero7\Models\LocationDnsSetting;
 use Hiero7\Services\DnsProviderService;
+use Hiero7\Services\DnsPodRecordSyncService;
 
 class DnsPodRecordSyncController extends Controller
 {
@@ -17,83 +18,43 @@ class DnsPodRecordSyncController extends Controller
 
     protected $record = [], $matchData = [], $diffData = [], $createData = [], $deleteData = [];
 
-    public function __construct(DnsProviderService $dnsProviderService)
+    protected $dnsPodRecordSyncService;
+
+    public function __construct(DnsPodRecordSyncService $dnsPodRecordSyncService)
     {
-        $this->dnsProviderService = $dnsProviderService;
+        $this->dnsPodRecordSyncService = $dnsPodRecordSyncService;
     }
 
-    public function index(Domain $domain)
+    public function index()
     {
-        $domainAll = $domain->all();
+        $record = $this->dnsPodRecordSyncService->getAllDomain();
 
-        foreach ($domainAll as $domain) {
-            $this->getDomain($domain);
-        }
-
-        return $this->response('', null, $this->record);
+        return $this->response('', null, $record);
     }
 
     public function getDomain(Domain $domain)
     {
-        $this->domainName = $domain->cname;
+        $record = $this->dnsPodRecordSyncService->getDomain($domain);
 
-        app()->call([$this, 'getCdnProvider'], ['ugid' => $domain->user_group_id]);
-
-        $domain->locationDnsSettings;
-
-        $this->cdns = $domain->cdns->keyBy('id');
-
-        $this->getDefaultCdn($domain->cdns);
-
-        $this->getIRouteSetting($domain->locationDnsSettings);
-
-        return $this->response('', null, $this->record);
+        return $this->response('', null, $record);
     }
 
     public function checkDataDiff(Request $request, Domain $domain)
     {
-        $this->diffData = $this->createData = $this->deleteData = collect([]);
-
         if ($name = $request->get('name', null)) {
 
             $domain = $domain->where('name', $name)->first();
 
-            $this->getDomain($domain);
-
-            $podRecord = collect($this->getDnsPodRecord($domain->cname))->keyBy('hash');
+            $this->dnsPodRecordSyncService->getDomain($domain);
 
         } else {
-
-            $this->index($domain);
-
-            $podRecord = collect($this->getDnsPodRecord())->keyBy('hash');
+            
+            $this->dnsPodRecordSyncService->getDomain($getAllDomain);
         }
 
-        $data = [
-            'dbRecord' => $this->record,
-            'podRecord' => $podRecord
-        ];
+        $record = $this->dnsPodRecordSyncService->getDiffRecord();
 
-        $dbRecord = collect($this->record)->keyBy('hash');
-
-        $this->getCreateAndDeleteDnsPodData($podRecord);
-
-        $this->diffData = $dbRecord->diffKeys($podRecord);
-
-        $this->getMatchData($dbRecord, $podRecord);
-        
-        $this->createData = $this->createData->diffKeys($this->matchData->keyBy('hash'));
-
-        $this->diffData = $this->diffData->diffKeys($this->createData->keyBy('hash'));
-
-        $data = [
-            'diff' => $this->diffData->values(),
-            'create' => $this->createData->values(),
-            'delele' => $this->deleteData->values(),
-            'match' => $this->matchData->values(),
-        ];
-
-        return $this->response('', null, $data);
+        return $this->response('', null, $record);
     }
 
     public function getMatchData($dbRecord, $podRecord)

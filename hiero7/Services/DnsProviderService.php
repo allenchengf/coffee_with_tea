@@ -146,6 +146,26 @@ class DnsProviderService
             ->delete();
     }
 
+    /**
+     * Get Soruce Record With DNS Pod Record Diff function
+     *
+     * @param string login_token DNS Pod LoginToken
+     * @param int domain_id 對應域名ID
+     * @param json records 記錄
+     * @param string sub_domain 主機記錄
+     */
+    public function getDiffRecord(array $data = [])
+    {
+        $url = $this->dnsProviderApi . "/check-diff";
+
+        $data = $this->addLoginTokenAndDomainId($data);
+
+        return Curl::to($url)
+            ->withData($data)
+            ->asJson(true)
+            ->get();
+    }
+
     public function checkAPIOutput(array $response): bool
     {
         if (array_key_exists('errors', $response) || !is_null($response['errorCode'])) {

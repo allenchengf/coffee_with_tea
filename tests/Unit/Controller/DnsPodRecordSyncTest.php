@@ -12,6 +12,8 @@ use Hiero7\Services\DnsProviderService;
 use Illuminate\Foundation\Testing\DatabaseMigrations;
 use Mockery as m;
 use Tests\TestCase;
+use Hiero7\Services\DnsPodRecordSyncService;
+use Hiero7\Repositories\DomainRepository;
 
 class DnsPodRecordSyncTest extends TestCase
 {
@@ -26,13 +28,22 @@ class DnsPodRecordSyncTest extends TestCase
         $this->seed();
         $this->domain = new domain();
         $this->mockDnsProviderService = m::mock(DnsProviderService::class);
+        
+        app()->call([$this,'repository']);
 
-        $this->controller = new DnsPodRecordSyncController($this->mockDnsProviderService);
+        $this->mockDnsPodRecordSyncService = new DnsPodRecordSyncService($this->mockDnsProviderService,$this->domainRepository);
+        
+        $this->controller = new DnsPodRecordSyncController($this->mockDnsPodRecordSyncService);
         
         $this->setDomainData();
         $this->setCdnProviderData();
         $this->setCdnData();
         $this->setLocationDnsSettingData();
+    }
+
+    public function repository(DomainRepository $domainRepository)
+    {
+        $this->domainRepository = $domainRepository;
     }
 
     /**
@@ -76,96 +87,13 @@ class DnsPodRecordSyncTest extends TestCase
 
         $request->merge(compact('name'));
 
-        $this->mockGetRecords();
+        $this->muckGetDiffRecord();
 
         $this->mockCheckAPIOutput();
 
         $response = $this->controller->checkDataDiff($request, $this->domain);
 
         $data = $this->checkStatusAndReturnData($response);
-    }
-
-    private function mockGetRecords(array $data = [])
-    {
-        $record = [
-            "records" => [
-                [
-                    "id" => "437764331",
-                    "ttl" => "601",
-                    "value" => "hiero7.leo1.com.",
-                    "enabled" => "1",
-                    "status" => "enabled",
-                    "updated_on" => "2019-07-11 14:57:02",
-                    "name" => "leo1com.1",
-                    "line" => "默认",
-                    "line_id" => "0",
-                    "type" => "CNAME",
-                    "weight" => null,
-                    "monitor_status" => "",
-                    "remark" => "",
-                    "use_aqb" => "no",
-                    "mx" => "0",
-                ], [
-                    "id" => "437764337",
-                    "ttl" => "701",
-                    "value" => "cloudflare.leo1.com.",
-                    "enabled" => "1",
-                    "status" => "enabled",
-                    "updated_on" => "2019-07-11 14:57:04",
-                    "name" => "leo1com.1",
-                    "line" => "联通",
-                    "line_id" => "10=1",
-                    "type" => "CNAME",
-                    "weight" => null,
-                    "monitor_status" => "",
-                    "remark" => "",
-                    "use_aqb" => "no",
-                    "mx" => "0",
-                ], [
-                    "id" => "437764333",
-                    "ttl" => "601",
-                    "value" => "hiero7.leo1.com.",
-                    "enabled" => "1",
-                    "status" => "enabled",
-                    "updated_on" => "2019-07-11 14:57:03",
-                    "name" => "leo1com.1",
-                    "line" => "国外",
-                    "line_id" => "3=0",
-                    "type" => "CNAME",
-                    "weight" => null,
-                    "monitor_status" => "",
-                    "remark" => "",
-                    "use_aqb" => "no",
-                    "mx" => "0",
-                ], [
-                    "id" => "437764335",
-                    "ttl" => "701",
-                    "value" => "cloudflare.leo1.com.",
-                    "enabled" => "1",
-                    "status" => "enabled",
-                    "updated_on" => "2019-07-11 14:57:03",
-                    "name" => "leo1com.1",
-                    "line" => "国内",
-                    "line_id" => "7=0",
-                    "type" => "CNAME",
-                    "weight" => null,
-                    "monitor_status" => "",
-                    "remark" => "",
-                    "use_aqb" => "no",
-                    "mx" => "0",
-                ],
-            ],
-        ];
-
-        $data = [
-            'message' => 'test Message',
-            'errorCode' => null,
-            'data' => $record,
-        ];
-
-        $this->mockDnsProviderService
-            ->shouldReceive('getRecords')
-            ->andReturn($data);
     }
 
     private function mockCheckAPIOutput($check = true)
@@ -203,13 +131,13 @@ class DnsPodRecordSyncTest extends TestCase
         $data = [
             [
                 "id" => 1,
-                "ttl" => 601,
+                "ttl" => 485866,
             ], [
                 "id" => 2,
-                "ttl" => 701,
+                "ttl" => 401926,
             ], [
                 "id" => 3,
-                "ttl" => 801,
+                "ttl" => 54323,
             ]
         ];
 
@@ -317,5 +245,12 @@ class DnsPodRecordSyncTest extends TestCase
         $this->assertEquals(200, $response->status());
 
         return json_decode($response->getContent(), true);
+    }
+
+    private function muckGetDiffRecord()
+    {
+        $this->mockDnsProviderService
+            ->shouldReceive('getDiffRecord')
+            ->andReturn(json_decode('{"message":"Success","errorCode":null,"data":{"diff":[{"id":438034966,"ttl":401926,"value":"cloudflare.leo1.com","enabled":true,"name":"leo1com.1","line":"联通","hash":"886f781f55e22b2c8c27877e5ad589c57236b2e6"}],"create":[{"id":438654702,"ttl":401926,"value":"cloudflare.leo1.com","enabled":true,"name":"leo1com.1","line":"国内","hash":"65bbdafe9415a58f1f09ab5ae59da01b6bbdf4ee"}],"delele":[{"id":438755246,"ttl":600,"value":"leo.123.com","enabled":true,"name":"leo1com.1","line":"搜搜","hash":"46e3fe384eafcc452abf6def951a9d93bcb9ff04"}],"match":[{"id":438037897,"ttl":485866,"value":"hiero7.leo1.com","enabled":true,"name":"leo1com.1","line":"默认","hash":"88d0da415a453849ae2e63588eecec7c69f583d2"},{"id":438038957,"ttl":485866,"value":"hiero7.leo1.com","enabled":true,"name":"leo1com.1","line":"国外","hash":"b402d449ee70e25e0ba73374d92b61f8b1c5e504"}]}}',true));
     }
 }
