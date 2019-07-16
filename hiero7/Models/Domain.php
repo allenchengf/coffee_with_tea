@@ -34,12 +34,9 @@ class Domain extends Model
         return $this->belongsToMany(DomainGroup::class, 'domain_group_mapping')->as('domain_group_mapping');
     }
 
-    public function locationDnsSetting()
+    public function getDefaultCdnProvider()
     {
-        return $this->belongsToMany(LocationDnsSetting::class,'cdns','domain_id','id')
-                ->as('locationDnsSetting')
-                ->withPivot('id', 'cname', 'default')
-                ->withTimestamps();
+        return $this->cdns()->where('default', 1)->first()->cdnProvider()->first();
     }
 
     public function locationDnsSettings()
@@ -52,10 +49,5 @@ class Domain extends Model
             'id',
             'id'
         );
-    }
-
-    public function getDefaultCdnProvider()
-    {
-        return $this->cdns()->where('default', 1)->first()->cdnProvider()->first();
     }
 }

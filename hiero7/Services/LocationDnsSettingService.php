@@ -23,7 +23,7 @@ class LocationDnsSettingService
 
     }
 
-    public function getAll(int $domainId)
+    public function indexByDomain(int $domainId)
     {
         $cdnModel = new Cdn;
         $lineResult = $this->lineRepository->getLinesById();
@@ -69,6 +69,8 @@ class LocationDnsSettingService
             'sub_domain' => $domain->cname,
             'value' => $cdn->cname,
             'record_line' => $locationNetwork->network()->first()->name,
+            'ttl' => $cdn->cdnProvider->ttl,
+            'status' => $cdn->cdnProvider->status,
         ]);
 
         if ($podResult['errorCode']) {
