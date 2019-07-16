@@ -41,7 +41,7 @@ class DomainGroupService
 
     public function indexGroupIroute(DomainGroup $domainGroup)
     {
-        $domainGroup->location_network = $this->locationDnsSettingService->getAll($domainGroup->domains()->first()->id);
+        $domainGroup->location_network = $this->locationDnsSettingService->indexByDomain($domainGroup->domains()->first()->id);
         return $domainGroup;
     }
 /**

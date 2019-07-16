@@ -14,6 +14,15 @@ use App;
 
 trait OperationLogTrait
 {
+    protected $status;
+
+    /**
+     * OperationLogTrait constructor.
+     */
+    public function __construct()
+    {
+        $this->status = (env('APP_ENV') != 'testing') ?? false;
+    }
 
     protected function curlWithUri($domain, $uri, array $body, $method, $asJson = true)
     {
@@ -33,6 +42,10 @@ trait OperationLogTrait
     //createEsLog has not been testing,so there may be bugs
     public function createEsLog(int $targetUser, $category, $behavior, $item)
     {
+        if (!$this->status){
+            return true;
+        }
+
         $targetUser = $this->getTargetUser($targetUser);
 
         $data = $this->formatBehavior($this->getLoginUser(), $targetUser, $category, $behavior, $item);

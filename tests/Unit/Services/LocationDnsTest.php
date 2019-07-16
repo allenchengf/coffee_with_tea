@@ -8,7 +8,6 @@ use Hiero7\Services\DnsProviderService;
 use Hiero7\Services\LocationDnsSettingService;
 use Hiero7\Models\{LocationNetwork,cdn};
 use Hiero7\Models\{Domain,LocationDnsSetting};
-use Illuminate\Support\Facades\Artisan;
 use Tests\TestCase;
 
 class LocationDnsTest extends TestCase
@@ -16,7 +15,7 @@ class LocationDnsTest extends TestCase
     protected function setUp()
     {
         parent::setUp();
-        Artisan::call('migrate');
+        $this->artisan('migrate');  
         $this->seed();
         $this->seed('LocationDnsSettingSeeder');
         $this->seed('DomainTableSeeder');
