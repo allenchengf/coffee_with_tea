@@ -6,7 +6,7 @@ use Illuminate\Foundation\Http\FormRequest;
 use Hiero7\Models\Domain;
 
 
-class LocatinDnsSettingRequest extends FormRequest
+class LocationDnsSettingRequest extends FormRequest
 {
         protected $prefix = 'iRoute';
     /**

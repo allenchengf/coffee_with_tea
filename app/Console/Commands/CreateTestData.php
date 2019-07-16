@@ -158,7 +158,6 @@ class CreateTestData extends Command
                     ->withData(compact('cdn_id'))
                     ->asJson(true)
                     ->put();
-dd($this->api . "/domains/$domain->id/iRouteCDN/$location_network_id");
             }
         }
         print_r('Create Domains IRoute Success' . "\n\n");
