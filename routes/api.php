@@ -78,10 +78,12 @@ Route::group(['middleware' => ['api'], 'namespace' => 'Api\v1', 'prefix' => 'v1'
 
     Route::group(['prefix' => 'routing-rules'], function () {
         Route::get('/lists', 'LocationDnsSettingController@indexByGroup')->name('iRoute.indexByGroup');
+        Route::get('/all', 'LocationDnsSettingController@indexAll')->name('iRoute.indexAll');
     });
 
     Route::group(['prefix' => 'config'], function () {
         Route::get('', 'ConfigController@get')->name('config.get');
+        Route::post('', 'ConfigController@import')->name('config.import');
     });
 
     Route::group(['middleware' => ['auth.user.module'], 'prefix' => 'operation_log'], function () {

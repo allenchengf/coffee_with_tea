@@ -5,7 +5,7 @@ namespace App\Http\Controllers\Api\v1;
 use App\Http\Controllers\Controller;
 use Hiero7\Enums\InputError;
 use Hiero7\Enums\InternalError;
-use Hiero7\Services\LocationDnsSettingService;
+use Hiero7\Services\{LocationDnsSettingService,DomainGroupService};
 use Hiero7\Traits\OperationLogTrait;
 use Illuminate\Http\Request;
 use Hiero7\Models\LocationNetwork;
@@ -17,9 +17,10 @@ class LocationDnsSettingController extends Controller
     use OperationLogTrait;
     protected $locationDnsSettingService;
 
-    public function __construct(LocationDnsSettingService $locationDnsSettingService)
+    public function __construct(LocationDnsSettingService $locationDnsSettingService,DomainGroupService $domainGroupService)
     {
         $this->locationDnsSettingService = $locationDnsSettingService;
+        $this->domainGroupService = $domainGroupService;
     }
 
     public function indexByDomain(Domain $domain)
@@ -34,7 +35,7 @@ class LocationDnsSettingController extends Controller
         $user_group_id = $this->getUgid($request);
 
         $domainGroup = DomainGroup::where(compact('user_group_id'))->get();
-        
+
         $domains = $domain->with('domainGroup')->where(compact('user_group_id'))->get();
 
         $domains = $domains->filter(function ($item) {
@@ -47,11 +48,38 @@ class LocationDnsSettingController extends Controller
 
     }
 
+    public function indexAll(Request $request,Domain $domain)
+    {
+        $user_group_id = $this->getUgid($request);
+
+        $domainGroupCollection = DomainGroup::where(compact('user_group_id'))->get();
+
+
+        foreach($domainGroupCollection as $domainGroupModel){
+            $domainGroup[] = $this->domainGroupService->indexGroupIroute($domainGroupModel);
+        }
+
+        $domainsCollection = $domain->with('domainGroup')->where(compact('user_group_id'))->get();
+
+        $domainsCollection = $domainsCollection->filter(function ($item) {
+            return $item->domainGroup->isEmpty();
+        });
+
+        foreach($domainsCollection as $domainModel){
+            $domainModel->location_network = $this->locationDnsSettingService->indexByDomain($domainModel->id);
+        }
+
+        $domains = $domainsCollection->flatten();
+
+
+        return $this->response('',null,compact('domainGroup','domains'));
+    }
+
     public function editSetting(LocationDnsSettingRequest $request, Domain $domain, LocationNetwork $locationNetworkId)
     {
         $message = '';
         $error = '';
-        
+
         $request->merge([
             'edited_by' => $this->getJWTPayload()['uuid'],
         ]);
@@ -90,6 +118,6 @@ class LocationDnsSettingController extends Controller
     {
         $cdnId = Cdn::where('domain_id',$domain->id)->pluck('id');
         return LocationDnsSetting::where('location_networks_id',$locationNetwork->id)->whereIn('cdn_id',$cdnId)->first();
-        
+
     }
 }
