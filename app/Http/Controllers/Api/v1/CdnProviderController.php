@@ -23,12 +23,14 @@ class CdnProviderController extends Controller
 {
     use OperationLogTrait;
     protected $cdnProviderService;
+    protected $status;
     /**
      * CdnProviderController constructor.
      */
     public function __construct(CdnProviderService $cdnProviderService)
     {
         $this->cdnProviderService = $cdnProviderService;
+        $this->status = (env('APP_ENV') !== 'testing') ?? false;
     }
 
     /**

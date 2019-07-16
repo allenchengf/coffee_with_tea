@@ -14,15 +14,6 @@ use App;
 
 trait OperationLogTrait
 {
-    protected $status;
-
-    /**
-     * OperationLogTrait constructor.
-     */
-    public function __construct()
-    {
-        $this->status = (env('APP_ENV') != 'testing') ?? false;
-    }
 
     protected function curlWithUri($domain, $uri, array $body, $method, $asJson = true)
     {
@@ -31,7 +22,7 @@ trait OperationLogTrait
 
     private static function getKongOperationLogDomain()
     {
-        return env('KONG_OPERATION_LOG');
+        return env('OPERATION_LOG_URL');
     }
 
     private static function getUserModuleDomain()

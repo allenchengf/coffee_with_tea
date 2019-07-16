@@ -15,10 +15,12 @@ class DomainController extends Controller
 {
     use OperationLogTrait;
     protected $domainService;
+    protected $status;
 
     public function __construct(DomainService $domainService)
     {
         $this->domainService = $domainService;
+        $this->status = (env('APP_ENV') !== 'testing') ?? false;
     }
 
     /**

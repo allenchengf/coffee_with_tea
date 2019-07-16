@@ -16,11 +16,13 @@ class LocationDnsSettingController extends Controller
 {
     use OperationLogTrait;
     protected $locationDnsSettingService;
+    protected $status;
 
     public function __construct(LocationDnsSettingService $locationDnsSettingService,DomainGroupService $domainGroupService)
     {
         $this->locationDnsSettingService = $locationDnsSettingService;
         $this->domainGroupService = $domainGroupService;
+        $this->status = (env('APP_ENV') !== 'testing') ?? false;
     }
 
     public function indexByDomain(Domain $domain)
