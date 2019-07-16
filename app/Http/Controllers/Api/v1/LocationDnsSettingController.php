@@ -8,7 +8,7 @@ use Hiero7\Enums\InternalError;
 use Hiero7\Services\{LocationDnsSettingService,DomainGroupService};
 use Illuminate\Http\Request;
 use Hiero7\Models\LocationNetwork;
-use Hiero7\Models\{Domain,Cdn,LocationDnsSetting,DomainGroup};
+use Hiero7\Models\{Domain,Cdn,LocationDnsSetting,DomainGroup, CdnProvider};
 use App\Http\Requests\LocationDnsSettingRequest;
 
 class LocationDnsSettingController extends Controller
@@ -33,9 +33,14 @@ class LocationDnsSettingController extends Controller
         $user_group_id = $this->getUgid($request);
 
         $domainGroup = DomainGroup::where(compact('user_group_id'))->get();
-        
-        $domains = $domain->with('domainGroup')->where(compact('user_group_id'))->get();
+        //取每個 Group 所有的 cdn list 
+        foreach($domainGroup as $domainGroupModel ){
+            $cdnProvider = $domainGroupModel->domains()->first()->cdnProvider()->get();
+            $domainGroupModel->cdn_provider = $cdnProvider;
+        }
 
+        $domains = $domain->with('cdnProvider','domainGroup')->where(compact('user_group_id'))->get();
+        //取沒有 Group 的 domain
         $domains = $domains->filter(function ($item) {
             return $item->domainGroup->isEmpty();
         });
@@ -51,7 +56,6 @@ class LocationDnsSettingController extends Controller
         $user_group_id = $this->getUgid($request);
 
         $domainGroupCollection = DomainGroup::where(compact('user_group_id'))->get();
-
 
         foreach($domainGroupCollection as $domainGroupModel){
             $domainGroup[] = $this->domainGroupService->indexGroupIroute($domainGroupModel);
