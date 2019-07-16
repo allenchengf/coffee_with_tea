@@ -235,26 +235,10 @@ class DomainGroupService
                     return true;
                 }
 
-                // 修改 location_dns_settings & DNSPOD
-                // 查
-                // $locationDnsSetting = LocationDnsSetting::all();
-                $locationDnsSetting = LocationDnsSetting::where('location_networks_id', $locationNetwork->id)->whereIn('cdn_id', $scopeCdnIds)->first();
-                // dd(is_null($locationDnsSetting));
-                if (is_null($locationDnsSetting)) {
-                    $returns[$k] = [
-                        'domain' => $v,
-                        'success' => false,
-                        'message' => "error: no location_dns_settings where ['location_networks_id' => $locationNetwork->id] and where in ['cdn_id' => $scopeCdnIds]"
-                    ];
-                    return true;
-                }
-                // 改
+                // 增/改 location_dns_settings & DNSPOD
+                // 增/改 > 資料準備
                 $targetDomain = Domain::find($domainId);
                 $targetCdn = $this->cdnRepository->indexByWhere(['cdn_provider_id' => $cdnProviderId, 'domain_id' => $domainId])->first();
-                $data = [
-                    'cdn_id' => $targetCdn->id,
-                    'edited_by' => $editedBy
-                ];
                 if (is_null($targetCdn)) {
                     $returns[$k] = [
                         'domain' => $v,
@@ -263,11 +247,30 @@ class DomainGroupService
                     ];
                     return true;
                 }
+                $data = [
+                    'cdn_id' => $targetCdn->id,
+                    'edited_by' => $editedBy
+                ];
+
+                // 查
+                $locationDnsSetting = LocationDnsSetting::where('location_networks_id', $locationNetwork->id)->whereIn('cdn_id', $scopeCdnIds)->first();
+                if (is_null($locationDnsSetting)) {
+                    // 查不到 > 增
+                    $result = $this->locationDnsSettingService->createSetting($data, $targetDomain, $targetCdn, $locationNetwork);
+                    $returns[$k] = [
+                        'domain' => $v,
+                        'success' => true,
+                        'message' => "create datum in location_dns_settings, result: " . json_encode($result)
+                    ];
+                    return true;
+                }
+
+                // 查到 > 改
                 $result = $this->locationDnsSettingService->updateSetting($data, $targetDomain, $targetCdn, $locationDnsSetting);
                 $returns[$k] = [
                     'domain' => $v,
                     'success' => true,
-                    'message' => 'add dnspod & location_dns_settings result: ' . json_encode($result)
+                    'message' => 'update dnspod & location_dns_settings result: ' . json_encode($result)
                 ];
             });
             return $returns;
