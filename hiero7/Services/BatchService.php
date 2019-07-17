@@ -51,7 +51,7 @@ class BatchService{
             }
 
             // 查詢 cdns.domain_id 是否存在 ? 不存在才打 POD，代表 POD 的 default 尚未存在
-            $cdns = $this->cdnRepository->getByWhere(['domain_id' => $domain_id]);
+            $cdns = $this->cdnRepository->indexByWhere(['domain_id' => $domain_id]);
             $isFirstCdn = count($cdns) == 0 ? true : false;
 
             // 批次新增 cdn 迴圈

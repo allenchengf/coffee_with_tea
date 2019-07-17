@@ -40,7 +40,7 @@ class LocationDnsSettingTest extends TestCase
 
     public function testIndexByDomain()
     {
-        $response = $this->call('GET', $this->uri.'/1/iRouteCDN');
+        $response = $this->call('GET', $this->uri.'/1/routing-rules');
         $response->assertStatus(200);
     }
 
