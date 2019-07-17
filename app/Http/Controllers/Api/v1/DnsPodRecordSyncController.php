@@ -36,28 +36,27 @@ class DnsPodRecordSyncController extends Controller
 
     public function checkDataDiff(Request $request, Domain $domain)
     {
-        $record = $this->getDomainRecord($request, $domain);
+        $domain = $this->getDomainObject($request, $domain);
+
+        $record = $this->dnsPodRecordSyncService->getDifferentRecords($domain);
 
         return $this->response('', null, $record);
     }
 
     public function syncDnsData(Request $request, Domain $domain)
     {
+        $domain = $this->getDomainObject($request, $domain);
 
-        $diffRecord = $this->getDomainRecord($request, $domain);
-
-        $data = $this->dnsPodRecordSyncService->syncRecord($diffRecord['create'], $diffRecord['diff'], $diffRecord['delele']);
-
-        $record = $this->getDomainRecord($request, $domain);
+        $record = $this->dnsPodRecordSyncService->syncAndCheckRecords($domain);
 
         return $this->response('', null, $record);
     }
 
-    private function getDomainRecord(Request $request, Domain $domain)
+    private function getDomainObject(Request $request, Domain $domain)
     {
         $domain = $request->has('name') ?
         $domain->where('name', $request->get('name'))->first() : null;
-
-        return $this->dnsPodRecordSyncService->getDiffRecords($domain);
+        
+        return $domain;
     }
 }

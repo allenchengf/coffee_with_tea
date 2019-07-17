@@ -22,16 +22,46 @@ class DnsPodRecordSyncService
         $this->domainRepository = $domainRepository;
     }
 
-    public function getDiffRecords(Domain $domain = null)
+    /**
+     * 取得 DB 與 Dns Pod Different Record
+     *
+     * @param Domain $domain
+     * @return array
+     */
+    public function getDifferentRecords(Domain $domain = null)
     {
         $record = $domain ? $this->getDomain($domain) : $this->getAllDomain();
 
         $domainCname = $domain ? $domain->cname : '';
 
-        return $this->getDiff($record, $domainCname);
+        return $this->getDifferent($record, $domainCname);
     }
 
-    public function getDiff($record = [], string $domainCname = '')
+    /**
+     * Sync DB 與 Dns Pod Record
+     *
+     * @param Domain $domain
+     * @return array
+     */
+    public function syncAndCheckRecords(Domain $domain = null)
+    {
+        $differentRecord = $this->getDifferentRecords($domain);
+
+        if (isset($differentRecord['create'])) {
+            $this->syncRecord($differentRecord['create'], $differentRecord['different'], $differentRecord['delele']);
+        }
+
+        return $this->getDifferentRecords($domain);
+    }
+
+    /**
+     * Get Different Record
+     *
+     * @param array $record
+     * @param string $domainCname
+     * @return array
+     */
+    private function getDifferent($record = [], string $domainCname = '')
     {
         $data = [
             'records' => json_encode($record),
@@ -50,11 +80,19 @@ class DnsPodRecordSyncService
         return ['error' => true];
     }
 
-    public function syncRecord($createData, $diffData, $deleteData)
+    /**
+     * Sync Record
+     *
+     * @param array $createData
+     * @param array $diffData
+     * @param array $deleteData
+     * @return array
+     */
+    private function syncRecord(array $createData, array $diffData, array $deleteData)
     {
         $data = [
             'create' => json_encode($createData),
-            'diff' => json_encode($diffData),
+            'different' => json_encode($diffData),
             'delele' => json_encode($deleteData),
         ];
 
@@ -107,6 +145,12 @@ class DnsPodRecordSyncService
         return $this->cdnProvider;
     }
 
+    /**
+     * Get Default Record
+     *
+     * @param cdn $cdns
+     * @return array
+     */
     private function getDefaultCdn($cdns)
     {
         $record = [];
@@ -123,7 +167,9 @@ class DnsPodRecordSyncService
                 'enabled' => (bool) $this->cdnProvider[$cdnDefault->cdn_provider_id]['status'],
                 'name' => $this->domainName,
                 'line' => "默认",
+                'type' => "CNAME",
             ];
+
             $this->record[] = $record;
         }
 
@@ -153,6 +199,7 @@ class DnsPodRecordSyncService
                 'enabled' => (bool) $this->cdnProvider[$cdn['cdn_provider_id']]['status'],
                 'name' => $this->domainName,
                 'line' => $line,
+                'type' => "CNAME",
             ];
 
             $record[] = $data;
@@ -171,7 +218,7 @@ class DnsPodRecordSyncService
         $matchData = $this->transferRecord($matchData)->keyBy('hash');
 
         $matchData->map(function ($value, $key) use (&$soruceRecord) {
-            if (isset($soruceRecord[$key])) {
+            if (!isset($soruceRecord[$key])) {
                 return;
             }
 
@@ -199,9 +246,9 @@ class DnsPodRecordSyncService
         if ($record["line"] == "默认") {
             $cdn->where('provider_record_id', $record['id'])
                 ->update(['provider_record_id' => $dnsRecordId]);
-
         } else {
             $locationDnsSetting->where('provider_record_id', $record['id'])
+                ->first()
                 ->update(['provider_record_id' => $dnsRecordId]);
         }
     }
@@ -220,6 +267,7 @@ class DnsPodRecordSyncService
     private function hashRecord(array $data)
     {
         $data = collect($data)->only('ttl', 'value', 'enabled', 'name', 'line')->toArray();
+
         return sha1(json_encode($data));
     }
 }
