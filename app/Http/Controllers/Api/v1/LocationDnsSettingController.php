@@ -3,22 +3,26 @@
 namespace App\Http\Controllers\Api\v1;
 
 use App\Http\Controllers\Controller;
-use Hiero7\Enums\InputError;
-use Hiero7\Enums\InternalError;
-use Hiero7\Services\{LocationDnsSettingService,DomainGroupService};
 use Illuminate\Http\Request;
-use Hiero7\Models\LocationNetwork;
-use Hiero7\Models\{Domain,Cdn,LocationDnsSetting,DomainGroup};
 use App\Http\Requests\LocationDnsSettingRequest;
+use Hiero7\Services\{LocationDnsSettingService, DomainGroupService};
+use Hiero7\Repositories\CdnRepository;
+use Hiero7\Models\{Domain, Cdn, LocationDnsSetting, DomainGroup, LocationNetwork};
+use Hiero7\Enums\{InputError, InternalError};
 
 class LocationDnsSettingController extends Controller
 {
     protected $locationDnsSettingService;
 
-    public function __construct(LocationDnsSettingService $locationDnsSettingService,DomainGroupService $domainGroupService)
+    public function __construct(
+        LocationDnsSettingService $locationDnsSettingService,
+        DomainGroupService $domainGroupService,
+        CdnRepository $cdnRepository
+    )
     {
         $this->locationDnsSettingService = $locationDnsSettingService;
         $this->domainGroupService = $domainGroupService;
+        $this->cdnRepository = $cdnRepository;
     }
 
     public function indexByDomain(Domain $domain)
@@ -77,23 +81,23 @@ class LocationDnsSettingController extends Controller
     {
         $message = '';
         $error = '';
-        
-        $request->merge([
-            'edited_by' => $this->getJWTPayload()['uuid'],
-        ]);
 
-        $cdnModel = $this->checkCdnIfExist($request->get('cdn_id'), $domain);
-
-        if (!$cdnModel) {
+        $cdnModel = $this->cdnRepository->indexByWhere(['cdn_provider_id' => $request->get('cdn_provider_id'), 'domain_id' => $domain->id])->first();
+        if (is_null($cdnModel)) {
             return $this->setStatusCode(400)->response($message,InputError::WRONG_PARAMETER_ERROR,'');
         }
+
+        $data = [
+            'cdn_id' => $cdnModel->id,
+            'edited_by' => $this->getJWTPayload()['uuid']
+        ];
 
         $existLocationDnsSetting = $this->checkExist($domain, $locationNetworkId);
 
         if (!collect($existLocationDnsSetting)->isEmpty()) {
-            $result = $this->locationDnsSettingService->updateSetting($request->all(),$domain,$cdnModel, $existLocationDnsSetting);
+            $result = $this->locationDnsSettingService->updateSetting($data, $domain, $cdnModel, $existLocationDnsSetting);
         } else {
-            $result = $this->locationDnsSettingService->createSetting($request->all(), $domain, $cdnModel ,$locationNetworkId);
+            $result = $this->locationDnsSettingService->createSetting($data, $domain, $cdnModel, $locationNetworkId);
         }
 
         if ($result == false) {
