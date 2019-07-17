@@ -15,14 +15,14 @@ use App;
 trait OperationLogTrait
 {
 
-    protected function curlWithUri($domain, $uri, array $body, $method)
+    protected function curlWithUri($domain, $uri, array $body, $method, $asJson = true)
     {
-        return Curl::to($domain . $uri)->withHeader('Authorization: ' . 'Bearer ' . $this->getToken())->withData($body)->asJson(true)->$method();
+        return Curl::to($domain . $uri)->withHeader('Authorization: ' . 'Bearer ' . $this->getToken())->withData($body)->asJson($asJson)->$method();
     }
 
     private static function getKongOperationLogDomain()
     {
-        return env('KONG_OPERATION_LOG');
+        return env('OPERATION_LOG_URL');
     }
 
     private static function getUserModuleDomain()
@@ -31,8 +31,14 @@ trait OperationLogTrait
     }
 
     //createEsLog has not been testing,so there may be bugs
-    public function createEsLog($targetUser, $category, $behavior, $item)
+    public function createEsLog(int $targetUser, $category, $behavior, $item)
     {
+        if (!$this->status){
+            return true;
+        }
+
+        $targetUser = $this->getTargetUser($targetUser);
+
         $data = $this->formatBehavior($this->getLoginUser(), $targetUser, $category, $behavior, $item);
 
         $this->curlWithUri(self::getKongOperationLogDomain(), '/log/platform', $data, 'post');
@@ -54,17 +60,19 @@ trait OperationLogTrait
     {
         $message = '';
 
+        $operatorData = $operator->data;
+
         if ($this->checkOperatorNTargetUserIsTheSame($operator, $targetUser)) {
-            $message = "{$operator->name} ({$operator->email}) {$behavior} {$item}.";
+            $message = "{$operatorData->name} ({$operatorData->email}) {$behavior} {$item}.";
 
         } else {
-            $message = "{$operator->name} ({$operator->email}) {$behavior} {$targetUser->name}'s ({$targetUser->email}) {$item}.";
+            $message = "{$operatorData->name} ({$operatorData->email}) {$behavior} {$targetUser->name}'s ({$targetUser->email}) {$item}.";
         }
 
 
         $body = [
-            "uid"       => $operator->uid,
-            "userGroup" => $operator->user_group_id,
+            "uid"       => $operatorData->uid,
+            "userGroup" => $operatorData->user_group_id,
             "platform"  => $this->getPlatform(),
             "category"  => $category,
             "message"   => $message
@@ -78,17 +86,16 @@ trait OperationLogTrait
         return $this->curlWithUri(self::getUserModuleDomain(), '/users/self', [
             'uid'  => $this->parseToken()->payload()->get('sub'),
             'ugid' => $this->parseToken()->getPayload()->get('user_group_id')
-        ], 'get');
+        ], 'get', false);
 
     }
 
 
-    private function getTargetUser($uid, $ugid)
+    private function getTargetUser($uid)
     {
-        return $this->curlWithUri(self::getUserModuleDomain(), '/users/self', [
+        return $this->curlWithUri(self::getUserModuleDomain(), "/users/$uid/profile", [
             'uid'  => $uid,
-            'ugid' => $ugid
-        ], 'get');
+        ], 'get', false);
 
     }
 
@@ -105,15 +112,15 @@ trait OperationLogTrait
 
     private function getPlatform()
     {
-        $payload = JWTAuth::getPayload();
-
-        return $payload['platformKey'];
+        return env('PLATFORM_KEY');
     }
 
 
     private function checkOperatorNTargetUserIsTheSame($operator, $targetUser)
     {
-        return $operator->uid == $targetUser->uid ? true : false;
+        $targetUserData = $targetUser->data;
+        $operatorData = $operator->data;
+        return $operatorData->uid == $targetUserData->uid ? true : false;
     }
 
 }

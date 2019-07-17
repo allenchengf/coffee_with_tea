@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Hiero7\Enums\InputError;
 use Hiero7\Enums\InternalError;
 use Hiero7\Services\{LocationDnsSettingService,DomainGroupService};
+use Hiero7\Traits\OperationLogTrait;
 use Illuminate\Http\Request;
 use Hiero7\Models\LocationNetwork;
 use Hiero7\Models\{Domain,Cdn,LocationDnsSetting,DomainGroup};
@@ -13,12 +14,15 @@ use App\Http\Requests\LocationDnsSettingRequest;
 
 class LocationDnsSettingController extends Controller
 {
+    use OperationLogTrait;
     protected $locationDnsSettingService;
+    protected $status;
 
     public function __construct(LocationDnsSettingService $locationDnsSettingService,DomainGroupService $domainGroupService)
     {
         $this->locationDnsSettingService = $locationDnsSettingService;
         $this->domainGroupService = $domainGroupService;
+        $this->status = (env('APP_ENV') !== 'testing') ?? false;
     }
 
     public function indexByDomain(Domain $domain)
@@ -33,7 +37,7 @@ class LocationDnsSettingController extends Controller
         $user_group_id = $this->getUgid($request);
 
         $domainGroup = DomainGroup::where(compact('user_group_id'))->get();
-        
+
         $domains = $domain->with('domainGroup')->where(compact('user_group_id'))->get();
 
         $domains = $domains->filter(function ($item) {
@@ -66,7 +70,7 @@ class LocationDnsSettingController extends Controller
         foreach($domainsCollection as $domainModel){
             $domainModel->location_network = $this->locationDnsSettingService->indexByDomain($domainModel->id);
         }
-        
+
         $domains = $domainsCollection->flatten();
 
 
@@ -77,7 +81,7 @@ class LocationDnsSettingController extends Controller
     {
         $message = '';
         $error = '';
-        
+
         $request->merge([
             'edited_by' => $this->getJWTPayload()['uuid'],
         ]);
@@ -99,8 +103,10 @@ class LocationDnsSettingController extends Controller
         if ($result == false) {
             return $this->setStatusCode(409)->response('please contact the admin', InternalError::INTERNAL_ERROR, []);
         }
-        
+
         $data = $this->locationDnsSettingService->indexByDomain($domain->id);
+
+        $this->createEsLog($this->getJWTPayload()['sub'], "IRoute", "update", "IRouteCDN");
 
         return $this->response($message,$error,$data);
     }
@@ -114,6 +120,6 @@ class LocationDnsSettingController extends Controller
     {
         $cdnId = Cdn::where('domain_id',$domain->id)->pluck('id');
         return LocationDnsSetting::where('location_networks_id',$locationNetwork->id)->whereIn('cdn_id',$cdnId)->first();
-        
+
     }
 }

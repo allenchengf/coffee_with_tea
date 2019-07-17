@@ -20,7 +20,12 @@ class DomainGroupRepository
             return  $this->domainGroupModel->with('domains')->get();
         }
 
-        return $this->domainGroupModel->with('domains')->where('user_group_id',$userGroupId)->get();
+        return $this->domainGroupModel->with('domains')->where('id',$userGroupId)->get();
+    }
+
+    public function showByDomainGroupId(int $domainGroupId)
+    {
+        return $this->domainGroupModel->with('domains')->where('id',$domainGroupId)->first();
     }
 
 /**

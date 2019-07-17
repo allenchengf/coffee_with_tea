@@ -18,7 +18,7 @@ Route::group(['middleware' => ['api'], 'namespace' => 'Api\v1', 'prefix' => 'v1'
                 Route::patch('cdn/{cdn}/cname', 'CdnController@updateCname')->name('cdn.cname');
                 
                 //yuan
-                Route::group(['prefix' => '/iRouteCDN'], function () {
+                Route::group(['prefix' => '/routing-rules'], function () {
                     Route::get('', 'LocationDnsSettingController@indexByDomain')->name('iRoute.indexByDomain');
                     Route::middleware(['admin.check'])->group(function() {
                         Route::put('/{locationNetworkId}', 'LocationDnsSettingController@editSetting')->name('iRoute.edit');
@@ -68,18 +68,20 @@ Route::group(['middleware' => ['api'], 'namespace' => 'Api\v1', 'prefix' => 'v1'
 
     Route::group(['middleware' => ['auth.user.module'], 'prefix' => 'groups'], function(){
         Route::get('', 'DomainGroupController@index')->name('groups.index');
-        Route::get('{domainGroup}/iRoute', 'DomainGroupController@indexGroupIroute')->name('groups.indexGroupIroute');
+        Route::get('{domainGroup}/routing-rules', 'DomainGroupController@indexGroupIroute')->name('groups.indexGroupIroute');
         Route::get('{domainGroup}', 'DomainGroupController@indexByDomainGroupId')->name('groups.indexByDomainGroupId');
         Route::post('', 'DomainGroupController@create')->name('groups.create');
         Route::post('{domainGroup}', 'DomainGroupController@createDomainToGroup')->name('groups.createDomainToGroup');
         Route::put('{domainGroup}', 'DomainGroupController@edit')->name('groups.edit');
         Route::put('{domainGroup}/defaultCdn', 'DomainGroupController@changeDefaultCdn')->name('groups.changeDefaultCdn');
+        Route::put('{domainGroup}/routing-rules/{locationNetwork}', 'DomainGroupController@updateRouteCdn')->name('groups.updateRouteCdn');
         Route::delete('{domainGroup}', 'DomainGroupController@destroy')->name('groups.destroy');
         Route::delete('{domainGroup}/domain/{domain}', 'DomainGroupController@destroyByDomainId')->name('groups.destroyByDomainId');
 
         Route::post('{domainGroup}/batch', 'BatchController@storeDomainToGroup')->name('groups.batch');
 
     });
+
 
     Route::group(['prefix' => 'routing-rules'], function () {
         Route::get('/lists', 'LocationDnsSettingController@indexByGroup')->name('iRoute.indexByGroup');
@@ -91,4 +93,7 @@ Route::group(['middleware' => ['api'], 'namespace' => 'Api\v1', 'prefix' => 'v1'
         Route::post('', 'ConfigController@import')->name('config.import');
     });
 
+    Route::group(['middleware' => ['auth.user.module'], 'prefix' => 'operation_log'], function () {
+        Route::get('', 'OperationLogController@index')->name('operation_log.index');
+    });
 });
