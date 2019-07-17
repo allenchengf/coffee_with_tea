@@ -41,18 +41,19 @@ class DnsPodRecordSyncController extends Controller
 
     public function checkDataDiff(Request $request, Domain $domain)
     {
+        $domainName = '';
         if ($name = $request->get('name', null)) {
 
             $domain = $domain->where('name', $name)->first();
-
-            $this->dnsPodRecordSyncService->getDomain($domain);
+            $domainName = $domain->cname;
+            $record = $this->dnsPodRecordSyncService->getDomain($domain);
 
         } else {
             
-            $this->dnsPodRecordSyncService->getDomain($getAllDomain);
+            $record = $this->dnsPodRecordSyncService->getDomain($getAllDomain);
         }
 
-        $record = $this->dnsPodRecordSyncService->getDiffRecord();
+        $record = $this->dnsPodRecordSyncService->getDiffRecord($record, $domainName);
 
         return $this->response('', null, $record);
     }
@@ -104,50 +105,26 @@ class DnsPodRecordSyncController extends Controller
 
     public function syncDnsData(Request $request, Domain $domain)
     {
-        $this->checkDataDiff($request, $domain);
+        $domainName = '';
 
-        foreach ($this->deleteData as $record) {
-            $this->dnsProviderService->deleteRecord([
-                'record_id' => $record['id'],
-            ]);
-        }
+        if ($name = $request->get('name', null)) {
 
-        foreach ($this->diffData as $record) {
-            $this->dnsProviderService->editRecord([
-                'sub_domain' => $record['name'],
-                'value' => $record['value'],
-                'record_id' => $record['id'],
-                'record_line' => $record['line'],
-                'ttl' => $record['ttl'],
-                'status' => $record['enabled'],
-            ]);
-        }
+            $domain = $domain->where('name', $name)->first();
+            $domainName = $domain->cname;
+            $record = $this->dnsPodRecordSyncService->getDomain($domain);
 
-        foreach ($this->createData as $record) {
-            DB::beginTransaction();
-
-            $response = $this->dnsProviderService->createRecord([
-                'sub_domain' => $record['name'],
-                'value' => $record['value'],
-                'record_line' => $record['line'],
-                'ttl' => $record['ttl'],
-                'status' => $record['enabled'],
-            ]);
+        } else {
             
-            if ($this->dnsProviderService->checkAPIOutput($response)) {
-                app()->call([$this, 'updateProviderRecordId'],
-                    [
-                        'record' => $record,
-                        'dnsRecordId' => $response['data']['record']['id'],
-                    ]);
-
-                DB::commit();
-                continue;
-            }
-            DB::rollback();
+            $record = $this->dnsPodRecordSyncService->getDomain($getAllDomain);
         }
 
-        return $this->response();
+        $diffRecord = $this->dnsPodRecordSyncService->getDiffRecord($record, $domainName);
+
+        $data = $this->dnsPodRecordSyncService->syncRecord($diffRecord['create'], $diffRecord['diff'], $diffRecord['delele']);
+
+        $record = $this->dnsPodRecordSyncService->getDiffRecord($record, $domainName);
+
+        return $this->response('',null,$record);
     }
 
     public function getCdnProvider(CdnProvider $cdnProvider, $ugid)

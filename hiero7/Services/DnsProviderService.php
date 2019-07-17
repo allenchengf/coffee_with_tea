@@ -147,12 +147,14 @@ class DnsProviderService
     }
 
     /**
+     * 由 Hiero7 實作的功能
+     * 
      * Get Soruce Record With DNS Pod Record Diff function
      *
      * @param string login_token DNS Pod LoginToken
      * @param int domain_id 對應域名ID
-     * @param json records 記錄
      * @param string sub_domain 主機記錄
+     * @param json records 記錄
      */
     public function getDiffRecord(array $data = [])
     {
@@ -164,6 +166,32 @@ class DnsProviderService
             ->withData($data)
             ->asJson(true)
             ->get();
+    }
+
+    /**
+     * 由 Hiero7 實作的功能
+     * 
+     * Get Soruce Record With DNS Pod Record Diff function
+     *
+     * @param string login_token DNS Pod LoginToken
+     * @param int domain_id 對應域名ID
+     * @param json diff 記錄
+     * @param json create 記錄
+     * @param json delele 記錄
+     */
+    public function syncRecordToDnsPod(array $data = [])
+    {
+        $url = $this->dnsProviderApi . "/records-sync";
+
+        $data = $this->addLoginTokenAndDomainId($data);
+        
+        $response = Curl::to($url)
+            ->withData($data)
+            ->asJson(true)
+            ->post();
+
+        return $response;
+
     }
 
     public function checkAPIOutput(array $response): bool

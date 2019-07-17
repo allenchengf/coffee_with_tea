@@ -1,13 +1,14 @@
 <?php
 
 namespace Hiero7\Services;
+
 use DB;
 use Hiero7\Models\Cdn;
 use Hiero7\Models\CdnProvider;
 use Hiero7\Models\Domain;
 use Hiero7\Models\LocationDnsSetting;
-use Hiero7\Services\DnsProviderService;
 use Hiero7\Repositories\DomainRepository;
+use Hiero7\Services\DnsProviderService;
 
 class DnsPodRecordSyncService
 {
@@ -15,28 +16,39 @@ class DnsPodRecordSyncService
 
     protected $record = [], $createData = [], $deleteData = [];
 
-    public function __construct(DnsProviderService $dnsProviderService,DomainRepository $domainRepository)
+    public function __construct(DnsProviderService $dnsProviderService, DomainRepository $domainRepository)
     {
         $this->dnsProviderService = $dnsProviderService;
         $this->domainRepository = $domainRepository;
     }
 
-    public function getDiffRecord()
+    public function getDiffRecord($record = [], string $domainName = '')
     {
         $data = [
-            'records' => json_encode($this->record),
-            'sub_domain' => $this->domainName
+            'records' => json_encode($record),
+            'sub_domain' => $domainName,
         ];
 
         $response = $this->dnsProviderService->getDiffRecord($data);
 
-        if($this->dnsProviderService->checkAPIOutput($response)){
+        if ($this->dnsProviderService->checkAPIOutput($response)) {
 
-            $this->syncDnsProviderRecordId($response['data']['match']);
+            $this->syncDnsProviderRecordId($record, $response['data']['match']);
             return $response['data'];
         }
 
         return [];
+    }
+
+    public function syncRecord($createData, $diffData, $deleteData)
+    {
+        $data = [
+            'create' => json_encode($createData),
+            'diff' => json_encode($diffData),
+            'delele' => json_encode($deleteData),
+        ];
+
+        return $this->dnsProviderService->syncRecordToDnsPod($data);
     }
 
     public function getAllDomain()
@@ -132,19 +144,19 @@ class DnsPodRecordSyncService
         return $record;
     }
 
-    public function syncDnsProviderRecordId($matchData)
+    public function syncDnsProviderRecordId($soruceRecord = [], $matchData = [])
     {
-        $dbData = $this->transferSourceRecord($this->record)->keyBy('hash');
-        
-        $matchData = $this->transferSourceRecord($matchData)->keyBy('hash');
-        
-        $matchData->map(function ($value, $key) use (&$dbData) {
-            if ($dbData[$key]['id'] != $value['id']){
+        $soruceRecord = $this->transferRecord($soruceRecord)->keyBy('hash');
+
+        $matchData = $this->transferRecord($matchData)->keyBy('hash');
+
+        $matchData->map(function ($value, $key) use (&$soruceRecord) {
+            if ($soruceRecord[$key]['id'] != $value['id']) {
                 app()->call([$this, 'updateProviderRecordId'],
-                [
-                    'record' => $dbData[$key],
-                    'dnsRecordId' => $value['id'],
-                ]);
+                    [
+                        'record' => $soruceRecord[$key],
+                        'dnsRecordId' => $value['id'],
+                    ]);
             }
         });
     }
@@ -170,9 +182,9 @@ class DnsPodRecordSyncService
         }
     }
 
-    private function transferSourceRecord($sourceRecord)
+    private function transferRecord($record)
     {
-        return collect($sourceRecord)->map(function ($item, $key) {
+        return collect($record)->map(function ($item, $key) {
             return array_merge($item,
                 [
                     'hash' => $this->hashRecord($item),
