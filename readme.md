@@ -18,6 +18,9 @@ DNS_POD_DOMAIN_ID=
 DOMAIN_REGULAR='regex:/^(?!:\/\/)([a-zA-Z0-9-_]+\.)*[a-zA-Z0-9][a-zA-Z0-9-_]+\.[a-zA-Z]{2,11}?$/'
 CDN_TTL=600
 SCHEME=1 #dnspod free
+
+OPERATION_LOG_URL=http://10.88.55.122:39452/api/v1
+PLATFORM_KEY=eu7nxsfttc
 ```
 
 #### Database

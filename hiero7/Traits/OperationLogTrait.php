@@ -112,9 +112,7 @@ trait OperationLogTrait
 
     private function getPlatform()
     {
-        $payload = JWTAuth::getPayload();
-
-        return $payload['platformKey'];
+        return env('PLATFORM_KEY');
     }
 
 
