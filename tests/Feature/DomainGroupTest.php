@@ -98,7 +98,7 @@ class DomainGroupTest extends TestCase
 
     public function testIndexGroupIroute()
     {
-        $response = $this->call('GET', $this->uri.'/1/iRoute');
+        $response = $this->call('GET', $this->uri.'/1/routing-rules');
         $response->assertStatus(200);
     }
 

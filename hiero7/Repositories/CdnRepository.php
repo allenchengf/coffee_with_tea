@@ -36,7 +36,7 @@ class CdnRepository
     }
     
 
-    public function getByWhere(array $conditions = null)
+    public function indexByWhere(array $conditions = null)
     {
         $select = $this->cdn;
 
@@ -47,5 +47,47 @@ class CdnRepository
         }
 
         return $select->get();
+    }
+
+
+    public function indexByWhereIn(array $conditions = null)
+    {
+        $select = $this->cdn;
+
+        if (is_array($conditions)) {
+            foreach ($conditions as $k => $v){
+                $select = $select->whereIn($k, $v);
+            }
+        }
+
+        return $select->get();
+    }
+
+
+    public function updateByWhere(array $inputs, array $conditions = null)
+    {
+        $update = $this->cdn;
+
+        if (is_array($conditions)) {
+            foreach ($conditions as $k => $v){
+                $update = $update->where($k, $v);
+            }
+        }
+
+        return $update->update($inputs);
+    }
+
+
+    public function updateByWhereIn(array $inputs, array $conditions = null)
+    {
+        $update = $this->cdn;
+
+        if (is_array($conditions)) {
+            foreach ($conditions as $k => $v){
+                $update = $update->whereIn($k, $v);
+            }
+        }
+
+        return $update->update($inputs);
     }
 }
