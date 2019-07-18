@@ -229,6 +229,7 @@ class DomainGroupService
                 if (is_null($scopeCdnIds)) {
                     $returns[$k] = [
                         'domain' => $v,
+                        'cdns' => $scopeCdnIds,
                         'success' => false,
                         'message' => "error: no cdns where ['domain_id' =>  $domainId]"
                     ];
@@ -242,6 +243,7 @@ class DomainGroupService
                 if (is_null($targetCdn)) {
                     $returns[$k] = [
                         'domain' => $v,
+                        'cdns' => $scopeCdnIds,
                         'success' => false,
                         'message' => "error: no cdn where ['cdn_provider_id' => $cdnProviderId, 'domain_id' => $domainId]"
                     ];
@@ -259,6 +261,7 @@ class DomainGroupService
                     $result = $this->locationDnsSettingService->createSetting($data, $targetDomain, $targetCdn, $locationNetwork);
                     $returns[$k] = [
                         'domain' => $v,
+                        'cdns' => $scopeCdnIds,
                         'success' => true,
                         'message' => "create datum in location_dns_settings, result: " . json_encode($result)
                     ];
@@ -269,6 +272,7 @@ class DomainGroupService
                 $result = $this->locationDnsSettingService->updateSetting($data, $targetDomain, $targetCdn, $locationDnsSetting);
                 $returns[$k] = [
                     'domain' => $v,
+                    'cdns' => $scopeCdnIds,
                     'success' => true,
                     'message' => 'update dnspod & location_dns_settings result: ' . json_encode($result)
                 ];

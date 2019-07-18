@@ -35,7 +35,7 @@ class LocationDnsSettingRequest extends FormRequest
         switch ($routeName) {
             case ($routeName == "$this->prefix.edit"):
                 return [
-                    "cdn_id" => "required|integer",
+                    "cdn_provider_id" => "required|integer",
                 ];
                 break;
             default :
