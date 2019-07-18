@@ -6,17 +6,17 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
 use App\Http\Controllers\Controller;
 use Hiero7\Models\{Domain,Cdn,CdnProvider,LocationDnsSetting,DomainGroup};
-use Hiero7\Services\{ConfigServices,DnsPodRecordSyncService};
+use Hiero7\Services\{ConfigService,DnsPodRecordSyncService};
 use Illuminate\Support\Collection;
 use Illuminate\Database\Eloquent\Model;
 
 class ConfigController extends Controller
 {
-    protected $configServices;
+    protected $configService;
 
-    public function __construct(ConfigServices $configServices,DnsPodRecordSyncService $dnsPodRecordSyncService)
+    public function __construct(ConfigService $configService,DnsPodRecordSyncService $dnsPodRecordSyncService)
     {
-        $this->configServices = $configServices;
+        $this->configService = $configService;
         $this->dnsPodRecordSyncService = $dnsPodRecordSyncService;
     }
     
@@ -40,6 +40,21 @@ class ConfigController extends Controller
     public function import(Request $request,Domain $domain,CdnProvider $cdnProvider,DomainGroup $domainGroup)
     {
         $dataResult = $this->handleDataToData($request,$domain, $cdnProvider, $domainGroup);
+
+        $result = [];
+        foreach($dataResult as $key => $tableName){
+            if(empty($tableName)){
+                continue;
+            }
+            $error = [];
+            foreach($tableName as $method){
+                if(empty($method)){
+                    continue;
+                }
+                $error [] = $method['errorMessage'];
+            }
+            $result[$key] = $error;
+        }
 
         if(!empty($result)){
             $dbDomain = $domain->where('user_group_id',$this->getUgid($request))->get();
@@ -92,15 +107,15 @@ class ConfigController extends Controller
         $result = [];
         
         if(!$updateData->isEmpty()){
-            $result['updateData'] = $this->configServices->update($updateData ,$targetTable);
+            $result['updateData'] = $this->configService->update($updateData ,$targetTable);
         }
 
         if(!$InsertData->isEmpty()){
-            $result['InsertData'] = $this->configServices->insert($InsertData ,$targetTable);
+            $result['InsertData'] = $this->configService->insert($InsertData ,$targetTable);
         }
 
         if(!$deleteData->isEmpty()){
-            $result['deleteData'] = $this->configServices->delete($deleteData ,$targetTable);
+            $result['deleteData'] = $this->configService->delete($deleteData ,$targetTable);
         }
 
         return $result;
@@ -111,7 +126,7 @@ class ConfigController extends Controller
         $dataBaseCdnProviderWithHash = $this->formateDataWithHash($dataBase["$index"]);
         $importCdnProviderWithHash = $this->formateDataWithHash($importData["$index"]);
         
-        list($updateData ,$InsertData, $deleteData) = $this->configServices->getDifferent(collect($importCdnProviderWithHash)->keyBy('hash'),
+        list($updateData ,$InsertData, $deleteData) = $this->configService->getDifferent(collect($importCdnProviderWithHash)->keyBy('hash'),
                                                                                         collect($dataBaseCdnProviderWithHash)->keyBy('hash'));
 
         return [$updateData ,$InsertData, $deleteData];
