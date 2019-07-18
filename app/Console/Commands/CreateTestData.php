@@ -67,8 +67,8 @@ class CreateTestData extends Command
 
         if ($this->createBatchDomianAndCdn($domainName, $dataCount)) {
             $this->createIRoute();
-            // $this->createDomainGroup($domainName);
-            // $this->createDomainToGroup();
+            $this->createDomainGroup($domainName);
+            $this->createDomainToGroup();
 
             print_r("All Success" . "\n");
         }
@@ -153,7 +153,7 @@ class CreateTestData extends Command
             foreach ($location_network_ids as $location_network_id) {
                 $cdn_id = Cdn::where('domain_id', $domain->id)->inRandomOrder()->pluck('id')->first();
 
-                $response = Curl::to($this->api . "/domains/$domain->id/iRouteCDN/$location_network_id")
+                $response = Curl::to($this->api . "/domains/$domain->id/routing-rules/$location_network_id")
                     ->withHeaders(['Authorization: ' . $this->authorization])
                     ->withData(compact('cdn_id'))
                     ->asJson(true)
