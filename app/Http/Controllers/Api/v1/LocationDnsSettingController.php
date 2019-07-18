@@ -94,8 +94,6 @@ class LocationDnsSettingController extends Controller
             'edited_by' => $this->getJWTPayload()['uuid'],
         ]);
 
-        $cdnModel = $this->checkCdnIfExist($request->get('cdn_id'), $domain);
-
         $cdnModel = $this->cdnRepository->indexByWhere(['cdn_provider_id' => $request->get('cdn_provider_id'), 'domain_id' => $domain->id])->first();
         if (is_null($cdnModel)) {
             return $this->setStatusCode(400)->response($message,InputError::WRONG_PARAMETER_ERROR,'');
