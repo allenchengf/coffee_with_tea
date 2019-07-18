@@ -9,6 +9,7 @@ use Hiero7\Models\Domain;
 use Hiero7\Models\LocationDnsSetting;
 use Hiero7\Repositories\DomainRepository;
 use Hiero7\Services\DnsProviderService;
+use Illuminate\Database\Eloquent\Collection;
 
 class DnsPodRecordSyncService
 {
@@ -19,6 +20,7 @@ class DnsPodRecordSyncService
     public function __construct(DnsProviderService $dnsProviderService, DomainRepository $domainRepository)
     {
         $this->dnsProviderService = $dnsProviderService;
+
         $this->domainRepository = $domainRepository;
     }
 
@@ -61,7 +63,7 @@ class DnsPodRecordSyncService
      * @param string $domainCname
      * @return array
      */
-    private function getDifferent($record = [], string $domainCname = '')
+    private function getDifferent(array $record = [], string $domainCname = '')
     {
         $data = [
             'records' => json_encode($record),
@@ -126,17 +128,16 @@ class DnsPodRecordSyncService
         $this->domainName = $domain->cname;
 
         app()->call([$this, 'getCdnProvider'], ['ugid' => $domain->user_group_id]);
-
         $this->cdns = $domain->cdns->keyBy('id');
 
-        $this->getDefaultCdn($domain->cdns);
+        $this->getDefaultCdn($domain->cdns()->default()->first());
 
         $this->getIRouteSetting($domain->locationDnsSettings);
 
         return $this->record;
     }
 
-    public function getCdnProvider(CdnProvider $cdnProvider, $ugid)
+    public function getCdnProvider(CdnProvider $cdnProvider, int $ugid)
     {
         $this->cdnProvider = $cdnProvider->where('user_group_id', $ugid)
             ->get()
@@ -151,13 +152,9 @@ class DnsPodRecordSyncService
      * @param cdn $cdns
      * @return array
      */
-    private function getDefaultCdn($cdns)
+    private function getDefaultCdn(Cdn $cdnDefault = null)
     {
         $record = [];
-
-        $cdnDefault = $cdns->first(function ($value, $key) {
-            return $value->default == 1;
-        });
 
         if ($cdnDefault) {
             $record = [
@@ -182,7 +179,7 @@ class DnsPodRecordSyncService
      * @param array $locationDnsSettings
      * @return array
      */
-    private function getIRouteSetting($locationDnsSettings)
+    private function getIRouteSetting(Collection $locationDnsSettings = null)
     {
         $record = [];
 
@@ -211,7 +208,7 @@ class DnsPodRecordSyncService
         return $record;
     }
 
-    private function syncDnsProviderRecordId($soruceRecord = [], $matchData = [])
+    private function syncDnsProviderRecordId(array $soruceRecord = [], array $matchData = [])
     {
         $soruceRecord = $this->transferRecord($soruceRecord)->keyBy('hash');
 
@@ -241,7 +238,7 @@ class DnsPodRecordSyncService
      * @param array $dnsResponse
      * @return void
      */
-    public function updateProviderRecordId(Cdn $cdn, LocationDnsSetting $locationDnsSetting, $record, $dnsRecordId)
+    public function updateProviderRecordId(Cdn $cdn, LocationDnsSetting $locationDnsSetting, array $record, int $dnsRecordId)
     {
         if ($record["line"] == "默认") {
             $cdn->where('provider_record_id', $record['id'])
@@ -253,7 +250,7 @@ class DnsPodRecordSyncService
         }
     }
 
-    private function transferRecord($record)
+    private function transferRecord(array $record)
     {
         return collect($record)->map(function ($item, $key) {
             return array_merge($item,
