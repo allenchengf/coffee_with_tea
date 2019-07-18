@@ -6,7 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
 use App\Http\Controllers\Controller;
 use Hiero7\Models\{Domain,Cdn,CdnProvider,LocationDnsSetting,DomainGroup};
-use Hiero7\Services\ConfigServices;
+use Hiero7\Services\{ConfigServices,DnsPodRecordSyncService};
 use Illuminate\Support\Collection;
 use Illuminate\Database\Eloquent\Model;
 
@@ -14,12 +14,13 @@ class ConfigController extends Controller
 {
     protected $configServices;
 
-    public function __construct(ConfigServices $configServices)
+    public function __construct(ConfigServices $configServices,DnsPodRecordSyncService $dnsPodRecordSyncService)
     {
         $this->configServices = $configServices;
+        $this->dnsPodRecordSyncService = $dnsPodRecordSyncService;
     }
     
-    public function get(Request $request,Domain $domain, CdnProvider $cdnProvider,DomainGroup $domainGroup)
+    public function index(Request $request,Domain $domain, CdnProvider $cdnProvider,DomainGroup $domainGroup)
     {
         $userGroupId = $this->getUgid($request);
         $result = $this->getDataBaseAllSetting($userGroupId, $domain, $cdnProvider, $domainGroup );
@@ -36,8 +37,21 @@ class ConfigController extends Controller
         return compact('domains','cdnProviders','domainGroups');
     }
 
-    public function import(Request $request,Domain $domain, Cdn $cdn ,
-                            CdnProvider $cdnProvider,LocationDnsSetting $locationDnsSetting,DomainGroup $domainGroup)
+    public function import(Request $request,Domain $domain,CdnProvider $cdnProvider,DomainGroup $domainGroup)
+    {
+        $dataResult = $this->handleDataToData($request,$domain, $cdnProvider, $domainGroup);
+
+        if(!empty($result)){
+            $dbDomain = $domain->where('user_group_id',$this->getUgid($request))->get();
+            foreach($dbDomain as $domain){
+                $this->dnsPodRecordSyncService->syncAndCheckRecords($domain);
+            }
+        }
+
+        return $this->response('', null, $dataResult);
+    }
+    
+    public function handleDataToData(Request $request,Domain $domain,CdnProvider $cdnProvider,DomainGroup $domainGroup)
     {
         $result = [];
         $importData = $request->all();
@@ -64,12 +78,12 @@ class ConfigController extends Controller
         $result['cdns'] = $this->operationDb($updateData ,$InsertData, $deleteData, new Cdn);
 
         list($updateData ,$InsertData, $deleteData) = $this->compare($locationDnsSettingImportData, $locationDnsSettingDbData, 'LocationDnsSetting');
-        $result['LocationDnsSetting'] = $this->operationDb($updateData ,$InsertData, $deleteData, new LocationDnsSetting);
+        $result['locationDnsSetting'] = $this->operationDb($updateData ,$InsertData, $deleteData, new LocationDnsSetting);
 
         list($updateData ,$InsertData, $deleteData) = $this->compare($importData, $dataBase, 'domainGroups');
         $result['domainGroup'] = $this->operationDb($updateData ,$InsertData, $deleteData, new DomainGroup);
 
-        return $this->response('', null, $result);
+        return $result;
     }
 
     //如果三個參數都沒有資料，回傳也會是空[]

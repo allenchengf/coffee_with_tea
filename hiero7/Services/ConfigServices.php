@@ -43,7 +43,7 @@ Class ConfigServices
         $result = [];
         foreach($updateData as $data){
             try{
-                $result[] = $targetTable::where('id',$data['id'])->update(Arr::except($data,['id','hash']));
+                $targetTable::where('id',$data['id'])->update(Arr::except($data,['id','hash']));
             } catch  (\Exception $e){
                 $result['errorMessage'] = $e->getMessage();
             }
@@ -57,9 +57,9 @@ Class ConfigServices
         $result = [];
         foreach($InsertData as $data){
             try{
-                $result[] = $targetTable::create(Arr::except($data,['id','hash']));
-            } catch  (\Exception $e){
-                $result['errorMessage'] = $e->getMessage();
+                $targetTable::create(Arr::except($data,['id','hash']));
+            } catch  (\Illuminate\Database\QueryException $e){
+                $result['errorMessage'] = "please check relation column.";
             }
         }
 
