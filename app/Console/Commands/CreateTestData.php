@@ -148,8 +148,10 @@ class CreateTestData extends Command
     {
         print_r('Create Domains IRoute Start' . "\n");
 
-        $location_network_ids = [1, 2, 4];
+        $location_network_ids = [1, 2, 3, 4];
+
         $domains = Domain::all();
+
         foreach ($domains as $domain) {
             foreach ($location_network_ids as $location_network_id) {
 
@@ -160,6 +162,7 @@ class CreateTestData extends Command
                     ->withData(compact('cdn_provider_id'))
                     ->asJson(true)
                     ->put();
+
             }
         }
 
@@ -191,7 +194,9 @@ class CreateTestData extends Command
         $domain_group_id = DomainGroup::inRandomOrder()->pluck('id')->first();
 
         $domains = Domain::whereNotIn('id', [1])->get();
+
         $domain1 = Domain::find(1);
+
         $domain1Count = count($domain1->cdns);
 
         $groupLimit = 3;
