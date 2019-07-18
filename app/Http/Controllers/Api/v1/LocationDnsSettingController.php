@@ -7,12 +7,15 @@ use Illuminate\Http\Request;
 use App\Http\Requests\LocationDnsSettingRequest;
 use Hiero7\Services\{LocationDnsSettingService, DomainGroupService};
 use Hiero7\Repositories\CdnRepository;
-use Hiero7\Models\{Domain, Cdn, LocationDnsSetting, DomainGroup, LocationNetwork};
+use Hiero7\Models\{Domain, Cdn, LocationDnsSetting, DomainGroup, LocationNetwork, CdnProvider};
+use Hiero7\Traits\OperationLogTrait;
 use Hiero7\Enums\{InputError, InternalError};
 
 class LocationDnsSettingController extends Controller
 {
+    use OperationLogTrait;
     protected $locationDnsSettingService;
+    protected $status;
 
     public function __construct(
         LocationDnsSettingService $locationDnsSettingService,
@@ -23,6 +26,7 @@ class LocationDnsSettingController extends Controller
         $this->locationDnsSettingService = $locationDnsSettingService;
         $this->domainGroupService = $domainGroupService;
         $this->cdnRepository = $cdnRepository;
+        $this->status = (env('APP_ENV') !== 'testing') ?? false;
     }
 
     public function indexByDomain(Domain $domain)
@@ -37,9 +41,14 @@ class LocationDnsSettingController extends Controller
         $user_group_id = $this->getUgid($request);
 
         $domainGroup = DomainGroup::where(compact('user_group_id'))->get();
-        
-        $domains = $domain->with('domainGroup')->where(compact('user_group_id'))->get();
+        //取每個 Group 所有的 cdn list 
+        foreach($domainGroup as $domainGroupModel ){
+            $cdnProvider = $domainGroupModel->domains()->first()->cdnProvider()->get();
+            $domainGroupModel->cdn_provider = $cdnProvider;
+        }
 
+        $domains = $domain->with('cdnProvider','domainGroup')->where(compact('user_group_id'))->get();
+        //取沒有 Group 的 domain
         $domains = $domains->filter(function ($item) {
             return $item->domainGroup->isEmpty();
         });
@@ -56,7 +65,6 @@ class LocationDnsSettingController extends Controller
 
         $domainGroupCollection = DomainGroup::where(compact('user_group_id'))->get();
 
-
         foreach($domainGroupCollection as $domainGroupModel){
             $domainGroup[] = $this->domainGroupService->indexGroupIroute($domainGroupModel);
         }
@@ -70,7 +78,7 @@ class LocationDnsSettingController extends Controller
         foreach($domainsCollection as $domainModel){
             $domainModel->location_network = $this->locationDnsSettingService->indexByDomain($domainModel->id);
         }
-        
+
         $domains = $domainsCollection->flatten();
 
 
@@ -81,6 +89,12 @@ class LocationDnsSettingController extends Controller
     {
         $message = '';
         $error = '';
+
+        $request->merge([
+            'edited_by' => $this->getJWTPayload()['uuid'],
+        ]);
+
+        $cdnModel = $this->checkCdnIfExist($request->get('cdn_id'), $domain);
 
         $cdnModel = $this->cdnRepository->indexByWhere(['cdn_provider_id' => $request->get('cdn_provider_id'), 'domain_id' => $domain->id])->first();
         if (is_null($cdnModel)) {
@@ -103,8 +117,10 @@ class LocationDnsSettingController extends Controller
         if ($result == false) {
             return $this->setStatusCode(409)->response('please contact the admin', InternalError::INTERNAL_ERROR, []);
         }
-        
+
         $data = $this->locationDnsSettingService->indexByDomain($domain->id);
+
+        $this->createEsLog($this->getJWTPayload()['sub'], "IRoute", "update", "IRouteCDN");
 
         return $this->response($message,$error,$data);
     }
@@ -118,6 +134,6 @@ class LocationDnsSettingController extends Controller
     {
         $cdnId = Cdn::where('domain_id',$domain->id)->pluck('id');
         return LocationDnsSetting::where('location_networks_id',$locationNetwork->id)->whereIn('cdn_id',$cdnId)->first();
-        
+
     }
 }

@@ -8,15 +8,19 @@ use Hiero7\Models\Domain;
 use Hiero7\Services\DomainService;
 use Hiero7\Enums\PermissionError;
 use App\Events\CdnWasDelete;
+use Hiero7\Traits\OperationLogTrait;
 
 
 class DomainController extends Controller
 {
+    use OperationLogTrait;
     protected $domainService;
+    protected $status;
 
     public function __construct(DomainService $domainService)
     {
         $this->domainService = $domainService;
+        $this->status = (env('APP_ENV') !== 'testing') ?? false;
     }
 
     /**
@@ -87,7 +91,7 @@ class DomainController extends Controller
         if (!$errorCode = $this->domainService->checkUniqueCname($request->cname)) {
             $domain = $domain->create($request->all());
         }
-
+        $this->createEsLog($this->getJWTPayload()['sub'], "Domain", "create", "domain");
         return $this->setStatusCode($errorCode ? 400 : 200)->response(
             '',
             $errorCode ? $errorCode : null,
@@ -100,6 +104,7 @@ class DomainController extends Controller
     {
         $domain->update($request->only('name', 'label', 'edited_by'));
         $domain->cdns;
+        $this->createEsLog($this->getJWTPayload()['sub'], "Domain", "update", "domain");
         return $this->response('', null, $domain);
     }
 
@@ -117,7 +122,7 @@ class DomainController extends Controller
             }
         }
         $domain->delete();
-        
+        $this->createEsLog($this->getJWTPayload()['sub'], "Domain", "delete", "domain");
         return $this->response('','',[]);
     }
 }

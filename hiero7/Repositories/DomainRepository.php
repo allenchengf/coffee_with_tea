@@ -13,6 +13,11 @@ class DomainRepository
         $this->domain = $domain;
     }
 
+    public function getAll()
+    {
+        return $this->domain->all();
+    }
+
     public function store($info, $user)
     {
         try {
