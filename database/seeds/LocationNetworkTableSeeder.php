@@ -23,7 +23,7 @@ class LocationNetworkTableSeeder extends Seeder
                 'updated_at' => \Carbon\Carbon::now(),
             ], [
                 'id' => 2,
-                'continent_id' => 4,
+                'continent_id' => 3,
                 'country_id' => 1,
                 'location' => 'All',
                 'isp' => 'All',
@@ -32,7 +32,7 @@ class LocationNetworkTableSeeder extends Seeder
                 'updated_at' => \Carbon\Carbon::now(),
             ], [
                 'id' => 3,
-                'continent_id' => 4,
+                'continent_id' => 3,
                 'country_id' => 1,
                 'location' => 'All',
                 'isp' => 'China Unicom',
@@ -41,7 +41,7 @@ class LocationNetworkTableSeeder extends Seeder
                 'updated_at' => \Carbon\Carbon::now(),
             ], [
                 'id' => 4,
-                'continent_id' => 4,
+                'continent_id' => 3,
                 'country_id' => 1,
                 'location' => 'All',
                 'isp' => 'China Telecom',
@@ -59,7 +59,7 @@ class LocationNetworkTableSeeder extends Seeder
                 'updated_at' => \Carbon\Carbon::now(),
             ], [
                 'id' => 6,
-                'continent_id' => 4,
+                'continent_id' => 3,
                 'country_id' => 1,
                 'location' => 'All',
                 'isp' => 'All',
@@ -68,7 +68,7 @@ class LocationNetworkTableSeeder extends Seeder
                 'updated_at' => \Carbon\Carbon::now(),
             ], [
                 'id' => 7,
-                'continent_id' => 4,
+                'continent_id' => 3,
                 'country_id' => 1,
                 'location' => 'Beijing',
                 'isp' => 'Yidong',
@@ -77,7 +77,7 @@ class LocationNetworkTableSeeder extends Seeder
                 'updated_at' => \Carbon\Carbon::now(),
             ], [
                 'id' => 8,
-                'continent_id' => 4,
+                'continent_id' => 3,
                 'country_id' => 1,
                 'location' => 'Beijing',
                 'isp' => 'China Unicom',
