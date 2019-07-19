@@ -2,7 +2,6 @@
 
 namespace App\Http\Requests;
 
-use Illuminate\Foundation\Http\FormRequest;
 use Hiero7\Models\Domain;
 
 
@@ -35,7 +34,7 @@ class LocationDnsSettingRequest extends FormRequest
         switch ($routeName) {
             case ($routeName == "$this->prefix.edit"):
                 return [
-                    "cdn_id" => "required|integer",
+                    "cdn_provider_id" => "required|integer",
                 ];
                 break;
             default :

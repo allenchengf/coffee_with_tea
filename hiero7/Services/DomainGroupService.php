@@ -3,21 +3,26 @@
 namespace Hiero7\Services;
 
 use App\Http\Requests\DomainGroupRequest;
-use Hiero7\Models\Domain;
-use Hiero7\Models\DomainGroup;
-use Hiero7\Models\LocationDnsSetting;
-use Hiero7\Repositories\DomainGroupRepository;
-use Hiero7\Services\CdnService;
-use Hiero7\Services\LocationDnsSettingService;
+use Hiero7\Models\{Domain, DomainGroup, LocationDnsSetting, LocationNetwork};
+use Hiero7\Repositories\{DomainGroupRepository, CdnRepository};
+use Hiero7\Services\{CdnService, LocationDnsSettingService};
 use Illuminate\Database\Eloquent\Collection;
+use Hiero7\Enums\InputError;
 
 class DomainGroupService
 {
     protected $domainGroupRepository;
+    protected $cdnRepository;
 
-    public function __construct(DomainGroupRepository $domainGroupRepository, CdnService $cdnService, LocationDnsSettingService $locationDnsSettingService)
+    public function __construct(
+        DomainGroupRepository $domainGroupRepository,
+        CdnRepository $cdnRepository,
+        CdnService $cdnService,
+        LocationDnsSettingService $locationDnsSettingService
+    )
     {
         $this->domainGroupRepository = $domainGroupRepository;
+        $this->cdnRepository = $cdnRepository;
         $this->cdnService = $cdnService;
         $this->locationDnsSettingService = $locationDnsSettingService;
     }
@@ -206,6 +211,76 @@ class DomainGroupService
 
 
         return $result;
+    }
+
+    public function updateRouteCdn(DomainGroup $domainGroup, LocationNetwork $locationNetwork, int $cdnProviderId, string $editedBy)
+    {
+        try {
+            $returns = [];
+            // (int) domain_groups.id 多對多換得 (array) domains.id
+            $domainsCollection = collect($this->domainGroupRepository->showByDomainGroupId($domainGroup->id)->domains->toArray());
+
+            // 依 domains 個數迴圈修改 location_dns_settings & DNSPOD
+            $domainsCollection->each(function ($v, $k) use (&$cdnProviderId, &$editedBy, &$locationNetwork, &$returns) {
+                $domainId = $v['domain_group_mapping']['domain_id'];
+
+                // 查詢全部相同 cdns.domain_id，取其 id 為陣列
+                $scopeCdnIds = $this->cdnRepository->indexByWhere(['domain_id' => $domainId])->pluck('id');
+                if (is_null($scopeCdnIds)) {
+                    $returns[$k] = [
+                        'domain' => $v,
+                        'cdns' => $scopeCdnIds,
+                        'success' => false,
+                        'message' => "error: no cdns where ['domain_id' =>  $domainId]"
+                    ];
+                    return true;
+                }
+
+                // 增/改 location_dns_settings & DNSPOD
+                // 增/改 > 資料準備
+                $targetDomain = Domain::find($domainId);
+                $targetCdn = $this->cdnRepository->indexByWhere(['cdn_provider_id' => $cdnProviderId, 'domain_id' => $domainId])->first();
+                if (is_null($targetCdn)) {
+                    $returns[$k] = [
+                        'domain' => $v,
+                        'cdns' => $scopeCdnIds,
+                        'success' => false,
+                        'message' => "error: no cdn where ['cdn_provider_id' => $cdnProviderId, 'domain_id' => $domainId]"
+                    ];
+                    return true;
+                }
+                $data = [
+                    'cdn_id' => $targetCdn->id,
+                    'edited_by' => $editedBy
+                ];
+
+                // 查
+                $locationDnsSetting = LocationDnsSetting::where('location_networks_id', $locationNetwork->id)->whereIn('cdn_id', $scopeCdnIds)->first();
+                if (is_null($locationDnsSetting)) {
+                    // 查不到 > 增
+                    $result = $this->locationDnsSettingService->createSetting($data, $targetDomain, $targetCdn, $locationNetwork);
+                    $returns[$k] = [
+                        'domain' => $v,
+                        'cdns' => $scopeCdnIds,
+                        'success' => true,
+                        'message' => "create datum in location_dns_settings, result: " . json_encode($result)
+                    ];
+                    return true;
+                }
+
+                // 查到 > 改
+                $result = $this->locationDnsSettingService->updateSetting($data, $targetDomain, $targetCdn, $locationDnsSetting);
+                $returns[$k] = [
+                    'domain' => $v,
+                    'cdns' => $scopeCdnIds,
+                    'success' => true,
+                    'message' => 'update dnspod & location_dns_settings result: ' . json_encode($result)
+                ];
+            });
+            return $returns;
+        } catch(Exception $e) {
+            return $e;
+        }
     }
 
     private function getLocationSetting(Collection $cdnSetting)

@@ -4,9 +4,8 @@ namespace App\Http\Controllers\Api\v1;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\DomainGroupRequest;
-use Hiero7\Enums\{InputError,InternalError};
-use Hiero7\Enums\PermissionError;
-use Hiero7\Models\{DomainGroup,Domain};
+use Hiero7\Enums\{InputError, InternalError, PermissionError};
+use Hiero7\Models\{DomainGroup, Domain, LocationNetwork};
 use Hiero7\Services\{DomainGroupService,CdnService};
 use Illuminate\Http\Request;
 
@@ -170,6 +169,14 @@ class DomainGroupController extends Controller
         return $this->setStatusCode($this->error ? 409 : 200)->response($this->message, $this->error, $result);
     }
 
+    public function updateRouteCdn(DomainGroupRequest $request, DomainGroup $domainGroup, LocationNetwork $locationNetwork)
+    {
+        $this->formatRequestAndThis($request);
+        $result = $this->domainGroupService->updateRouteCdn($domainGroup, $locationNetwork, $request->cdn_provider_id, $request->edited_by);
+
+        return $this->handleResponse($result);
+    }
+
     private function formatRequestAndThis(DomainGroupRequest $request)
     {
         $this->userGroupId = $this->getUgid($request);
@@ -179,5 +186,12 @@ class DomainGroupController extends Controller
             'user_group_id' => $this->userGroupId,
             'edited_by' => $this->uuid,
         ]);
+    }
+    protected function handleResponse($result){
+        if (method_exists($result, 'getStatusCode') && $result->getStatusCode() == 404)
+            return abort(404);        
+        if (method_exists($result, 'getCode'))
+            return $this->response($result->getMessage(), $result->getCode(), null)->setStatusCode(400);
+        return $this->response('Success', null, $result);   
     }
 }
