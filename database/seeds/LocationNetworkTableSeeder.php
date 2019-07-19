@@ -23,8 +23,8 @@ class LocationNetworkTableSeeder extends Seeder
                 'updated_at' => \Carbon\Carbon::now(),
             ], [
                 'id' => 2,
-                'continent_id' => 3,
-                'country_id' => 1,
+                'continent_id' => 4,
+                'country_id' => 2,
                 'location' => 'All',
                 'isp' => 'All',
                 'network_id' => 1,
@@ -50,7 +50,7 @@ class LocationNetworkTableSeeder extends Seeder
                 'updated_at' => \Carbon\Carbon::now(),
             ], [
                 'id' => 5,
-                'continent_id' => 1,
+                'continent_id' => 2,
                 'country_id' => 2,
                 'location' => 'All',
                 'isp' => 'All',
