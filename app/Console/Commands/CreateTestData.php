@@ -2,7 +2,6 @@
 
 namespace App\Console\Commands;
 
-use Hiero7\Models\Cdn;
 use Hiero7\Models\Domain;
 use Hiero7\Models\DomainGroup;
 use Illuminate\Console\Command;
@@ -74,7 +73,7 @@ class CreateTestData extends Command
         }
     }
 
-    private function login($email = "brian@123.com", $password = "1qaz@WSX", $unique_id = "hiero7")
+    private function login(string $email = "brian@123.com", string $password = "1qaz@WSX", string $unique_id = "hiero7")
     {
         $key = "eu7nxsfttc";
 
@@ -96,7 +95,7 @@ class CreateTestData extends Command
         return false;
     }
 
-    private function createBatchDomianAndCdn($domainName = 'leo', $dataCount = 10)
+    private function createBatchDomianAndCdn(string $domainName = 'leo', int $dataCount = 10)
     {
         print_r('Domains Batch Start' . "\n");
 
@@ -135,11 +134,13 @@ class CreateTestData extends Command
         if (empty($response['error'])) {
 
             print_r('Domains Batch Success' . "\n\n");
+
             return true;
 
         }
 
         print_r('Domains Batch Error' . "\n");
+
         return false;
     }
 
@@ -147,24 +148,28 @@ class CreateTestData extends Command
     {
         print_r('Create Domains IRoute Start' . "\n");
 
-        $location_network_ids = [1, 2, 4];
+        $location_network_ids = [1, 2, 3, 4];
+
         $domains = Domain::all();
+
         foreach ($domains as $domain) {
             foreach ($location_network_ids as $location_network_id) {
-                $cdn_id = Cdn::where('domain_id', $domain->id)->inRandomOrder()->pluck('id')->first();
+
+                $cdn_provider_id = $domain->cdnProvider()->inRandomOrder()->first()->id;
 
                 $response = Curl::to($this->api . "/domains/$domain->id/routing-rules/$location_network_id")
                     ->withHeaders(['Authorization: ' . $this->authorization])
-                    ->withData(compact('cdn_id'))
+                    ->withData(compact('cdn_provider_id'))
                     ->asJson(true)
                     ->put();
+
             }
         }
-        print_r('Create Domains IRoute Success' . "\n\n");
 
+        print_r('Create Domains IRoute Success' . "\n\n");
     }
 
-    private function createDomainGroup($name = 'Leo')
+    private function createDomainGroup(string $name = 'Leo')
     {
         print_r('Create Domains Group Start' . "\n");
 
@@ -189,7 +194,9 @@ class CreateTestData extends Command
         $domain_group_id = DomainGroup::inRandomOrder()->pluck('id')->first();
 
         $domains = Domain::whereNotIn('id', [1])->get();
+
         $domain1 = Domain::find(1);
+
         $domain1Count = count($domain1->cdns);
 
         $groupLimit = 3;

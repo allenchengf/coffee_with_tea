@@ -89,7 +89,7 @@ Route::group(['middleware' => ['api'], 'namespace' => 'Api\v1', 'prefix' => 'v1'
     });
 
     Route::group(['prefix' => 'config'], function () {
-        Route::get('', 'ConfigController@get')->name('config.get');
+        Route::get('', 'ConfigController@index')->name('config.index');
         Route::post('', 'ConfigController@import')->name('config.import');
     });
 
