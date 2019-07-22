@@ -95,6 +95,7 @@ class LocationDnsSettingController extends Controller
         ]);
 
         $cdnModel = $this->cdnRepository->indexByWhere(['cdn_provider_id' => $request->get('cdn_provider_id'), 'domain_id' => $domain->id])->first();
+
         if (is_null($cdnModel)) {
             return $this->setStatusCode(400)->response($message,InputError::WRONG_PARAMETER_ERROR,'');
         }

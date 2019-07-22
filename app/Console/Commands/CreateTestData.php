@@ -155,7 +155,7 @@ class CreateTestData extends Command
 
                 $response = Curl::to($this->api . "/domains/$domain->id/routing-rules/$location_network_id")
                     ->withHeaders(['Authorization: ' . $this->authorization])
-                    ->withData(compact('cdn_id'))
+                    ->withData(compact('cdn_provider_id'))
                     ->asJson(true)
                     ->put();
             }

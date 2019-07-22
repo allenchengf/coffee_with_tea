@@ -9,9 +9,12 @@ use Hiero7\Models\{Domain,Cdn,CdnProvider,LocationDnsSetting,DomainGroup};
 use Hiero7\Services\{ConfigService,DnsPodRecordSyncService};
 use Illuminate\Support\Collection;
 use Illuminate\Database\Eloquent\Model;
-
+use Hiero7\Traits\DomainHelperTrait;
+use DB;
+use Hiero7\Enums\{InputError,DbError};
 class ConfigController extends Controller
 {
+    use DomainHelperTrait;    
     protected $configService;
 
     public function __construct(ConfigService $configService,DnsPodRecordSyncService $dnsPodRecordSyncService)
@@ -39,99 +42,101 @@ class ConfigController extends Controller
 
     public function import(Request $request,Domain $domain,CdnProvider $cdnProvider,DomainGroup $domainGroup)
     {
-        $dataResult = $this->handleDataToData($request,$domain, $cdnProvider, $domainGroup);
+        $userGroupId = $this->getUgid($request);
+        
+        DB::beginTransaction();
+        $domain->where('user_group_id',$userGroupId)->delete();
+        $cdnProvider->where('user_group_id',$userGroupId)->delete();
+        $domainGroup->where('user_group_id',$userGroupId)->delete();
 
-        $result = [];
-        foreach($dataResult as $key => $tableName){
-            if(empty($tableName)){
-                continue;
-            }
-            $error = [];
-            foreach($tableName as $method){
-                if(empty($method)){
-                    continue;
-                }
-                $error [] = $method['errorMessage'];
-            }
-            $result[$key] = $error;
+        $importData = $this->formateData($request);
+        $checkResult = $this->configService->checkDomainFormate($importData);
+
+        //不符合格式 return false 並 rollback
+        if(isset($checkResult['errorData']))
+        {
+            DB::rollback();
+            return $this->setStatusCode(400)->response('',InputError::WRONG_PARAMETER_ERROR,$checkResult);
+        }
+        //新增 Domain
+        $resultDomains = $this->configService->insert($importData['domains'],$domain);
+        if(isset($resultDomains['errorData'])){
+            DB::rollback();
+            return $this->setStatusCode(400)->response('',DbError::INSERT_GOT_SOME_PROBLEM,$resultDomains);
+        }
+        //新增 cdnProvider
+        $resultCdnProviders = $this->configService->insert($importData['cdnProviders'], $cdnProvider);
+        if(isset($resultCdnProviders['errorData'])){
+            DB::rollback();
+            return $this->setStatusCode(400)->response('',DbError::INSERT_GOT_SOME_PROBLEM,$resultCdnProviders);
+        }
+        //新增 cdns
+        $resultCdns = $this->configService->insert($importData['cdns'],new Cdn);
+        if(isset($resultCdns['errorData'])){
+            DB::rollback();
+            return $this->setStatusCode(400)->response('',DbError::INSERT_GOT_SOME_PROBLEM,$resultCdns);
+        }
+        //新增 LocationDns
+        $resultLocationDnsSetting = $this->configService->insert($importData['locationDnsSetting'],new LocationDnsSetting);
+        if(isset($resultLocationDnsSetting['errorData'])){
+            DB::rollback();
+            return $this->setStatusCode(400)->response('',DbError::INSERT_GOT_SOME_PROBLEM,$resultLocationDnsSetting);
+        }
+        //新增 DomainGroup
+        $resultDomainGroups = $this->configService->insert($importData['domainGroups'], $domainGroup);
+        if(isset($resultDomainGroups['errorData'])){
+            DB::rollback();
+            return $this->setStatusCode(400)->response('',DbError::INSERT_GOT_SOME_PROBLEM,$resultDomainGroups);
         }
 
-        if(!empty($result)){
-            $dbDomain = $domain->where('user_group_id',$this->getUgid($request))->get();
-            foreach($dbDomain as $domain){
-                $this->dnsPodRecordSyncService->syncAndCheckRecords($domain);
-            }
-        }
+        DB::commit();
+        
+        $this->callSync($domain, $userGroupId);
 
-        return $this->response('', null, $dataResult);
+        return $this->response('', null,'');
     }
-    
-    public function handleDataToData(Request $request,Domain $domain,CdnProvider $cdnProvider,DomainGroup $domainGroup)
+
+    private function callSync(Domain $domain,Int $userGroupId)
     {
+        $domains = $domain->where('user_group_id',$userGroupId)->get();
+        
         $result = [];
+        foreach($domains as $domainModel){
+            $result[] = $this->dnsPodRecordSyncService->syncAndCheckRecords($domainModel);
+        }
+
+        return $result;
+    }
+
+    private function formateData(Request $request)
+    {
         $importData = $request->all();
 
-        $dataBase = $this->getDataBaseAllSetting($this->getUgid($request),$domain,$cdnProvider,$domainGroup);
-        $dataBase = $this->changeDbFormate($dataBase);
+        $domain =  $this->formateDomainArray($importData['domains']);
+        $cdn =  $this->formateCdnArray($importData['domains']);
+        $locationDnsSetting =  $this->formateLocationDnsSettingArray($importData['domains']);
 
-        $domainDbData =  $this->formateDomainArray($dataBase['domains']->toArray());
-        $domainImportData =  $this->formateDomainArray($importData['domains']);
-
-        $cdnDbData =  $this->formateCdnArray($dataBase['domains']->toArray());
-        $cdnImportData =  $this->formateCdnArray($importData['domains']);
-
-        $locationDnsSettingDbData =  $this->formateLocationDnsSettingArray($dataBase['domains']->toArray());        
-        $locationDnsSettingImportData =  $this->formateLocationDnsSettingArray($importData['domains']);
-
-        list($updateData ,$InsertData, $deleteData) = $this->compare($domainImportData, $domainDbData, 'domains');
-        $result['domains'] = $this->operationDb($updateData ,$InsertData, $deleteData, new Domain);
-
-        list($updateData ,$InsertData, $deleteData) = $this->compare($importData, $dataBase, 'cdnProviders');
-        $result['cdnProvider'] = $this->operationDb($updateData ,$InsertData, $deleteData, new CdnProvider);
-
-        list($updateData ,$InsertData, $deleteData) = $this->compare($cdnImportData, $cdnDbData, 'cdns');
-        $result['cdns'] = $this->operationDb($updateData ,$InsertData, $deleteData, new Cdn);
-
-        list($updateData ,$InsertData, $deleteData) = $this->compare($locationDnsSettingImportData, $locationDnsSettingDbData, 'LocationDnsSetting');
-        $result['locationDnsSetting'] = $this->operationDb($updateData ,$InsertData, $deleteData, new LocationDnsSetting);
-
-        list($updateData ,$InsertData, $deleteData) = $this->compare($importData, $dataBase, 'domainGroups');
-        $result['domainGroup'] = $this->operationDb($updateData ,$InsertData, $deleteData, new DomainGroup);
+        $result = ['domains' => $domain,
+                    'cdns' => $cdn,
+                    'locationDnsSetting' => $locationDnsSetting,
+                    'cdnProviders' => $importData['cdnProviders'],
+                    'domainGroups' => $importData['domainGroups']];
 
         return $result;
     }
 
-    //如果三個參數都沒有資料，回傳也會是空[]
-    public function operationDb(Collection $updateData ,Collection $InsertData, Collection $deleteData, Model $targetTable)
-    {
-        $result = [];
-        
-        if(!$updateData->isEmpty()){
-            $result['updateData'] = $this->configService->update($updateData ,$targetTable);
-        }
+    // private function handleDataToDataBase(Array $data,Domain $domain,CdnProvider $cdnProvider,DomainGroup $domainGroup)
+    // {
+    //     $result = [];
 
-        if(!$InsertData->isEmpty()){
-            $result['InsertData'] = $this->configService->insert($InsertData ,$targetTable);
-        }
+    //     $result['domains'] = $this->configService->insert($data['domains'],$domain);
+    //     $result['cdnProviders'] = $this->configService->insert($data['cdnProviders'], $cdnProvider);
+    //     $result['cdns'] = $this->configService->insert($data['cdns'],new Cdn);
+    //     $result['locationDnsSetting'] = $this->configService->insert($data['locationDnsSetting'],new LocationDnsSetting);
+    //     $result['domainGroups'] = $this->configService->insert($data['domainGroups'], $domainGroup);
 
-        if(!$deleteData->isEmpty()){
-            $result['deleteData'] = $this->configService->delete($deleteData ,$targetTable);
-        }
-
-        return $result;
-    }
-
-    public function compare(array $importData,array $dataBase,String $index)
-    {
-        $dataBaseCdnProviderWithHash = $this->formateDataWithHash($dataBase["$index"]);
-        $importCdnProviderWithHash = $this->formateDataWithHash($importData["$index"]);
-        
-        list($updateData ,$InsertData, $deleteData) = $this->configService->getDifferent(collect($importCdnProviderWithHash)->keyBy('hash'),
-                                                                                        collect($dataBaseCdnProviderWithHash)->keyBy('hash'));
-
-        return [$updateData ,$InsertData, $deleteData];
-    }
-
+    //     return $result;
+    // }
 
     private function formateDomainArray(array $domainWithOther)
     {
@@ -139,9 +144,8 @@ class ConfigController extends Controller
         foreach($domainWithOther as $domain){
             $domains[]  = Arr::except($domain,['cdns','location_dns_settings']);
         }
-        $result = ['domains' => $domains];
 
-        return $result;
+        return $domains;
     }
 
     private function formateCdnArray(array $domainWithOther)
@@ -156,7 +160,7 @@ class ConfigController extends Controller
         }
         $cdns = collect($cdns)->collapse();
         
-        return ['cdns' => $cdns->all()];
+        return $cdns->all();
     }
 
     private function formateLocationDnsSettingArray(array $domainWithOther)
@@ -166,42 +170,15 @@ class ConfigController extends Controller
             $locationDnsSettingArray = Arr::only($domain,['location_dns_settings']);  
             if(empty($locationDnsSettingArray)){
                 continue;
-            } 
+            }
+            foreach($locationDnsSettingArray['location_dns_settings'] as &$array){
+                $array = Arr::except($array,['domain_id']);
+            }
             $locationDnsSetting [] = $locationDnsSettingArray['location_dns_settings'];
         }
         $locationDnsSettings = collect($locationDnsSetting)->collapse();
         
-        return ['LocationDnsSetting' => $locationDnsSettings->all()];
+        return $locationDnsSettings->all();
     }
 
-    private function changeDbFormate(array $dataBase)
-    {
-        
-        foreach($dataBase['cdnProviders'] as $key => $value){
-            $dataBase['cdnProviders'][$key] = $value->toArray();
-        }
-        $dataBase['cdnProviders'] = $dataBase['cdnProviders']->toArray();
-
-        foreach($dataBase['domainGroups'] as $key => $value){
-            $dataBase['domainGroups'][$key] = $value->toArray();
-        }
-        $dataBase['domainGroups'] = $dataBase['domainGroups']->toArray();
-
-        return $dataBase;
-    }
-
-    private function formateDataWithHash(array $dataArray)
-    {
-        foreach ($dataArray as &$data){
-            $dataWithoutId = Arr::except($data, ['id']);
-            $data['hash'] = $this->hashData($dataWithoutId);
-        }
-        return collect($dataArray);
-    }
-
-    private function hashData(array $data)
-    {
-        unset($data['id']);
-        return sha1(json_encode($data));
-    }
 }
