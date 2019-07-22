@@ -53,7 +53,7 @@ class DnsPodRecordSyncService
             $this->syncRecord($differentRecord['create'], $differentRecord['different'], $differentRecord['delele']);
         }
 
-        return $this->getDifferentRecords($domain);
+        return $this->getDifferent($this->record, $this->domainName);
     }
 
     /**
@@ -108,11 +108,15 @@ class DnsPodRecordSyncService
      */
     public function getAllDomain()
     {
+        $this->record = [];
+
         $domainAll = $this->domainRepository->getAll();
 
         foreach ($domainAll as $domain) {
             $this->getDomain($domain);
         }
+
+        $this->domainName = '';
 
         return $this->record;
     }
