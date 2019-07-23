@@ -161,19 +161,25 @@ class ConfigTest extends TestCase
                   "name" => "Group1",
                   "label" => "Label",
                   "edited_by" => "07e9f87f-457f-45d0-8652-6845a3961b33",
+                  "mapping"  => [
+                    [
+                        "id" => 1,
+                        "domain_id" => 1,
+                        "domain_group_id"=> 1
+                    ]
+                  ]
                 ]
-                ],
-              "edited_by" => "07e9f87f-457f-45d0-8652-6845a3961b33"
+              ],
+              "edited_by" => "07e9f87f-457f-45d0-8652-6845a3961b33",
         ]);
 
         $result = $this->controller->import($request, $domain, $cdnProvider, $domainGroup);
 
         $data = json_decode($result->getContent(), true);
 
-        $this->assertArrayHasKey('domains',$data['data']);
-        $this->assertArrayHasKey('cdns',$data['data']);
-        $this->assertArrayHasKey('locationDnsSetting',$data['data']);
-        $this->assertArrayHasKey('cdnProvider',$data['data']);
-        $this->assertArrayHasKey('domainGroup',$data['data']);
+        $this->assertArrayHasKey('message',$data);
+        $this->assertEquals($data['message'], 'Success');
+        $this->assertArrayHasKey('errorCode',$data);
+        $this->assertArrayHasKey('data',$data);
     }
 }

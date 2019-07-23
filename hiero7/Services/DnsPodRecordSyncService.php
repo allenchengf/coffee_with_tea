@@ -52,6 +52,10 @@ class DnsPodRecordSyncService
      */
     public function syncAndCheckRecords(Domain $domain = null)
     {
+        $this->domainArray = [];
+        $this->cdnsArray = [];
+        $this->locationNetworkLine = [];
+
         $differentRecord = $this->getDifferentRecords($domain);
 
         if (isset($differentRecord['create'])) {
