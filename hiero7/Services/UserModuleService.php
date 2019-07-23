@@ -31,6 +31,7 @@ class UserModuleService
             ->get();
 
         $this->userModuleOutputCheck($response);
+
         return $response;
     }
 
@@ -52,6 +53,7 @@ class UserModuleService
             ->get();
 
         $this->userModuleOutputCheck($response);
+
         return $response;
     }
 
@@ -111,7 +113,7 @@ class UserModuleService
 
     public function userModuleOutPutCheck($response)
     {
-        if ($response['errorCode'] != null) {
+        if ($response == null || $response['errorCode'] != null) {
             $message = (gettype($response['message']) == 'array') ? json_encode($response['message']) : $response['message'];
             throw new UserModuleException($message, $response['errorCode']);
         }

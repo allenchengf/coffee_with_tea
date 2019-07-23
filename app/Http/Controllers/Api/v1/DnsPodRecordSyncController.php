@@ -29,7 +29,7 @@ class DnsPodRecordSyncController extends Controller
 
     public function getDomain(Domain $domain)
     {
-        $record = $this->dnsPodRecordSyncService->getDomain($domain);
+        $record = $this->dnsPodRecordSyncService->getDomainRecord($domain);
 
         return $this->response('', null, $record);
     }

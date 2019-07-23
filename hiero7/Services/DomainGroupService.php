@@ -183,7 +183,7 @@ class DomainGroupService
         $result = '';
 
         foreach ($originIrouteSetting as $iRouteSetting) {
-            $targetCdn = $targetDomain->cdns()->where('cdn_provider_id', $iRouteSetting->cdn_provider_id)->first();
+            $targetCdn = $this->cdnRepository->indexByWhere(['cdn_provider_id' => $iRouteSetting->cdn_provider_id, 'domain_id' => $domainId])->first();
             $existLocationDnsSetting = $this->checkExist($targetDomain, $iRouteSetting->location_networks_id);
 
             $data = ['cdn_id' => $targetCdn->id,

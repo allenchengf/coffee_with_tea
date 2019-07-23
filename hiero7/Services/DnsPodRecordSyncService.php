@@ -7,7 +7,9 @@ use Hiero7\Models\Cdn;
 use Hiero7\Models\CdnProvider;
 use Hiero7\Models\Domain;
 use Hiero7\Models\LocationDnsSetting;
+use Hiero7\Models\Network;
 use Hiero7\Repositories\DomainRepository;
+use Hiero7\Repositories\NetworkRepository;
 use Hiero7\Services\DnsProviderService;
 use Illuminate\Database\Eloquent\Collection;
 
@@ -15,7 +17,9 @@ class DnsPodRecordSyncService
 {
     protected $dnsProviderService, $domainRepository, $domainName, $cdnProvider, $cdns;
 
-    protected $record = [], $createData = [], $deleteData = [];
+    private $domainArray = [], $cdnsArray = [], $locationNetworkLine = [];
+
+    private $record = [];
 
     public function __construct(DnsProviderService $dnsProviderService, DomainRepository $domainRepository)
     {
@@ -32,7 +36,8 @@ class DnsPodRecordSyncService
      */
     public function getDifferentRecords(Domain $domain = null)
     {
-        $record = $domain ? $this->getDomain($domain) : $this->getAllDomain();
+
+        $record = $domain ? $this->getDomainRecord($domain) : $this->getAllDomain();
 
         $domainCname = $domain ? $domain->cname : '';
 
@@ -113,7 +118,7 @@ class DnsPodRecordSyncService
         $domainAll = $this->domainRepository->getAll();
 
         foreach ($domainAll as $domain) {
-            $this->getDomain($domain);
+            $this->getDomainRecord($domain);
         }
 
         $this->domainName = '';
@@ -127,12 +132,17 @@ class DnsPodRecordSyncService
      * @param Domain $domain
      * @return array $this->record
      */
-    public function getDomain(Domain $domain)
+    public function getDomainRecord(Domain $domain)
     {
         $this->domainName = $domain->cname;
 
+        $this->domainArray[] = $domain->toArray();
+
         app()->call([$this, 'getCdnProvider'], ['ugid' => $domain->user_group_id]);
+
         $this->cdns = $domain->cdns->keyBy('id');
+
+        $this->cdnsArray = array_merge($this->cdnsArray, $this->cdns->toArray());
 
         $this->getDefaultCdn($domain->cdns()->default()->first());
 
@@ -161,11 +171,14 @@ class DnsPodRecordSyncService
         $record = [];
 
         if ($cdnDefault) {
+
+            $cdnProvider = $this->cdnProvider[$cdnDefault->cdn_provider_id];
+
             $record = [
                 'id' => (int) $cdnDefault->provider_record_id,
-                'ttl' => (int) $this->cdnProvider[$cdnDefault->cdn_provider_id]['ttl'],
+                'ttl' => (int) $cdnProvider['ttl'],
                 'value' => $cdnDefault->cname,
-                'enabled' => (bool) $this->cdnProvider[$cdnDefault->cdn_provider_id]['status'],
+                'enabled' => (bool) $cdnProvider['status'],
                 'name' => $this->domainName,
                 'line' => "默认",
                 'type' => "CNAME",
@@ -193,11 +206,13 @@ class DnsPodRecordSyncService
 
             $line = $value->location()->first()->network()->first()->name;
 
+            $cdnProvider = $this->cdnProvider[$cdn['cdn_provider_id']];
+
             $data = [
                 'id' => (int) $value->provider_record_id,
-                'ttl' => (int) $this->cdnProvider[$cdn['cdn_provider_id']]['ttl'],
+                'ttl' => (int) $cdnProvider['ttl'],
                 'value' => $cdn['cname'],
-                'enabled' => (bool) $this->cdnProvider[$cdn['cdn_provider_id']]['status'],
+                'enabled' => (bool) $cdnProvider['status'],
                 'name' => $this->domainName,
                 'line' => $line,
                 'type' => "CNAME",
@@ -217,6 +232,12 @@ class DnsPodRecordSyncService
         $soruceRecord = $this->transferRecord($soruceRecord)->keyBy('hash');
 
         $matchData = $this->transferRecord($matchData)->keyBy('hash');
+
+        app()->call([$this, 'getLocationNetworkLine']);
+
+        $this->domainArray = collect($this->domainArray)->keyBy('cname');
+
+        $this->cdnsArray = collect($this->cdnsArray);
 
         $matchData->map(function ($value, $key) use (&$soruceRecord) {
             if (!isset($soruceRecord[$key])) {
@@ -244,12 +265,23 @@ class DnsPodRecordSyncService
      */
     public function updateProviderRecordId(Cdn $cdn, LocationDnsSetting $locationDnsSetting, array $record, int $dnsRecordId)
     {
+        $domain_id = $this->domainArray[$record["name"]]['id'];
+
         if ($record["line"] == "默认") {
-            $cdn->where('provider_record_id', $record['id'])
+
+            $cdn->where('domain_id', $domain_id)
                 ->update(['provider_record_id' => $dnsRecordId]);
+
         } else {
-            $locationDnsSetting->where('provider_record_id', $record['id'])
-                ->first()
+
+            $location_networks_id = $this->locationNetworkLine[$record["line"]];
+
+            $cdn = $this->cdnsArray->first(function ($value, $key) use ($domain_id, $record) {
+                return ($value['domain_id'] == $domain_id) && ($value['cname'] == $record['value']);
+            });
+
+            $locationDnsSetting->where('location_networks_id', $location_networks_id)
+                ->where('cdn_id', $cdn['id'])
                 ->update(['provider_record_id' => $dnsRecordId]);
         }
     }
@@ -267,8 +299,15 @@ class DnsPodRecordSyncService
 
     private function hashRecord(array $data)
     {
-        $data = collect($data)->only('ttl', 'value', 'enabled', 'name', 'line')->toArray();
+        $data = collect($data)->only('ttl', 'value', 'enabled', 'name', 'line', 'type')->toArray();
 
         return sha1(json_encode($data));
+    }
+
+    public function getLocationNetworkLine(NetworkRepository $networkRepository)
+    {
+        $this->locationNetworkLine = $networkRepository->getLineList();
+
+        return $this->locationNetworkLine;
     }
 }
