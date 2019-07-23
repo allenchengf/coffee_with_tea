@@ -3,9 +3,8 @@
 namespace App\Http\Controllers\Api\v1;
 
 use Illuminate\Http\Request;
-use Illuminate\Support\Arr;
 use App\Http\Controllers\Controller;
-use Hiero7\Models\{Domain,Cdn,CdnProvider,LocationDnsSetting,DomainGroup};
+use Hiero7\Models\{Domain,Cdn,CdnProvider,LocationDnsSetting,DomainGroup,DomainGroupMapping};
 use Hiero7\Services\{ConfigService,DnsPodRecordSyncService};
 use Illuminate\Support\Collection;
 use Illuminate\Database\Eloquent\Model;
@@ -35,7 +34,7 @@ class ConfigController extends Controller
     {
         $domains = $domain->with('cdns','locationDnsSettings')->where('user_group_id',$userGroupId)->get();
         $cdnProviders = $cdnProvider->where('user_group_id',$userGroupId)->get();
-        $domainGroups = $domainGroup->where('user_group_id',$userGroupId)->get();
+        $domainGroups = $domainGroup->where('user_group_id',$userGroupId)->with('mapping')->get();
 
         return compact('domains','cdnProviders','domainGroups');
     }
@@ -45,55 +44,53 @@ class ConfigController extends Controller
         $userGroupId = $this->getUgid($request);
         
         DB::beginTransaction();
+
+        $this->deleteLocationDnsSetting($domain,$cdnProvider,$userGroupId);
         $domain->where('user_group_id',$userGroupId)->delete();
         $cdnProvider->where('user_group_id',$userGroupId)->delete();
         $domainGroup->where('user_group_id',$userGroupId)->delete();
+        
+        $importData = $this->formateDataAndCheckCdn($request);
 
-        $importData = $this->formateData($request);
-        $checkResult = $this->configService->checkDomainFormate($importData);
+        if(isset($importData['errorData'])){
+            DB::rollback();
+            return $this->setStatusCode(400)->response('',InputError::WRONG_PARAMETER_ERROR,$importData);
+        }
 
+        $checkDomainResult = $this->configService->checkDomainFormate($importData);
         //不符合格式 return false 並 rollback
-        if(isset($checkResult['errorData']))
-        {
+        if(isset($checkDomainResult['errorData'])){
             DB::rollback();
-            return $this->setStatusCode(400)->response('',InputError::WRONG_PARAMETER_ERROR,$checkResult);
+            return $this->setStatusCode(400)->response('',InputError::WRONG_PARAMETER_ERROR,$checkDomainResult);
         }
+
         //新增 Domain
-        $resultDomains = $this->configService->insert($importData['domains'],$domain);
-        if(isset($resultDomains['errorData'])){
-            DB::rollback();
-            return $this->setStatusCode(400)->response('',DbError::INSERT_GOT_SOME_PROBLEM,$resultDomains);
-        }
+        $this->configService->insert($importData['domains'],$domain);
         //新增 cdnProvider
-        $resultCdnProviders = $this->configService->insert($importData['cdnProviders'], $cdnProvider);
-        if(isset($resultCdnProviders['errorData'])){
-            DB::rollback();
-            return $this->setStatusCode(400)->response('',DbError::INSERT_GOT_SOME_PROBLEM,$resultCdnProviders);
-        }
+        $this->configService->insert($importData['cdnProviders'], $cdnProvider);
         //新增 cdns
-        $resultCdns = $this->configService->insert($importData['cdns'],new Cdn);
-        if(isset($resultCdns['errorData'])){
-            DB::rollback();
-            return $this->setStatusCode(400)->response('',DbError::INSERT_GOT_SOME_PROBLEM,$resultCdns);
-        }
-        //新增 LocationDns
-        $resultLocationDnsSetting = $this->configService->insert($importData['locationDnsSetting'],new LocationDnsSetting);
-        if(isset($resultLocationDnsSetting['errorData'])){
-            DB::rollback();
-            return $this->setStatusCode(400)->response('',DbError::INSERT_GOT_SOME_PROBLEM,$resultLocationDnsSetting);
-        }
+        $this->configService->insert($importData['cdns'],new Cdn);
+        //新增 LocationDns 
+        $this->configService->insert($importData['locationDnsSetting'],new LocationDnsSetting);
         //新增 DomainGroup
-        $resultDomainGroups = $this->configService->insert($importData['domainGroups'], $domainGroup);
-        if(isset($resultDomainGroups['errorData'])){
-            DB::rollback();
-            return $this->setStatusCode(400)->response('',DbError::INSERT_GOT_SOME_PROBLEM,$resultDomainGroups);
-        }
+        $this->configService->insert($importData['domainGroups'], $domainGroup);
+        //新增 DomainGroupMapping
+        $this->configService->insert($importData['domainGroupsMapping'], new DomainGroupMapping);
 
         DB::commit();
         
         $this->callSync($domain, $userGroupId);
 
-        return $this->response('', null,'');
+        return $this->response("Success", null,'');
+    }
+
+    private function deleteLocationDnsSetting(Domain $domain, CdnProvider $cdnProvider, int $userGroupId)
+    {
+        $domainId = $domain->where('user_group_id',$userGroupId)->pluck('id');
+        $cdnProviderId = $cdnProvider->where('user_group_id',$userGroupId)->pluck('id');
+        $cdnId = Cdn::whereIn('domain_id',$domainId)->whereIn('cdn_provider_id',$cdnProviderId)->pluck('id');
+        
+        return LocationDnsSetting::whereIn('cdn_id',$cdnId)->delete();
     }
 
     private function callSync(Domain $domain,Int $userGroupId)
@@ -108,41 +105,49 @@ class ConfigController extends Controller
         return $result;
     }
 
-    private function formateData(Request $request)
+    private function formateDataAndCheckCdn(Request $request)
     {
         $importData = $request->all();
 
         $domain =  $this->formateDomainArray($importData['domains']);
+        $checkCdnResult = $this->configService->checkCdnHaveDefault($importData['domains']);
+
+        if(isset($checkCdnResult['errorData'])){
+            return $checkCdnResult;
+        }
+
         $cdn =  $this->formateCdnArray($importData['domains']);
         $locationDnsSetting =  $this->formateLocationDnsSettingArray($importData['domains']);
+        list($domainGroup,$domainGroupMapping) = $this->formateDomainGroupMapping($importData['domainGroups']);
 
         $result = ['domains' => $domain,
                     'cdns' => $cdn,
                     'locationDnsSetting' => $locationDnsSetting,
                     'cdnProviders' => $importData['cdnProviders'],
-                    'domainGroups' => $importData['domainGroups']];
+                    'domainGroups' => $domainGroup,
+                    'domainGroupsMapping' => $domainGroupMapping];
 
         return $result;
     }
 
-    // private function handleDataToDataBase(Array $data,Domain $domain,CdnProvider $cdnProvider,DomainGroup $domainGroup)
-    // {
-    //     $result = [];
+    private function formateDomainGroupMapping(array $domainGroupWithMapping)
+    {
+        $domainGroupArray = [];
+        $domainGroupMapping = [];
+        foreach($domainGroupWithMapping as $domainGroup){
+            $mappingArray = array_only($domainGroup,['mapping']);
+            $domainGroupMapping[] = $mappingArray['mapping'];
+            $domainGroupArray[] =array_except($domainGroup,['mapping']);
+        }
 
-    //     $result['domains'] = $this->configService->insert($data['domains'],$domain);
-    //     $result['cdnProviders'] = $this->configService->insert($data['cdnProviders'], $cdnProvider);
-    //     $result['cdns'] = $this->configService->insert($data['cdns'],new Cdn);
-    //     $result['locationDnsSetting'] = $this->configService->insert($data['locationDnsSetting'],new LocationDnsSetting);
-    //     $result['domainGroups'] = $this->configService->insert($data['domainGroups'], $domainGroup);
-
-    //     return $result;
-    // }
+        return [$domainGroupArray,array_collapse($domainGroupMapping)];
+    }
 
     private function formateDomainArray(array $domainWithOther)
     {
         $domains = [];
         foreach($domainWithOther as $domain){
-            $domains[]  = Arr::except($domain,['cdns','location_dns_settings']);
+            $domains[]  = array_except($domain,['cdns','location_dns_settings']);
         }
 
         return $domains;
@@ -152,7 +157,8 @@ class ConfigController extends Controller
     {
         $cdns = [];
         foreach($domainWithOther as $domain){
-            $cdnsArray = Arr::only($domain,['cdns']); 
+            $cdnsArray = array_only($domain,['cdns']); 
+
             if(empty($cdnsArray)){
                 continue;
             }        
@@ -167,12 +173,12 @@ class ConfigController extends Controller
     {
         $locationDnsSetting = [];
         foreach($domainWithOther as $domain){
-            $locationDnsSettingArray = Arr::only($domain,['location_dns_settings']);  
+            $locationDnsSettingArray = array_only($domain,['location_dns_settings']);  
             if(empty($locationDnsSettingArray)){
                 continue;
             }
             foreach($locationDnsSettingArray['location_dns_settings'] as &$array){
-                $array = Arr::except($array,['domain_id']);
+                $array = array_except($array,['domain_id']);
             }
             $locationDnsSetting [] = $locationDnsSettingArray['location_dns_settings'];
         }
