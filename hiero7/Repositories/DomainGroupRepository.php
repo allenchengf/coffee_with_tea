@@ -16,7 +16,7 @@ class DomainGroupRepository
 
     public function indexByUserGroup(int $userGroupId)
     {
-        return $this->domainGroupModel->with('domains')->where('id',$userGroupId)->get();
+        return $this->domainGroupModel->with('domains')->where('user_group_id',$userGroupId)->get();
     }
 
     public function showByDomainGroupId(int $domainGroupId)
