@@ -16,10 +16,6 @@ class DomainGroupRepository
 
     public function indexByUserGroup(int $userGroupId)
     {
-        if($userGroupId == 1){
-            return  $this->domainGroupModel->with('domains')->get();
-        }
-
         return $this->domainGroupModel->with('domains')->where('id',$userGroupId)->get();
     }
 
