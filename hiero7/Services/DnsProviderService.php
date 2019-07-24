@@ -165,7 +165,7 @@ class DnsProviderService
         return Curl::to($url)
             ->withData($data)
             ->asJson(true)
-            ->get();
+            ->post();
     }
 
     /**
