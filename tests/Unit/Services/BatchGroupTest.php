@@ -6,6 +6,8 @@ use Tests\TestCase;
 use Illuminate\Foundation\Testing\WithFaker;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Hiero7\Models\DomainGroup;
+use Hiero7\Services\{BatchGroupService,DomainGroupService};
+use Hiero7\Repositories\DomainRepository;
 
 class BatchGroupTest extends TestCase
 {
@@ -24,11 +26,11 @@ class BatchGroupTest extends TestCase
         $this->seed('DomainGroupMappingTableSeeder');
         $this->seed('DomainTableSeeder');
         $this->seed('CdnTableSeeder');
-        $this->domainGroupService = $this->initMock(CdnService::class);
-        app()->call([$this, 'serviceMock']);
         $this->user = array("uuid" => \Illuminate\Support\Str::uuid(), "user_group_id" => 1);
         $this->domainGroup = DomainGroup::find(1);
-        $this->batchGroupService =  $this->app->make('Hiero7\Services\BatchGroupService');
+        app()->call([$this, 'repository']);
+        $this->batchGroupService = new BatchGroupService($this->domainGroupService, $this->domainRepository);
+        app()->call([$this, 'serviceMock']);
     }
 
     protected function tearDown()
@@ -39,6 +41,12 @@ class BatchGroupTest extends TestCase
         $this->batchGroupService = null;
         $this->domainGroupService = null;
         parent::tearDown();
+    }
+
+    public function repository(DomainGroupService $domainGroupService,DomainRepository $domainRepository)
+    {
+        $this->domainGroupService = $this->initMock(DomainGroupService::class);
+        $this->domainRepository = $domainRepository;
     }
 
     public function serviceMock()

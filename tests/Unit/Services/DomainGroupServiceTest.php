@@ -5,8 +5,8 @@ namespace Tests\Unit\Services;
 use Tests\TestCase;
 use Illuminate\Foundation\Testing\WithFaker;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Hiero7\Services\{LocationDnsSettingService,CdnService,DomainGroupService};
-use Hiero7\Repositories\DomainGroupRepository;
+use Hiero7\Services\{LocationDnsSettingService, CdnService, DomainGroupService};
+use Hiero7\Repositories\{DomainGroupRepository, CdnRepository};
 use Hiero7\Models\DomainGroup;
 use App\Http\Requests\DomainGroupRequest;
 
@@ -26,7 +26,7 @@ class DomainGroupServiceTest extends TestCase
         $this->seed('CdnTableSeeder');
         app()->call([$this, 'repository']);
         app()->call([$this, 'serviceMock']);
-        $this->service = new DomainGroupService($this->domainGroupRepository, $this->cdnService, $this->locationDnsSettingService);
+        $this->service = new DomainGroupService($this->domainGroupRepository, $this->cdnRepository, $this->cdnService, $this->locationDnsSettingService);
         $this->domainGroup = DomainGroup::find(1);
     }
 
@@ -37,9 +37,10 @@ class DomainGroupServiceTest extends TestCase
         parent::tearDown();
     }
 
-    public function repository(DomainGroupRepository $domainGroupRepository)
+    public function repository(DomainGroupRepository $domainGroupRepository, CdnRepository $cdnRepository)
     {
         $this->domainGroupRepository = $domainGroupRepository;
+        $this->cdnRepository = $cdnRepository;
         $this->cdnService = $this->initMock(CdnService::class);
         $this->locationDnsSettingService = $this->initMock(LocationDnsSettingService::class);
     }
@@ -49,6 +50,7 @@ class DomainGroupServiceTest extends TestCase
         $this->cdnService->shouldReceive('changeDefaultToTrue')->withAnyArgs()->andReturn(true);
         $this->locationDnsSettingService->shouldReceive('updateSetting')->withAnyArgs()->andReturn(true);
         $this->locationDnsSettingService->shouldReceive('createSetting')->withAnyArgs()->andReturn(true);
+        $this->locationDnsSettingService->shouldReceive('destroy')->withAnyArgs()->andReturn(true);
 
     }
 

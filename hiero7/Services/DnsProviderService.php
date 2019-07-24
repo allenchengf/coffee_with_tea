@@ -146,9 +146,57 @@ class DnsProviderService
             ->delete();
     }
 
-    public function checkAPIOutput(array $response): bool
+    /**
+     * 由 Hiero7 實作的功能
+     * 
+     * Get Soruce Record With DNS Pod Record Diff function
+     *
+     * @param string login_token DNS Pod LoginToken
+     * @param int domain_id 對應域名ID
+     * @param string sub_domain 主機記錄
+     * @param json records 記錄
+     */
+    public function getDiffRecord(array $data = [])
     {
-        if (array_key_exists('errors', $response) || !is_null($response['errorCode'])) {
+        $url = $this->dnsProviderApi . "/check-diff";
+
+        $data = $this->addLoginTokenAndDomainId($data);
+
+        return Curl::to($url)
+            ->withData($data)
+            ->asJson(true)
+            ->post();
+    }
+
+    /**
+     * 由 Hiero7 實作的功能
+     * 
+     * Get Soruce Record With DNS Pod Record Diff function
+     *
+     * @param string login_token DNS Pod LoginToken
+     * @param int domain_id 對應域名ID
+     * @param json diff 記錄
+     * @param json create 記錄
+     * @param json delele 記錄
+     */
+    public function syncRecordToDnsPod(array $data = [])
+    {
+        $url = $this->dnsProviderApi . "/records-sync";
+
+        $data = $this->addLoginTokenAndDomainId($data);
+        
+        $response = Curl::to($url)
+            ->withData($data)
+            ->asJson(true)
+            ->post();
+
+        return $response;
+
+    }
+
+    public function checkAPIOutput($response = []): bool
+    {
+        if (!$response || array_key_exists('errors', $response) || !is_null($response['errorCode'])) {
             return false;
         }
         return true;
