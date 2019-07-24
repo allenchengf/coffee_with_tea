@@ -1,6 +1,6 @@
 <?php
 
-Route::group(['middleware' => ['api'], 'namespace' => 'Api\v1', 'prefix' => 'v1'], function () {
+Route::group(['middleware' => ['api','check.config'], 'namespace' => 'Api\v1', 'prefix' => 'v1'], function () {
     Route::group(['prefix' => 'domains'], function () {
         
         Route::get('check', 'DnsPodRecordSyncController@index');
@@ -8,7 +8,7 @@ Route::group(['middleware' => ['api'], 'namespace' => 'Api\v1', 'prefix' => 'v1'
         Route::get('check-diff', 'DnsPodRecordSyncController@checkDataDiff');
         Route::post('sync', 'DnsPodRecordSyncController@syncDnsData');
         
-        Route::get('', 'DomainController@getDomain')->name('domain.get');
+        Route::get('', 'DomainController@getDomain')->name('domain.index');
         Route::middleware(['auth.user.module', 'domain.permission'])->group(function () {
             Route::post('', 'DomainController@create')->name('domain.create');
 
@@ -88,9 +88,9 @@ Route::group(['middleware' => ['api'], 'namespace' => 'Api\v1', 'prefix' => 'v1'
         Route::get('/all', 'LocationDnsSettingController@indexAll')->name('iRoute.indexAll');
     });
 
-    Route::group(['prefix' => 'config'], function () {
+    Route::group(['middleware' => ['check.config'],'prefix' => 'config'], function () {
         Route::get('', 'ConfigController@index')->name('config.index');
-        Route::post('', 'ConfigController@import')->name('config.import');
+        Route::post('', 'ConfigController@import')->name('config.indexByGroup');
     });
 
     Route::group(['middleware' => ['auth.user.module'], 'prefix' => 'operation_log'], function () {

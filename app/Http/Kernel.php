@@ -66,5 +66,6 @@ class Kernel extends HttpKernel
         'auth.user.module' => \App\Http\Middleware\AuthUserModule::class,
         'domain.permission' => \App\Http\Middleware\DomainPermission::class,
         'admin.check' => \App\Http\Middleware\AdminCheck::class,
+        'check.config' => \App\Http\Middleware\CheckForImportConfig::class,
     ];
 }

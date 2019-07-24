@@ -27,7 +27,7 @@ class DomainRequest extends FormRequest
         $prefix = 'domain';
         $routeName = $this->route()->getName() ?? $prefix;
         switch ($routeName) {
-            case ($routeName === "$prefix.get"):
+            case ($routeName === "$prefix.index"):
                 return [
                     'user_group_id' => 'nullable|integer',
                 ];

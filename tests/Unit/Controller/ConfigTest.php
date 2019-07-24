@@ -61,7 +61,7 @@ class ConfigTest extends TestCase
         $this->assertArrayHasKey('domainGroups',$data['data']);
     }
 
-    public function testImport()
+    public function testImportDataFailed()
     {
         $request = new Request;
         $domain = new Domain;
@@ -69,117 +69,146 @@ class ConfigTest extends TestCase
         $domainGroup = new DomainGroup;
         
         $request->merge([
-            "domains" => [
-                [
-                  "id" => 1,
-                  "user_group_id" => 1,
-                  "name" => "yuan1.test.com",
-                  "cname" => "yuan1testcom.1",
-                  "label" => "yuan",
-                  "edited_by" => "07e9f87f-457f-45d0-8652-6845a3961b33",
-                  "cdns" => [
-                    [
-                      "id" => 3,
-                      "domain_id" => 1,
-                      "cdn_provider_id" => 1,
-                      "provider_record_id" => 438651947,
-                      "cname" => "test.cdn1.com",
-                      "edited_by" => "07e9f87f-457f-45d0-8652-6845a3961b33",
-                      "default" => true
-                    ],[
-                      "id" => 4,
-                      "domain_id" => 1,
-                      "cdn_provider_id" => 2,
-                      "provider_record_id" => 0,
-                      "cname" => "yuan1test.cdn2.com",
-                      "edited_by" => "07e9f87f-457f-45d0-8652-6845a3961b33",
-                      "default" => false,
-                    ],[
-                      "id" => 5,
-                      "domain_id" => 1,
-                      "cdn_provider_id" => 3,
-                      "provider_record_id" => 0,
-                      "cname" => "yuan1test.cdn3.com",
-                      "edited_by" => "07e9f87f-457f-45d0-8652-6845a3961b33",
-                      "default" => false
-                    ],
-                ],
-                  "location_dns_settings" => [],
-                ],
-                [
-                  "id" => 2,
-                  "user_group_id" => 1,
-                  "name" => "yuan2.test.com",
-                  "cname" => "yuan2testcom.1",
-                  "label" => "yuan",
-                  "edited_by" => "07e9f87f-457f-45d0-8652-6845a3961b33",
-                  "cdns" => [
-                    [
-                      "id" => 6,
-                      "domain_id" => 2,
-                      "cdn_provider_id" => 2,
-                      "provider_record_id" => 438652135,
-                      "cname" => "yuan2test.cdn2.com",
-                      "edited_by" => "07e9f87f-457f-45d0-8652-6845a3961b33",
+            "domains" => [[
+                "id" => 1,
+                "user_group_id" => "1",
+                "name" => "hiero7.test1.com",
+                "cname" => "hiero7test1com.1",
+                "label" => null,
+                "edited_by" => null,
+                "cdns" =>  [ 
+                  [
+                      "id" => 1,
+                      "domain_id" => "1",
+                      "cdn_provider_id" => "1",
+                      "provider_record_id" => "0",
+                      "cname" => "speedlll.com",
+                      "edited_by" => null,
                       "default" => true,
-                    ],
-                ],
-                  "location_dns_settings" => [],
-                ],
-            ],
-              "cdnProviders" => [
-                [
-                  "id" => 1,
-                  "name" => "yuanYuan",
-                  "status" => true,
-                  "user_group_id" => 1,
-                  "ttl" => 428967,
-                ],[
-                  "id" => 2,
-                  "name" => "Cloudflare",
-                  "status" => true,
-                  "user_group_id" => 1,
-                  "ttl" => 470050,
-                ],[
-                  "id" => 3,
-                  "name" => "CloudFront",
-                  "status" => true,
-                  "user_group_id" => 1,
-                  "ttl" => 343530,
-                ],[
-                  "id" => 4,
-                  "name" => "CloudFront",
-                  "status" => true,
-                  "user_group_id" => 1,
-                  "ttl" => 12314,
-                ]
-                ],
-              "domainGroups" => [
-                [
-                  "id" => 1,
-                  "user_group_id" => 1,
-                  "name" => "Group1",
-                  "label" => "Label",
-                  "edited_by" => "07e9f87f-457f-45d0-8652-6845a3961b33",
-                  "mapping"  => [
-                    [
-                        "id" => 1,
-                        "domain_id" => 1,
-                        "domain_group_id"=> 1
-                    ]
-                  ]
+                  ],
+                  [
+                      "id" => 2,
+                      "domain_id" => "1",
+                      "cdn_provider_id" => "2",
+                      "provider_record_id" => "0",
+                      "cname" => "dnspod.com",
+                      "edited_by" => null,
+                      "default" => false,
+                  ],[
+                      "id" => 3,
+                      "domain_id" => "1",
+                      "cdn_provider_id" => "3",
+                      "provider_record_id" => "0",
+                      "cname" => "ZwWqcv.com",
+                      "edited_by" => null,
+                      "default" => false,
                 ]
               ],
-              "edited_by" => "07e9f87f-457f-45d0-8652-6845a3961b33",
+                "location_dns_settings" =>[ [
+                    "id" => 1,
+                    "provider_record_id" => "123456",
+                    "location_networks_id" => "1",
+                    "cdn_id" => "1",
+                    "edited_by" => null,
+                    "created_at" => "2019-07-24 09:43:55",
+                    "updated_at" => "2019-07-24 09:43:55",
+                    "domain_id" => "1",
+                  ]
+                ],
+              ],[
+                "id" => 2,
+                "user_group_id" => "1",
+                "name" => "hiero7.test2.com",
+                "cname" => "hiero7test2com.1",
+                "label" => null,
+                "edited_by" => null,
+                "cdns" => [ [
+                    "id" => 4,
+                    "domain_id" => "2",
+                    "cdn_provider_id" => "1",
+                    "provider_record_id" => "0",
+                    "cname" => "speedlll.com",
+                    "edited_by" => null,
+                    "default" => true,
+                  ], [
+                      "id" => 5,
+                      "domain_id" => "2",
+                      "cdn_provider_id" => "2",
+                      "provider_record_id" => "0",
+                      "cname" => "dnspod.com",
+                      "edited_by" => null,
+                      "default" => false,
+                  ], [
+                      "id" => 6,
+                      "domain_id" => "2",
+                      "cdn_provider_id" => "3",
+                      "provider_record_id" => "0",
+                      "cname" => "KYWDn5.com",
+                      "edited_by" => null,
+                      "default" => false,
+                    ]
+                ],
+                "location_dns_settings" => [[
+                    "id" => 2,
+                    "provider_record_id" => "456123",
+                    "location_networks_id" => "2",
+                    "cdn_id" => "5",
+                    "edited_by" => null,
+                    "created_at" => "2019-07-24 09:43:55",
+                    "updated_at" => "2019-07-24 09:43:55",
+                    "domain_id" => "2",
+                  ]
+                ],
+              ],
+            ],
+            "cdnProviders" => [
+              [
+                "id" => 1,
+                "name" => "Hiero7",
+                "status" => 'active',
+                "user_group_id" => 1,
+                "ttl" => "85125",
+              ], [
+                  "id" => 2,
+                  "name" => "Cloudflare",
+                  "status" => 'active',
+                  "user_group_id" => 1,
+                  "ttl" => "312204",
+              ], [
+                  "id" => 3,
+                  "name" => "CloudFront",
+                  "status" => 'active',
+                  "user_group_id" => 1,
+                  "ttl" => "136318",
+                ]
+            ],
+            "domainGroups" => [ [
+                "id" => 1,
+                "user_group_id" => "1",
+                "name" => "Group1",
+                "label" => "This is Group1",
+                "edited_by" => null,
+                "mapping" => [ [
+                    "id" => 1,
+                    "domain_id" => "1",
+                    "domain_group_id" => "1",
+                  ]
+                ]
+              ]
+            ]
         ]);
 
-        $result = $this->controller->import($request, $domain, $cdnProvider, $domainGroup);
+        try{
+          $this->controller->import($request, $domain, $cdnProvider, $domainGroup);
+        } catch (\Exception $e) {
+          $result = $e->getMessage();
+        }
 
-        $data = json_decode($result->getContent(), true);
-
-        $this->assertArrayHasKey('message',$data);
-        $this->assertEquals($data['message'], 'Success');
-        $this->assertArrayHasKey('errorCode',$data);
-        $this->assertArrayHasKey('data',$data);
+        // $data = json_decode($result->getContent(), true);
+        $this->assertEquals('Import Relational Data Have Some Problem.',$result);
+        // $this->assertArrayHasKey('message',$data);
+        // $this->assertEquals($data['message'], 'Success');
+        // $this->assertArrayHasKey('errorCode',$data);
+        // $this->assertArrayHasKey('data',$data);
     }
 }

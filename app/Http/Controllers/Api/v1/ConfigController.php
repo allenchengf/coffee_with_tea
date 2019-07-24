@@ -10,6 +10,7 @@ use Illuminate\Support\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Hiero7\Traits\DomainHelperTrait;
 use DB;
+use Cache;
 use Hiero7\Enums\{InputError,DbError};
 class ConfigController extends Controller
 {
@@ -40,20 +41,22 @@ class ConfigController extends Controller
     }
 
     public function import(Request $request,Domain $domain,CdnProvider $cdnProvider,DomainGroup $domainGroup)
-    {
+    {     
         $userGroupId = $this->getUgid($request);
-        
+
+        Cache::put('Config_userGroupId', $userGroupId , env('CONFIG_WAIT_TIME'));        
         DB::beginTransaction();
 
         $this->deleteLocationDnsSetting($domain,$cdnProvider,$userGroupId);
         $domain->where('user_group_id',$userGroupId)->delete();
         $cdnProvider->where('user_group_id',$userGroupId)->delete();
         $domainGroup->where('user_group_id',$userGroupId)->delete();
-        
+
         $importData = $this->formateDataAndCheckCdn($request);
 
         if(isset($importData['errorData'])){
             DB::rollback();
+            Cache::flush();
             return $this->setStatusCode(400)->response('',InputError::WRONG_PARAMETER_ERROR,$importData);
         }
 
@@ -61,6 +64,7 @@ class ConfigController extends Controller
         //不符合格式 return false 並 rollback
         if(isset($checkDomainResult['errorData'])){
             DB::rollback();
+            Cache::flush();
             return $this->setStatusCode(400)->response('',InputError::WRONG_PARAMETER_ERROR,$checkDomainResult);
         }
 
@@ -81,6 +85,7 @@ class ConfigController extends Controller
         
         $this->callSync($domain, $userGroupId);
 
+        Cache::flush();
         return $this->response("Success", null,'');
     }
 

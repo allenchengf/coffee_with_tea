@@ -20,6 +20,7 @@ class PermissionError extends Enum
     const CANT_DELETE_LAST_DOMAIN = 3008;
     const THIS_DOMAIN_DONT_HAVE_ANY_CDN = 3009;
     const THIS_GROUP_ID_NOT_MATCH = 3010;
+    const YOUR_GROUP_IS_IMPORTING_CONFIG = 3011;
     /**
      * @var array
      */
@@ -35,5 +36,6 @@ class PermissionError extends Enum
         self::CANT_DELETE_LAST_DOMAIN => "Can't Delete Last Domain At Group.",
         self::THIS_DOMAIN_DONT_HAVE_ANY_CDN => "This Domain don't have any CDN.",
         self::THIS_GROUP_ID_NOT_MATCH => "This group id does not match the operation permissions.",
+        self::YOUR_GROUP_IS_IMPORTING_CONFIG => 'Your group is importing config.'
     ];
 }
