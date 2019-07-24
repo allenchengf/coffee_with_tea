@@ -5,7 +5,9 @@ use Hiero7\Traits\DomainHelperTrait;
 use DB;
 use Illuminate\Database\Eloquent\Model;
 use Hiero7\Enums\DbError;
-use Symfony\Component\HttpFoundation\Response;
+use App\Exceptions\ConfigException;
+use Cache;
+use PhpParser\Node\Expr\Empty_;
 
 Class ConfigService
 {
@@ -31,26 +33,25 @@ Class ConfigService
             $cdnsArray = array_only($domainData,['cdns']); 
             $default = array_pluck($cdnsArray['cdns'],'default');
 
-            if(in_array(true,$default)){
-                continue;
+            if(!in_array(true,$default)){
+                $error[]= $domainData['cdns'];
             }
 
-            $error[]= $domainData['cdns'];
         }
 
-        return $error ? ['errorData' => array_collapse($error)] : true;
+        return empty($error['errorData']) ? true : ['errorData' => array_collapse($error)];
     }
     
     public function insert(Array $InsertData, Model $targetTable)
     {
         try{
-        $targetTable->insert($InsertData);
+            $targetTable->insert($InsertData);
         } catch (\Illuminate\Database\QueryException  $e) {
             DB::rollback();
-            return response()->json([
-                'message' => DbError::INSERT_GOT_SOME_PROBLEM,
-                'errorCode' => DbError::INSERT_GOT_SOME_PROBLEM,
-                'data' => $targetTable." got some wrong"],400);
+            Cache::flush();
+            $res = $e->getMessage();
+            throw new ConfigException(DbError::getDescription(DbError::IMPORT_RELATIONAL_DATA_HAVE_SOME_PROBLEM),
+                                        DbError::IMPORT_RELATIONAL_DATA_HAVE_SOME_PROBLEM);
         }
 
         return true;

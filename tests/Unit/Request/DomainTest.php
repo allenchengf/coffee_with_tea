@@ -55,7 +55,7 @@ class DomainTest extends TestRequest
     /** @test */
     public function domain_get_request()
     {
-        $this->request->setName('domain.get');
+        $this->request->setName('domain.index');
         $this->rules = $this->request->rules();
 
         $this->assertTrue($this->validateField('user_group_id', null));
