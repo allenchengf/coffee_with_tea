@@ -45,15 +45,15 @@ Class ConfigService
         return empty($error['errorData']) ? true : ['errorData' => array_collapse($error)];
     }
     
-    public function insert(Array $InsertData, Model $targetTable)
+    public function insert(Array $InsertData, Model $targetTable, Int $userGroupId)
     {
         try{
             $targetTable->insert($InsertData);
         } catch (\Illuminate\Database\QueryException  $e) {
             DB::rollback();
-            Cache::flush();
+            Cache::forget("Config_userGroupId$userGroupId");
             $res = $e->getMessage();
-            throw new ConfigException(DbError::getDescription(DbError::IMPORT_RELATIONAL_DATA_HAVE_SOME_PROBLEM)."$res",
+            throw new ConfigException(DbError::getDescription(DbError::IMPORT_RELATIONAL_DATA_HAVE_SOME_PROBLEM),
                                         DbError::IMPORT_RELATIONAL_DATA_HAVE_SOME_PROBLEM);
         }
 

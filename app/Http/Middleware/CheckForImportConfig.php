@@ -19,16 +19,15 @@ class CheckForImportConfig
      */
     public function handle($request, Closure $next)
     {
-        $stopUserGroup = Cache::get('Config_userGroupId');
-
         $token = JWTAuth::getToken();
         $payload = JWTAuth::getPayload($token)->toArray();
+        $userGroupId = $payload['user_group_id'];
         
         if($request->method() == 'GET'){
             return $next($request);
         }
 
-        if (Cache::has('Config_userGroupId') &&  $stopUserGroup == $payload['user_group_id']) {
+        if (Cache::has("Config_userGroupId$userGroupId")) {
             return response()->json([
                 'message' => PermissionError::getDescription(PermissionError::YOUR_GROUP_IS_IMPORTING_CONFIG),
                 'errorCode' => PermissionError::YOUR_GROUP_IS_IMPORTING_CONFIG,

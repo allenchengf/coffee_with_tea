@@ -44,7 +44,7 @@ class ConfigController extends Controller
     {     
         $userGroupId = $this->getUgid($request);
 
-        Cache::put('Config_userGroupId', $userGroupId , env('CONFIG_WAIT_TIME'));        
+        Cache::put("Config_userGroupId$userGroupId" , true , env('CONFIG_WAIT_TIME'));        
         DB::beginTransaction();
 
         $this->deleteLocationDnsSetting($domain,$cdnProvider,$userGroupId);
@@ -56,7 +56,7 @@ class ConfigController extends Controller
 
         if(isset($importData['errorData'])){
             DB::rollback();
-            Cache::flush();
+            Cache::forget("Config_userGroupId$userGroupId");
             return $this->setStatusCode(400)->response('',InputError::WRONG_PARAMETER_ERROR,$importData);
         }
 
@@ -65,28 +65,28 @@ class ConfigController extends Controller
         //不符合格式 return false 並 rollback
         if(isset($checkDomainResult['errorData'])){
             DB::rollback();
-            Cache::flush();
+            Cache::forget("Config_userGroupId$userGroupId");
             return $this->setStatusCode(400)->response('',InputError::WRONG_PARAMETER_ERROR,$checkDomainResult);
         }
 
         //新增 Domain
-        $this->configService->insert($importData['domains'],$domain);
+        $this->configService->insert($importData['domains'],$domain, $userGroupId);
         //新增 cdnProvider
-        $this->configService->insert($importData['cdnProviders'], $cdnProvider);
+        $this->configService->insert($importData['cdnProviders'], $cdnProvider, $userGroupId);
         //新增 cdns
-        $this->configService->insert($importData['cdns'],new Cdn);
+        $this->configService->insert($importData['cdns'],new Cdn, $userGroupId);
         //新增 LocationDns 
-        $this->configService->insert($importData['locationDnsSetting'],new LocationDnsSetting);
+        $this->configService->insert($importData['locationDnsSetting'],new LocationDnsSetting, $userGroupId);
         //新增 DomainGroup
-        $this->configService->insert($importData['domainGroups'], $domainGroup);
+        $this->configService->insert($importData['domainGroups'], $domainGroup, $userGroupId);
         //新增 DomainGroupMapping
-        $this->configService->insert($importData['domainGroupsMapping'], new DomainGroupMapping);
+        $this->configService->insert($importData['domainGroupsMapping'], new DomainGroupMapping, $userGroupId);
 
         DB::commit();
         
         $this->callSync($domain, $userGroupId);
 
-        Cache::flush();
+        Cache::forget("Config_userGroupId$userGroupId");
         return $this->response("Success", null,'');
     }
 
