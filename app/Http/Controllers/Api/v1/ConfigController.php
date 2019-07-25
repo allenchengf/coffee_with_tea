@@ -61,6 +61,7 @@ class ConfigController extends Controller
         }
 
         $checkDomainResult = $this->configService->checkDomainFormate($importData);
+
         //不符合格式 return false 並 rollback
         if(isset($checkDomainResult['errorData'])){
             DB::rollback();
@@ -125,16 +126,30 @@ class ConfigController extends Controller
         $locationDnsSetting =  $this->formateLocationDnsSettingArray($importData['domains']);
         list($domainGroup,$domainGroupMapping) = $this->formateDomainGroupMapping($importData['domainGroups']);
 
+        $cdnProvider= $this->formateCdnProvider($importData['cdnProviders']);
+        
         $result = ['domains' => $domain,
                     'cdns' => $cdn,
                     'locationDnsSetting' => $locationDnsSetting,
-                    'cdnProviders' => $importData['cdnProviders'],
+                    'cdnProviders' => $cdnProvider,
                     'domainGroups' => $domainGroup,
                     'domainGroupsMapping' => $domainGroupMapping];
 
         return $result;
     }
 
+    private function formateCdnProvider(Array $cdnProviders)
+    {
+        foreach($cdnProviders as &$cdnProvidersModel){
+            if($cdnProvidersModel['status'] == 'true'){
+                $cdnProvidersModel['status'] = "active";
+            }else{
+                $cdnProvidersModel['status'] = "stop";
+            }
+        }
+
+        return $cdnProviders;
+    }
     private function formateDomainGroupMapping(array $domainGroupWithMapping)
     {
         $domainGroupArray = [];

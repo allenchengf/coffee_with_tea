@@ -53,7 +53,7 @@ Class ConfigService
             DB::rollback();
             Cache::flush();
             $res = $e->getMessage();
-            throw new ConfigException(DbError::getDescription(DbError::IMPORT_RELATIONAL_DATA_HAVE_SOME_PROBLEM),
+            throw new ConfigException(DbError::getDescription(DbError::IMPORT_RELATIONAL_DATA_HAVE_SOME_PROBLEM)."$res",
                                         DbError::IMPORT_RELATIONAL_DATA_HAVE_SOME_PROBLEM);
         }
 
