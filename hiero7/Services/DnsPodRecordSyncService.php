@@ -36,6 +36,7 @@ class DnsPodRecordSyncService
      */
     public function getDifferentRecords(Domain $domain = null)
     {
+        $this->record = [];
 
         $record = $domain ? $this->getDomainRecord($domain) : $this->getAllDomain();
 
@@ -52,9 +53,7 @@ class DnsPodRecordSyncService
      */
     public function syncAndCheckRecords(Domain $domain = null)
     {
-        $this->domainArray = [];
-        $this->cdnsArray = [];
-        $this->locationNetworkLine = [];
+        $this->record = $this->domainArray = $this->cdnsArray = $this->locationNetworkLine = [];
 
         $differentRecord = $this->getDifferentRecords($domain);
 

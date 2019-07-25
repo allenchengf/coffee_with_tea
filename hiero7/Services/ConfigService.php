@@ -1,13 +1,11 @@
 <?php 
 namespace Hiero7\Services;
-use Hiero7\Models\{Domain,Cdn,CdnProvider,LocationDnsSetting,DomainGroup};
 use Hiero7\Traits\DomainHelperTrait;
 use DB;
 use Illuminate\Database\Eloquent\Model;
 use Hiero7\Enums\DbError;
 use App\Exceptions\ConfigException;
 use Cache;
-use PhpParser\Node\Expr\Empty_;
 
 Class ConfigService
 {
@@ -28,9 +26,14 @@ Class ConfigService
     
     public function checkCdnHaveDefault(Array $data)
     {
-        $error = [];        
+        $error = [];     
         foreach($data as $domainData){
             $cdnsArray = array_only($domainData,['cdns']); 
+            
+            if(empty($cdnsArray['cdns'])){
+                continue;
+            }
+            
             $default = array_pluck($cdnsArray['cdns'],'default');
 
             if(!in_array(true,$default)){
@@ -42,13 +45,13 @@ Class ConfigService
         return empty($error['errorData']) ? true : ['errorData' => array_collapse($error)];
     }
     
-    public function insert(Array $InsertData, Model $targetTable)
+    public function insert(Array $InsertData, Model $targetTable, Int $userGroupId)
     {
         try{
             $targetTable->insert($InsertData);
         } catch (\Illuminate\Database\QueryException  $e) {
             DB::rollback();
-            Cache::flush();
+            Cache::forget("Config_userGroupId$userGroupId");
             $res = $e->getMessage();
             throw new ConfigException(DbError::getDescription(DbError::IMPORT_RELATIONAL_DATA_HAVE_SOME_PROBLEM),
                                         DbError::IMPORT_RELATIONAL_DATA_HAVE_SOME_PROBLEM);
