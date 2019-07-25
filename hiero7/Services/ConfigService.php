@@ -29,7 +29,6 @@ Class ConfigService
         $error = [];     
         foreach($data as $domainData){
             $cdnsArray = array_only($domainData,['cdns']); 
-            Cache::flush();
             
             if(empty($cdnsArray['cdns'])){
                 continue;

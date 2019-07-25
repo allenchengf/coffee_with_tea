@@ -138,6 +138,8 @@ class DnsPodRecordSyncService
      */
     public function getDomainRecord(Domain $domain)
     {
+        $this->record = [];
+
         $this->domainName = $domain->cname;
 
         $this->domainArray[] = $domain->toArray();
