@@ -30,5 +30,6 @@ class ExampleTest extends TestCase
         $this->assertTrue(!empty(env('CDN_TTL')), 'CDN_TTL is not set');
         $this->assertTrue(!empty(env('SCHEME')), 'SCHEME is not set');
         $this->assertTrue(!empty(env('PLATFORM_KEY')), 'PLATFORM_KEY is not set');
+        $this->assertTrue(!empty(env('CONFIG_WAIT_TIME')), 'CONFIG_WAIT_TIME is not set');
     }
 }

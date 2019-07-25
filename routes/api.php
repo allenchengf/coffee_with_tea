@@ -1,4 +1,6 @@
 <?php
+ini_set('max_execution_time', 600);
+ini_set('memory_limit', '1024M');
 
 Route::group(['middleware' => ['api','check.config'], 'namespace' => 'Api\v1', 'prefix' => 'v1'], function () {
     Route::group(['prefix' => 'domains'], function () {

@@ -53,6 +53,7 @@ class LocationDnsSettingService
             'value' => $cdn->cname,
             'record_id' => $locationDnsSetting->provider_record_id,
             'record_line' => $locationDnsSetting->location()->first()->network()->first()->name,
+            'ttl' => $cdn->cdnProvider->ttl,
         ]);
 
         if ($podResult['errorCode']) {
