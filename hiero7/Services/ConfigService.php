@@ -1,13 +1,11 @@
 <?php 
 namespace Hiero7\Services;
-use Hiero7\Models\{Domain,Cdn,CdnProvider,LocationDnsSetting,DomainGroup};
 use Hiero7\Traits\DomainHelperTrait;
 use DB;
 use Illuminate\Database\Eloquent\Model;
 use Hiero7\Enums\DbError;
 use App\Exceptions\ConfigException;
 use Cache;
-use PhpParser\Node\Expr\Empty_;
 
 Class ConfigService
 {
@@ -28,9 +26,15 @@ Class ConfigService
     
     public function checkCdnHaveDefault(Array $data)
     {
-        $error = [];        
+        $error = [];     
         foreach($data as $domainData){
             $cdnsArray = array_only($domainData,['cdns']); 
+            Cache::flush();
+            
+            if(empty($cdnsArray['cdns'])){
+                continue;
+            }
+            
             $default = array_pluck($cdnsArray['cdns'],'default');
 
             if(!in_array(true,$default)){
