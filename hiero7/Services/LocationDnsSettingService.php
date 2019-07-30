@@ -23,24 +23,40 @@ class LocationDnsSettingService
 
     }
 
-    public function indexByDomain(int $domainId)
+    public function indexByDomain(Domain $domain)
     {
-        $cdnModel = new Cdn;
+        $cdnsModelMass = $domain->cdns;
+
+        if($cdnsModelMass->isEmpty()){
+            $defaultCdn = [];
+        }else{
+            $defaultCdn = $cdnsModelMass->where('default', 1)->first()->with('cdnProvider')->first();
+        }
+
+        foreach($cdnsModelMass as $cdnsModel){
+            $cdnsModel->cdnProvider;
+        }
+
+        $cdns = $cdnsModelMass->keyBy('id');
+
         $lineResult = $this->lineRepository->getLinesById();
         $lineCollection = collect($lineResult);
 
-        foreach ($lineCollection as $lineModel) {
-            if ($cdnModel->all()->isEmpty()) {
-                $lineModel->setAttribute('cdn', null);
+        $dnsSetting = $domain->locationDnsSettings->keyBy('location_networks_id');
+
+        foreach($lineCollection as $lineModel){
+
+            if(!$dnsSetting->has($lineModel->id)){
+                $lineModel->setAttribute('cdn', $defaultCdn);
                 continue;
             }
 
-            if ($this->locationDnsSettingRepository->getAll()->isEmpty()) {
-                $lineModel->setAttribute('cdn', $this->getDefaultCdn($cdnModel, $domainId));
-                continue;
-            }
-            $cdnId = $cdnModel->where('domain_id',$domainId)->pluck('id');
-            $this->getDnsSettingAll($lineModel, $cdnModel, $domainId, $lineModel->locationDnsSetting()->whereIn('cdn_id',$cdnId)->first());
+            $dnsCdnMapping = $dnsSetting->get(($lineModel->id));
+
+            $cdnsTarget = $cdns->get($dnsCdnMapping->cdn_id);
+
+            $lineModel->setAttribute('cdn', $cdnsTarget);
+
         }
 
         return $lineCollection;
@@ -99,21 +115,4 @@ class LocationDnsSettingService
 
         return $locationDnsSetting->delete();
     }
-
-    private function getDnsSettingAll($lineModel, Cdn $cdnModel, int $domainId, $locationDnsSetting)
-    {
-        if (!$locationDnsSetting) {
-            return $lineModel->setAttribute('cdn', $this->getDefaultCdn($cdnModel, $domainId));
-        }
-
-        $locationCdnResult = $locationDnsSetting->cdn()->select('id', 'cdn_provider_id')->with('cdnProvider')->first();
-
-        return $lineModel->setAttribute('cdn', $locationCdnResult);
-    }
-
-    private function getDefaultCdn(Cdn $cdnModel, int $domainId)
-    {
-        return $cdnModel->select('id','cdn_provider_id')->where('domain_id', $domainId)->where('default', 1)->with('cdnProvider')->first();
-    }
-
 }

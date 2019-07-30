@@ -31,7 +31,7 @@ class LocationDnsSettingController extends Controller
 
     public function indexByDomain(Domain $domain)
     {
-        $result = $this->locationDnsSettingService->indexByDomain($domain->id);
+        $result = $this->locationDnsSettingService->indexByDomain($domain);
         return $this->response('',null,$result);
 
     }
@@ -68,7 +68,6 @@ class LocationDnsSettingController extends Controller
         foreach($domainGroupCollection as $domainGroupModel){
             $domainGroup[] = $this->domainGroupService->indexGroupIroute($domainGroupModel);
         }
-
         $domainsCollection = $domain->with('domainGroup')->where(compact('user_group_id'))->get();
 
         $domainsCollection = $domainsCollection->filter(function ($item) {
@@ -76,7 +75,7 @@ class LocationDnsSettingController extends Controller
         });
 
         foreach($domainsCollection as $domainModel){
-            $domainModel->location_network = $this->locationDnsSettingService->indexByDomain($domainModel->id);
+            $domainModel->location_network = $this->locationDnsSettingService->indexByDomain($domainModel);
         }
 
         $domains = $domainsCollection->flatten();
