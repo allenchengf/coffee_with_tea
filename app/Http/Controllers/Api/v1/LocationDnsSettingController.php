@@ -116,7 +116,7 @@ class LocationDnsSettingController extends Controller
             return $this->setStatusCode(409)->response('please contact the admin', InternalError::INTERNAL_ERROR, []);
         }
 
-        $data = $this->locationDnsSettingService->indexByDomain($domain->id);
+        $data = $this->locationDnsSettingService->indexByDomain($domain);
 
         $this->createEsLog($this->getJWTPayload()['sub'], "IRoute", "update", "IRouteCDN");
 
