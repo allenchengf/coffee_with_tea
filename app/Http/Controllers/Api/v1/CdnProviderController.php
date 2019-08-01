@@ -72,6 +72,7 @@ class CdnProviderController extends Controller
      */
     public function update(Request $request, CdnProvider $cdnProvider)
     {
+        $recordList =[];
         $request->merge([
             'edited_by' => $this->getJWTPayload()['uuid'],
         ]);
@@ -84,9 +85,22 @@ class CdnProviderController extends Controller
 
         DB::beginTransaction();
         $cdnProvider->update($request->only('name','ttl', 'edited_by'));
-        $cdn = Cdn::where('cdn_provider_id', $cdnProvider->id)->pluck('provider_record_id')->all();
-        if(!empty($cdn)){
-            $BatchEditedDnsProviderRecordResult = $this->cdnProviderService->updateCdnProviderTTL($cdnProvider, $cdn);
+        $cdn = Cdn::where('cdn_provider_id', $cdnProvider->id)->with('locationDnsSetting')->get();
+        foreach ($cdn as $k => $v) {
+            $check = Cdn::where('provider_record_id',$v['provider_record_id'])->where('cdn_provider_id', $cdnProvider->id)->get();
+            if(count($check) > 0 && $v['default'] == 1){
+                $recordList[] = $v['provider_record_id'];
+            }
+
+            if (isset($v['locationDnsSetting'])) {
+                foreach ($v['locationDnsSetting'] as $key => $value){
+                    $recordList[] = $value['provider_record_id'];
+                }
+            }
+        }
+        $recordList = array_filter($recordList);
+        if (!empty($recordList)) {
+            $BatchEditedDnsProviderRecordResult = $this->cdnProviderService->updateCdnProviderTTL($cdnProvider, $recordList);
             if (array_key_exists('errors', $BatchEditedDnsProviderRecordResult[0])) {
                 DB::rollback();
                 return $this->setStatusCode(409)->response('please contact the admin', InternalError::INTERNAL_ERROR, []);
