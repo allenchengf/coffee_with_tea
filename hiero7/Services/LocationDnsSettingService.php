@@ -31,7 +31,7 @@ class LocationDnsSettingService
             $defaultCdn = [];
         }else{
             $cdnsModelMass->where('default', 1)->first()->cdnProvider;
-            $defaultCdn = $cdnsModelMass->where('default', 1);
+            $defaultCdn = $cdnsModelMass->where('default', 1)->first();
         }
 
         foreach($cdnsModelMass as $cdnsModel){
