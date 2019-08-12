@@ -44,6 +44,7 @@ class DomainGroupService
         return $groupLists;
     }
 
+    //拿 DomainGroup 去換 iRoute 設定
     public function indexGroupIroute(DomainGroup $domainGroup)
     {
         $domainGroup->location_network = $this->locationDnsSettingService->indexByDomain($domainGroup->domains()->first());
@@ -119,30 +120,55 @@ class DomainGroupService
         $result = $this->domainGroupRepository->createDomainToGroup($request, $domainGroup->id);
         return $result;
     }
-
+/**
+ * 純 update Group function
+ *  
+ *  判斷使用者和要修改的 Group 是否為相同 user_group_id。
+ *  
+ * @param DomainGroupRequest $request
+ * @param DomainGroup $domainGroup
+ * @return void
+ */
     public function edit(DomainGroupRequest $request, DomainGroup $domainGroup)
     {
-        $domain = $domainGroup->domains()->first();
-        if ($request->user_group_id != 1 && $request->user_group_id != $domain->user_group_id) {
-            return false;
-        }
+        $result = $this->checkUserGroupId($request, $domainGroup);
 
-        return $this->domainGroupRepository->update($request, $domainGroup->id);
+        return $result ? $this->domainGroupRepository->update($request, $domainGroup->id) : $result;
     }
-
-    public function destroy(int $domainGroupId)
+/**
+ * 純 刪除 Group function
+ * 
+ * 判斷使用者和要修改的 Group 是否為相同 user_group_id。
+ *
+ * @param integer $domainGroupId
+ * @return void
+ */
+    public function destroy(DomainGroupRequest $request, DomainGroup $domainGroup)
     {
-        return $this->domainGroupRepository->destroy($domainGroupId);
+        $result = $this->checkUserGroupId($request, $domainGroup);
+        
+        return $result ? $this->domainGroupRepository->destroy($domainGroup->id) : $result;
     }
-
-    public function destroyByDomainId(DomainGroup $domainGroup, Domain $domain)
+/**
+ * 從 Group 移除某個 Domain
+ *
+ * 先判斷是否為該 Group 內最後一個 Domain，
+ * 
+ * @param DomainGroup $domainGroup
+ * @param Domain $domain
+ * @return void
+ */
+    public function destroyByDomainId(DomainGroupRequest $request, DomainGroup $domainGroup, Domain $domain)
     {
+        $result = $this->checkUserGroupId($request, $domainGroup);
+        
         $domainCollection = $domainGroup->domains;
 
         if ($domainCollection->count() == 1) {
             return false;
         }
-        return $this->domainGroupRepository->destroyByDomainId($domainGroup->id, $domain->id);
+
+        return $result ? $this->domainGroupRepository->destroyByDomainId($domainGroup->id, $domain->id) : $result;
     }
 
     public function compareDomainCdnSetting(DomainGroup $domainGroup, $targetDomainId)
@@ -306,5 +332,21 @@ class DomainGroupService
     {
         $cdnId = $domain->cdns->pluck('id');
         return LocationDnsSetting::where('location_networks_id', $locationNetworkId)->whereIn('cdn_id', $cdnId)->first();
+    }
+
+/**
+ * 檢查 使用者 是否操作 相同 userGroup 的 DomainGroup
+ *
+ * @param DomainGroupRequest $request
+ * @param DomainGroup $domainGroup
+ * @return void
+ */
+    private function checkUserGroupId(DomainGroupRequest $request, DomainGroup $domainGroup)
+    {
+        if ($request->user_group_id != 1 && $request->user_group_id != $domainGroup->user_group_id) {
+            return false;
+        }
+
+        return true;
     }
 }
