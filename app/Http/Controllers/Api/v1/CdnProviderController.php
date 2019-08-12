@@ -84,7 +84,7 @@ class CdnProviderController extends Controller
         }
 
         DB::beginTransaction();
-        $cdnProvider->update($request->only('name','ttl', 'edited_by'));
+        $cdnProvider->update($request->only('name','ttl', 'edited_by', 'url'));
         $cdn = Cdn::where('cdn_provider_id', $cdnProvider->id)->with('locationDnsSetting')->get();
         foreach ($cdn as $k => $v) {
             $check = Cdn::where('provider_record_id',$v['provider_record_id'])->where('cdn_provider_id', $cdnProvider->id)->get();
