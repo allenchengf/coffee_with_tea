@@ -44,6 +44,10 @@ class LocationDnsSettingRepository
     {
         return $this->locationDnsSetting->where('cdn_id', $targetCdnId)
         ->update(['cdn_id' => $defaultCdnId]);
+    }
 
+    public function deleteByCdnId(int $cdnId)
+    {
+        return $this->locationDnsSetting->where('cdn_id', $cdnId)->delete();
     }
 }

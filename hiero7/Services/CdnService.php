@@ -21,7 +21,7 @@ class CdnService
     public function __construct(DnsProviderService $dnsProviderService)
     {
         $this->dnsProviderService = $dnsProviderService;
-        
+
     }
 
     public function setEditedByOfRequest(Request $request, $uuid)
