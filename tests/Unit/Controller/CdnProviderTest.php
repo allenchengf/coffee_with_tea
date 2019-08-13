@@ -75,7 +75,8 @@ class CdnProviderTest extends TestCase
             'edited_by' => "de20afd0-d009-4fbf-a3b0-2c3257915d10",
             'status' => 'active',
             'name' => 'Cloudflare',
-            'ttl' => 600
+            'ttl' => 600,
+            'url' => 'http://www.hiero7.com'
         ]);
 
         $this->addUuidforPayload()
@@ -98,7 +99,8 @@ class CdnProviderTest extends TestCase
             'user_group_id' => $target_user_group_id,
             'edited_by' => "de20afd0-d009-4fbf-a3b0-2c3257915d10",
             'name' => 'Cloudflare',
-            'ttl' => 600
+            'ttl' => 600,
+            'url' => 'http://www.hiero7.com'
         ]);
 
         $this->addUuidforPayload()
@@ -122,7 +124,8 @@ class CdnProviderTest extends TestCase
 
         $editData = [
             'name' => 'Update',
-            'ttl' => '666'
+            'ttl' => '666',
+            'url' => 'http://www.google.com'
         ];
         $request = new Request;
         $request->merge($editData);
@@ -150,7 +153,8 @@ class CdnProviderTest extends TestCase
             'user_group_id' => $target_user_group_id,
             'edited_by' => "de20afd0-d009-4fbf-a3b0-2c3257915d10",
             'name' => 'Cloudflare',
-            'ttl' => 600
+            'ttl' => 600,
+            'url' => 'http://www.hiero7.com'
         ]);
 
         $this->addUuidforPayload()
@@ -198,7 +202,8 @@ class CdnProviderTest extends TestCase
             'user_group_id' => $target_user_group_id,
             'edited_by' => "de20afd0-d009-4fbf-a3b0-2c3257915d10",
             'name' => 'Cloudflare',
-            'ttl' => 600
+            'ttl' => 600,
+            'url' => 'http://www.hiero7.com'
         ]);
 
         $this->addUuidforPayload()
@@ -257,7 +262,8 @@ class CdnProviderTest extends TestCase
             'user_group_id' => $target_user_group_id,
             'edited_by' => "de20afd0-d009-4fbf-a3b0-2c3257915d10",
             'name' => 'Cloudflare',
-            'ttl' => 600
+            'ttl' => 600,
+            'url' => 'http://www.hiero7.com'
         ]);
 
         $this->addUuidforPayload()

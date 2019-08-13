@@ -37,6 +37,7 @@ class CdnProviderRequest extends FormRequest
                         }),
                     ],
                     'ttl'   => 'integer' . '|min:' . env('CDN_TTL') . '|max:604800',
+                    'url'   => 'string|url'
                 ];
                 break;
             case ($routeName == "$prefix.update"):
@@ -49,6 +50,7 @@ class CdnProviderRequest extends FormRequest
                         }),
                     ],
                     'ttl'   => 'integer' . '|min:' . env('CDN_TTL') . '|max:604800',
+                    'url'   => 'string|url'
                 ];
                 break;
             case ($routeName == "$prefix.status"):
