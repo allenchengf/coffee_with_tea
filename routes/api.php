@@ -4,12 +4,12 @@ ini_set('memory_limit', '1024M');
 
 Route::group(['middleware' => ['api','check.config'], 'namespace' => 'Api\v1', 'prefix' => 'v1'], function () {
     Route::group(['prefix' => 'domains'], function () {
-        
+
         Route::get('check', 'DnsPodRecordSyncController@index');
         Route::get('{domain}/check', 'DnsPodRecordSyncController@getDomain');
         Route::get('check-diff', 'DnsPodRecordSyncController@checkDataDiff');
         Route::post('sync', 'DnsPodRecordSyncController@syncDnsData');
-        
+
         Route::get('', 'DomainController@getDomain')->name('domain.index');
         Route::middleware(['auth.user.module', 'domain.permission'])->group(function () {
             Route::post('', 'DomainController@create')->name('domain.create');
@@ -18,7 +18,7 @@ Route::group(['middleware' => ['api','check.config'], 'namespace' => 'Api\v1', '
                 Route::resource('/cdn', 'CdnController', ['only' => ['index', 'store', 'destroy']]);
                 Route::patch('cdn/{cdn}/default', 'CdnController@updateDefault')->name('cdn.default');
                 Route::patch('cdn/{cdn}/cname', 'CdnController@updateCname')->name('cdn.cname');
-                
+
                 //yuan
                 Route::group(['prefix' => '/routing-rules'], function () {
                     Route::get('', 'LocationDnsSettingController@indexByDomain')->name('iRoute.indexByDomain');
@@ -97,5 +97,12 @@ Route::group(['middleware' => ['api','check.config'], 'namespace' => 'Api\v1', '
 
     Route::group(['middleware' => ['auth.user.module'], 'prefix' => 'operation_log'], function () {
         Route::get('', 'OperationLogController@index')->name('operation_log.index');
+    });
+
+
+    Route::group(['prefix' => 'scan-provider'],function () {
+        Route::get('', 'ScanProviderController@index');
+        Route::put('cdn-provider', 'ScanProviderController@selectAchangeToBCdnProvider')->name('scan.chage');
+        Route::patch('cdn-provider', 'ScanProviderController@changeToCdnProvider')->name('scan.chage2');
     });
 });
