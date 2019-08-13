@@ -32,12 +32,12 @@ class ScanProviderController extends Controller
      * @param ScanProviderRequest $request
      * @return array
      */
-    public function changeCdnProvider(ScanProviderRequest $request)
+    public function selectAchangeToBCdnProvider(ScanProviderRequest $request)
     {
-        $old_cdn_provider_id = $request->get('old_cdn_provider_id');
-        $new_cdn_provider_id = $request->get('new_cdn_provider_id');
+        $oldCdnProviderId = $request->get('old_cdn_provider_id');
+        $newCdnProviderId = $request->get('new_cdn_provider_id');
 
-        $this->scanProviderService->changeProvider($old_cdn_provider_id, $new_cdn_provider_id);
+        $this->scanProviderService->selectAchangeToBCdnProvider($oldCdnProviderId, $newCdnProviderId);
 
         return $this->response();
 
@@ -50,9 +50,9 @@ class ScanProviderController extends Controller
      */
     public function changeToCdnProvider(ScanProviderRequest $request)
     {
-        $cdn_provider_id = $request->get('cdn_provider_id');
+        $cdnProviderId = $request->get('cdn_provider_id');
 
-        $this->scanProviderService->changeCdnProviderById($cdn_provider_id);
+        $this->scanProviderService->changeCdnProviderById($cdnProviderId);
 
         return $this->response();
     }

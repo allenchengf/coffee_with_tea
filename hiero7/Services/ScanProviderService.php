@@ -30,7 +30,7 @@ class ScanProviderService
 
     }
 
-    public function changeProvider($fromCdnProviderId, $toCdnProviderId)
+    public function selectAchangeToBCdnProvider($fromCdnProviderId, $toCdnProviderId)
     {
         $cdnProviderIdList = [$fromCdnProviderId, $toCdnProviderId];
 

@@ -102,7 +102,7 @@ Route::group(['middleware' => ['api','check.config'], 'namespace' => 'Api\v1', '
 
     Route::group(['prefix' => 'scan-provider'],function () {
         Route::get('', 'ScanProviderController@index');
-        Route::put('cdn-provider', 'ScanProviderController@changeCdnProvider')->name('scan.chage');
+        Route::put('cdn-provider', 'ScanProviderController@selectAchangeToBCdnProvider')->name('scan.chage');
         Route::patch('cdn-provider', 'ScanProviderController@changeToCdnProvider')->name('scan.chage2');
     });
 });
