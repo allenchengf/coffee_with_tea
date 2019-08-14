@@ -3,24 +3,19 @@
 namespace Hiero7\Services;
 
 use Hiero7\Models\Domain;
-use Hiero7\Models\Cdn;
 use Hiero7\Models\LocationNetwork;
-use Hiero7\Repositories\DomainRepository;
-use Hiero7\Traits\JwtPayloadTrait;
 use Illuminate\Support\Collection;
+use Hiero7\Repositories\DomainRepository;
 
 class ScanProviderService
 {
-    use JwtPayloadTrait;
 
     protected $locationDnsSettionService;
 
     /**
      * NetworkService constructor.
      */
-    public function __construct(
-        LocationDnsSettingService $locationDnsSettingService
-    )
+    public function __construct(LocationDnsSettingService $locationDnsSettingService)
     {
         $this->locationDnsSettionService = $locationDnsSettingService;
     }
@@ -30,17 +25,17 @@ class ScanProviderService
      *
      * @param LocationNetwork $locationNetwork
      * @param int $fromCdnProviderId
-     * @param int $targetCdnProviderId
+     * @param int $toCdnProviderId
      * @return mixed
      */
-    public function changeCDNProviderByIRoute(LocationNetwork $locationNetwork, int $fromCdnProviderId, int $targetCdnProviderId)
+    public function changeCDNProviderByIRoute(LocationNetwork $locationNetwork, int $fromCdnProviderId, int $toCdnProviderId)
     {
         $domains = app()->call([$this, 'getDomainsByCDNProviderIdList'], [
-            'cdnProviderIdList' => [$fromCdnProviderId, $targetCdnProviderId]
+            'cdnProviderIdList' => [$fromCdnProviderId, $toCdnProviderId],
         ]);
 
-        $domains->map(function ($domain) use ($locationNetwork) {
-            $this->locationDnsSettionService->updateSetting([],$domain,$domain->cdns()->first(),$domain->locationDnsSettings()->first());
+        $domains->map(function (Domain $domain) use ($locationNetwork, $toCdnProviderId) {
+            $this->locationDnsSettionService->decideAction($toCdnProviderId, $domain, $locationNetwork);
         });
 
         return $domains;

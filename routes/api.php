@@ -103,8 +103,6 @@ Route::group(['middleware' => ['api','check.config'], 'namespace' => 'Api\v1', '
     Route::group(['prefix' => 'scan-provider'],function () {
         Route::get('', 'ScanProviderController@index');
 
-        Route::put('/routing-rules/{locationNetworkId}', 'ScanProviderController@selectAchangeToBCdnProvider')->name('scan.chage.routing-rule');
-
-//        Route::patch('cdn-provider', 'ScanProviderController@changeToCdnProvider')->name('scan.chage2');
+        Route::put('/routing-rules/{locationNetworkId}', 'ScanProviderController@changeCDNProviderByIRoute')->name('scan.chage.routing-rule');
     });
 });

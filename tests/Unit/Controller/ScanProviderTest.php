@@ -3,15 +3,12 @@
 namespace Tests\Unit\Controller;
 
 use App\Http\Controllers\Api\v1\ScanProviderController;
-use Hiero7\Repositories\LocationDnsSettingRepository;
-use Hiero7\Services\CdnService;
-use Hiero7\Services\DnsPodRecordSyncService;
+use App\Http\Requests\ScanProviderRequest as Request;
+use Hiero7\Models\LocationNetwork;
 use Hiero7\Services\LocationDnsSettingService;
 use Hiero7\Services\ScanProviderService;
 use Mockery as m;
 use Tests\TestCase;
-use App\Http\Requests\ScanProviderRequest as Request;
-use Hiero7\Models\LocationNetwork;
 
 class ScanProviderTest extends TestCase
 {
@@ -20,7 +17,6 @@ class ScanProviderTest extends TestCase
      */
     private $controller;
     private $spyLocationDnsSettingService;
-
 
     protected function setUp()
     {
@@ -69,7 +65,7 @@ class ScanProviderTest extends TestCase
     {
         $selectCdnProvider = [
             'old_cdn_provider_id' => 1,
-            'new_cdn_provider_id' => 2
+            'new_cdn_provider_id' => 2,
         ];
 
         $request = $this->createRequestAndJwt($selectCdnProvider);
@@ -80,13 +76,13 @@ class ScanProviderTest extends TestCase
 
         $this->assertEquals(200, $response->status());
 
-        $this->shouldUseChangeLocationDNSSettion();
+        $this->shouldUseDecideAction();
     }
 
-    private function shouldUseChangeLocationDNSSettion()
+    private function shouldUseDecideAction()
     {
         $this->spyLocationDnsSettingService
-            ->shouldHaveReceived('updateSetting')
+            ->shouldHaveReceived('decideAction')
             ->twice();
     }
 
