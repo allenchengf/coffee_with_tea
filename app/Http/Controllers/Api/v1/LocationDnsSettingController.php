@@ -17,15 +17,10 @@ class LocationDnsSettingController extends Controller
     protected $locationDnsSettingService;
     protected $status;
 
-    public function __construct(
-        LocationDnsSettingService $locationDnsSettingService,
-        DomainGroupService $domainGroupService,
-        CdnRepository $cdnRepository
-    )
+    public function __construct(LocationDnsSettingService $locationDnsSettingService,DomainGroupService $domainGroupService)
     {
         $this->locationDnsSettingService = $locationDnsSettingService;
         $this->domainGroupService = $domainGroupService;
-        $this->cdnRepository = $cdnRepository;
         $this->status = (env('APP_ENV') !== 'testing') ?? false;
     }
 
@@ -111,7 +106,7 @@ class LocationDnsSettingController extends Controller
  * @param LocationNetwork $locationNetworkId
  * @return void
  */
-    public function editSetting(LocationDnsSettingRequest $request, Domain $domain, LocationNetwork $locationNetworkId)
+    public function editSetting(LocationDnsSettingRequest $request, Domain $domain, LocationNetwork $locationNetwork)
     {
         $message = '';
         $error = '';
@@ -120,23 +115,10 @@ class LocationDnsSettingController extends Controller
             'edited_by' => $this->getJWTPayload()['uuid'],
         ]);
 
-        $cdnModel = $this->cdnRepository->indexByWhere(['cdn_provider_id' => $request->get('cdn_provider_id'), 'domain_id' => $domain->id])->first();
+        $result = $this->locationDnsSettingService->decideAction($request->cdn_provider_id, $domain, $locationNetwork);
 
-        if (is_null($cdnModel)) {
+        if ($result === 'differentGroup') {
             return $this->setStatusCode(400)->response($message,InputError::WRONG_PARAMETER_ERROR,'');
-        }
-
-        $data = [
-            'cdn_id' => $cdnModel->id,
-            'edited_by' => $this->getJWTPayload()['uuid']
-        ];
-
-        $existLocationDnsSetting = $this->checkSettingExist($domain, $locationNetworkId);
-
-        if (!collect($existLocationDnsSetting)->isEmpty()) {
-            $result = $this->locationDnsSettingService->updateSetting($data, $domain, $cdnModel, $existLocationDnsSetting);
-        } else {
-            $result = $this->locationDnsSettingService->createSetting($data, $domain, $cdnModel, $locationNetworkId);
         }
 
         if ($result == false) {
@@ -148,17 +130,5 @@ class LocationDnsSettingController extends Controller
         $this->createEsLog($this->getJWTPayload()['sub'], "IRoute", "update", "IRouteCDN");
 
         return $this->response($message,$error,$data);
-    }
-
-    private function checkCdnIfExist(int $cdnId, Domain $domain)
-    {
-        return $domain->cdns()->where('id', $cdnId)->first();
-    }
-
-    private function checkSettingExist(Domain $domain,LocationNetwork $locationNetwork)
-    {
-        $cdnId = Cdn::where('domain_id',$domain->id)->pluck('id');
-        return LocationDnsSetting::where('location_networks_id',$locationNetwork->id)->whereIn('cdn_id',$cdnId)->first();
-
     }
 }

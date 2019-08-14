@@ -222,24 +222,14 @@ class DomainGroupService
         list($originIrouteSetting,$nonSettingCdn) = $this->getLocationSetting($originCdnSetting);
 
         if (empty($originIrouteSetting)) {
-            return true; //如果 Group 內 cdn 沒有設定 iroute 就不做更改。
+            return true; //如果 Group 內 cdn 沒有 iroute 設定就不做更改。
         }
 
         $targetDomain = Domain::find($domainId);
         $result = '';
 
         foreach ($originIrouteSetting as $iRouteSetting) {
-            $targetCdn = $this->cdnRepository->indexByWhere(['cdn_provider_id' => $iRouteSetting->cdn_provider_id, 'domain_id' => $domainId])->first();
-            $existLocationDnsSetting = $this->checkSettingExist($targetDomain, $iRouteSetting->location_networks_id);
-
-            $data = ['cdn_id' => $targetCdn->id,
-                'edited_by' => $editedBy];
-
-            if (!collect($existLocationDnsSetting)->isEmpty()) {
-                $result = $this->locationDnsSettingService->updateSetting($data, $targetDomain, $targetCdn, $existLocationDnsSetting);
-            } else {
-                $result = $this->locationDnsSettingService->createSetting($data, $targetDomain, $targetCdn, $iRouteSetting->location);
-            }
+            $result = $this->locationDnsSettingService->decideAction($iRouteSetting->cdn_provider_id, $targetDomain, $iRouteSetting->location);
         }
 
         foreach($nonSettingCdn as $cdnProviderId ){
@@ -330,7 +320,12 @@ class DomainGroupService
     }
 /**
  * 依照 cdn 的設定分辨，哪些 cdn 是有存在  locationDnsSetting table 內，有哪些 cdn 是沒有設定的。
- *
+ * 
+ * 會回傳 targetIrouteSetting 和 nonSettingCdn 兩個參數。
+ * 
+ *  targetIrouteSetting 是有設定的 locationDnsSetting 物件
+ *  nonSettingCdn 是 cdn 沒有被設定的 cdn_provider_id 
+ * 
  * @param Collection $cdnSetting
  * @return void
  */
