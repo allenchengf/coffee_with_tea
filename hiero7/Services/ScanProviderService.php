@@ -26,19 +26,24 @@ class ScanProviderService
      * @param LocationNetwork $locationNetwork
      * @param int $fromCdnProviderId
      * @param int $toCdnProviderId
-     * @return mixed
+     * @return array
      */
-    public function changeCDNProviderByIRoute(LocationNetwork $locationNetwork, int $fromCdnProviderId, int $toCdnProviderId)
+    public function changeCDNProviderByIRoute(LocationNetwork $locationNetwork, int $fromCdnProviderId, int $toCdnProviderId): array
     {
+        $domainAction = [];
+
         $domains = app()->call([$this, 'getDomainsByCDNProviderIdList'], [
             'cdnProviderIdList' => [$fromCdnProviderId, $toCdnProviderId],
         ]);
 
-        $domains->map(function (Domain $domain) use ($locationNetwork, $toCdnProviderId) {
-            $this->locationDnsSettionService->decideAction($toCdnProviderId, $domain, $locationNetwork);
+        $domains->map(function (Domain $domain) use ($locationNetwork, $toCdnProviderId, &$domainAction) {
+            $domainAction[] = [
+                'domain' => $domain->only('id', 'user_group_id', 'name', 'cname', 'label'),
+                'action' => $this->locationDnsSettionService->decideAction($toCdnProviderId, $domain, $locationNetwork)
+            ];
         });
 
-        return $domains;
+        return $domainAction;
     }
 
     /**

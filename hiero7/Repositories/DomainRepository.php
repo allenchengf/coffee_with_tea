@@ -64,7 +64,8 @@ class DomainRepository
 
         return $this->domain->where('user_group_id', $this->getJWTUserGroupId())
             ->with(array('cdnProvider' => function ($query) use ($cdnProviderIdList) {
-                $query->whereIn('cdn_providers.id', $cdnProviderIdList);
+                $query->where('cdn_providers.status', 'active')
+                    ->whereIn('cdn_providers.id', $cdnProviderIdList);
             }))->get()->filter(function ($item) use ($countList) {
                 return (count($item->cdnProvider) == $countList) ? true : false;
             })->values();
