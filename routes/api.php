@@ -23,7 +23,7 @@ Route::group(['middleware' => ['api','check.config'], 'namespace' => 'Api\v1', '
                 Route::group(['prefix' => '/routing-rules'], function () {
                     Route::get('', 'LocationDnsSettingController@indexByDomain')->name('iRoute.indexByDomain');
                     Route::middleware(['admin.check'])->group(function() {
-                        Route::put('/{locationNetworkId}', 'LocationDnsSettingController@editSetting')->name('iRoute.edit');
+                        Route::put('/{locationNetwork}', 'LocationDnsSettingController@editSetting')->name('iRoute.edit');
                     });
                 });
             });

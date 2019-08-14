@@ -2,8 +2,6 @@
 
 namespace App\Http\Requests;
 
-use Hiero7\Models\Domain;
-
 
 class LocationDnsSettingRequest extends FormRequest
 {
