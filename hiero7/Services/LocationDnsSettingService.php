@@ -122,8 +122,7 @@ class LocationDnsSettingService
 
         $existLocationDnsSetting = $this->getExistSetting($domain, $locationNetwork);
 
-        $result = '';
-        if($cdnModel->default){
+        if($cdnModel->default && $existLocationDnsSetting){
             $result = $this->destroy($existLocationDnsSetting);
         }else{
             switch(collect($existLocationDnsSetting)->isEmpty()){

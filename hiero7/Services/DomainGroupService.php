@@ -208,7 +208,8 @@ class DomainGroupService
         return $this->cdnService->changeDefaultToTrue($domain, $targetCdn, $editedBy);
     }
 /**
- * 修改 要被加入 domainGroup 的 domain 的 iRoute 設定
+ * 修改 要被加入 domainGroup 的 domain 的 iRoute 設定。
+ * 
  *
  * @param DomainGroup $domainGroup
  * @param integer $domainId
