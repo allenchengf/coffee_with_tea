@@ -101,6 +101,7 @@ class LocationDnsSettingService
  * 刪除:  給的 cdn_provider 是 default ，就會刪掉 locationDnsSetting 那筆設定。
  * 
  * 如果提供的 cdn_provider 並未存在於該 domain 會回傳 'differentGroup' ， 離開 function。
+ * 如果提供的 cdn_provider 是 Default，不會執行任何動作，離開。function。
  *
  * @param Int $cdnProviderId
  * @param Domain $domain
@@ -124,6 +125,10 @@ class LocationDnsSettingService
 
         if($cdnModel->default && $existLocationDnsSetting){
             $result = $this->destroy($existLocationDnsSetting);
+
+        }elseif($cdnModel->default && !$existLocationDnsSetting){
+            return true;
+
         }else{
             switch(collect($existLocationDnsSetting)->isEmpty()){
                 case true:
@@ -161,7 +166,7 @@ class LocationDnsSettingService
  * @param LocationDnsSetting $locationDnsSetting
  * @return void
  */
-    private function updateSetting(array $data,Domain $domain,Cdn $cdn, LocationDnsSetting $locationDnsSetting)
+    public function updateSetting(array $data,Domain $domain,Cdn $cdn, LocationDnsSetting $locationDnsSetting)
     {
         $podResult = $this->dnsProviderService->editRecord([
             'sub_domain' => $domain->cname,
@@ -189,7 +194,7 @@ class LocationDnsSettingService
  * @param LocationNetwork $locationNetwork
  * @return void
  */
-    private function createSetting(array $data, Domain $domain,Cdn $cdn, LocationNetwork $locationNetwork)
+    public function createSetting(array $data, Domain $domain,Cdn $cdn, LocationNetwork $locationNetwork)
     {
         $podResult = $this->dnsProviderService->createRecord([
             'sub_domain' => $domain->cname,

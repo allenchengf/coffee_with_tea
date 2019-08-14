@@ -48,6 +48,7 @@ class DomainGroupServiceTest extends TestCase
     public function serviceMock()
     {
         $this->cdnService->shouldReceive('changeDefaultToTrue')->withAnyArgs()->andReturn(true);
+        $this->locationDnsSettingService->shouldReceive('decideAction')->withAnyArgs()->andReturn(true);
         $this->locationDnsSettingService->shouldReceive('updateSetting')->withAnyArgs()->andReturn(true);
         $this->locationDnsSettingService->shouldReceive('createSetting')->withAnyArgs()->andReturn(true);
         $this->locationDnsSettingService->shouldReceive('destroy')->withAnyArgs()->andReturn(true);
