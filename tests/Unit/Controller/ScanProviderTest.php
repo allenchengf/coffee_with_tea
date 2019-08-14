@@ -72,7 +72,7 @@ class ScanProviderTest extends TestCase
 
         $locationNetwork = LocationNetwork::find(1);
 
-        $response = $this->controller->selectAchangeToBCdnProvider($request, $locationNetwork);
+        $response = $this->controller->changeCDNProviderByIRoute($request, $locationNetwork);
 
         $this->assertEquals(200, $response->status());
 
