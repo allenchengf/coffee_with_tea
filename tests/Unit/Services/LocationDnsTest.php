@@ -2,7 +2,7 @@
 
 namespace Tests\Unit\Services;
 
-use Hiero7\Repositories\LineRepository;
+use Hiero7\Repositories\{LineRepository,CdnRepository};
 use Hiero7\Repositories\LocationDnsSettingRepository;
 use Hiero7\Services\DnsProviderService;
 use Hiero7\Services\LocationDnsSettingService;
@@ -22,23 +22,24 @@ class LocationDnsTest extends TestCase
         $this->seed('CdnTableSeeder');
         $this->dnsprovider = $this->initMock(DnsProviderService::class);
         app()->call([$this, 'repository']);
-        app()->call([$this, 'dnsPodMock']);
+        app()->call([$this, 'mockery']);
         $this->domain = Domain::inRandomOrder()->first();
         $this->cdnId = $this->domain->cdns()->first()->id;
         $this->cdn = $this->domain->cdns()->where('id', $this->cdnId)->first();
         $this->locationNetwork = LocationNetwork::inRandomOrder()->first();
         $this->locationDnsSetting = LocationDnsSetting::first();
-        $this->service = new LocationDnsSettingService($this->locationDnsSettingRepository, $this->dnsprovider, $this->lineRepository);
+        $this->service = new LocationDnsSettingService($this->locationDnsSettingRepository, $this->dnsprovider, $this->lineRepository, $this->cdnRepository);
 
     }
 
-    public function repository(LocationDnsSettingRepository $locationDnsSettingRepository, LineRepository $lineRepository)
+    public function repository(LocationDnsSettingRepository $locationDnsSettingRepository, LineRepository $lineRepository, CdnRepository $cdnRepository)
     {
         $this->locationDnsSettingRepository = $locationDnsSettingRepository;
         $this->lineRepository = $lineRepository;
+        $this->cdnRepository = $cdnRepository;
     }
 
-    public function dnsPodMock()
+    public function mockery()
     {
         $this->dnsprovider->shouldReceive('createRecord')->withAnyArgs()
             ->andReturn(["message" => "Success", "errorCode" => null, "data" => [
@@ -89,5 +90,18 @@ class LocationDnsTest extends TestCase
 
         $this->assertEquals($response, true);
 
+    }
+
+    public function testDecideAction()
+    {
+        $this->addUuidforPayload()
+            ->addUserGroupId(1)
+            ->setJwtTokenPayload(1, $this->jwtPayload);
+
+        $cdnProviderId = $this->cdn->cdn_provider_id;
+        
+        $response =  $this->service->decideAction($cdnProviderId, $this->domain, $this->locationNetwork);
+
+        $this->assertEquals($response, true);
     }
 }

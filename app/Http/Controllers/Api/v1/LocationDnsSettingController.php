@@ -31,15 +31,15 @@ class LocationDnsSettingController extends Controller
 
     }
 
-/**
- * get Group/孤兒 Domain 名單列表 的 function
- * 
- * 有回傳 cdn provider 是為了前端多給的。
- * 
- * @param Request $request
- * @param Domain $domain
- * @return void
- */
+    /**
+     * get Group/孤兒 Domain 名單列表 的 function
+     * 
+     * 有回傳 cdn provider 是為了前端多給的。
+     * 
+     * @param Request $request
+     * @param Domain $domain
+     * @return void
+     */
     public function indexByGroup(Request $request,Domain $domain)
     {
         $user_group_id = $this->getUgid($request);
@@ -63,13 +63,13 @@ class LocationDnsSettingController extends Controller
 
     }
 
-/**
- * get Group/孤兒 Domain 的 iRoute 設定列表 function
- *
- * @param Request $request
- * @param Domain $domain
- * @return void
- */
+    /**
+     * get Group/孤兒 Domain 的 iRoute 設定列表 function
+     *
+     * @param Request $request
+     * @param Domain $domain
+     * @return void
+     */
     public function indexAll(Request $request,Domain $domain)
     {
         $user_group_id = $this->getUgid($request);
@@ -96,16 +96,17 @@ class LocationDnsSettingController extends Controller
 
         return $this->response('',null,compact('domainGroup','domains'));
     }
-/**
- * 新增/修改 iRoute 設定的 function
- * 
- * 拿 cdn_provider_id 換到該 domain 下的 cdn ，再判斷要走 update 還是 create 。
- * 
- * @param LocationDnsSettingRequest $request
- * @param Domain $domain
- * @param LocationNetwork $locationNetworkId
- * @return void
- */
+
+    /**
+     * 新增/修改 iRoute 設定的 function
+     * 
+     * 拿 cdn_provider_id 換到該 domain 下的 cdn ，再判斷要走 update 還是 create 。
+     * 
+     * @param LocationDnsSettingRequest $request
+     * @param Domain $domain
+     * @param LocationNetwork $locationNetworkId
+     * @return void
+     */
     public function editSetting(LocationDnsSettingRequest $request, Domain $domain, LocationNetwork $locationNetwork)
     {
         $message = '';
