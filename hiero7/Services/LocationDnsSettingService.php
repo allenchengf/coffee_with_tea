@@ -23,6 +23,13 @@ class LocationDnsSettingService
 
     }
 
+/**
+ * get Domain's iRoute function
+ *
+ * 拿 domain 下的東西
+ * @param Domain $domain
+ * @return void
+ */
     public function indexByDomain(Domain $domain)
     {
         $cdnsModelMass = $domain->cdns;
@@ -45,6 +52,7 @@ class LocationDnsSettingService
 
         $dnsSetting = $domain->locationDnsSettings->keyBy('location_networks_id');
 
+        //如果沒有設定在 locationDnsSetting 就放預設 cdn。 
         foreach($lineCollection as $lineModel){
 
             if(!$dnsSetting->has($lineModel->id)){
@@ -53,7 +61,7 @@ class LocationDnsSettingService
             }
 
             $dnsCdnMapping = $dnsSetting->get(($lineModel->id));
-
+            //用 locationDnsSetting 的 cdn_id 取出特定的 cdn 設定
             $cdnsTarget = $cdns->get($dnsCdnMapping->cdn_id);
 
             $lineModel->setAttribute('cdn', $cdnsTarget);
@@ -62,7 +70,17 @@ class LocationDnsSettingService
 
         return $lineCollection;
     }
-
+/**
+ * update iRoute Setting function
+ *
+ * 會把設定打上去 pod
+ * 
+ * @param array $data
+ * @param Domain $domain
+ * @param Cdn $cdn
+ * @param LocationDnsSetting $locationDnsSetting
+ * @return void
+ */
     public function updateSetting(array $data,Domain $domain,Cdn $cdn, LocationDnsSetting $locationDnsSetting)
     {
         $podResult = $this->dnsProviderService->editRecord([
@@ -80,7 +98,17 @@ class LocationDnsSettingService
         return $this->locationDnsSettingRepository
                     ->updateLocationDnsSetting($locationDnsSetting, $data);
     }
-
+/**
+ * create  iRoute Setting function
+ *
+ *  會把設定打上去 pod
+ *  
+ * @param array $data
+ * @param Domain $domain
+ * @param Cdn $cdn
+ * @param LocationNetwork $locationNetwork
+ * @return void
+ */
     public function createSetting(array $data, Domain $domain,Cdn $cdn, LocationNetwork $locationNetwork)
     {
         $podResult = $this->dnsProviderService->createRecord([
@@ -99,11 +127,14 @@ class LocationDnsSettingService
                     ->createSetting($locationNetwork, $podResult['data']['record']['id'], $data);
     }
 
-    public function updateToDefaultCdnId(Cdn $targetCdn, Cdn $defaultCdn)
-    {
-        return $this->locationDnsSettingRepository->updateToDefaultCdnId($targetCdn->id, $defaultCdn->id);
-    }
-
+/**
+ * delete iRoute Setting function
+ * 
+ * 會將 pod 上的設定刪掉
+ *
+ * @param LocationDnsSetting $locationDnsSetting
+ * @return void
+ */
     public function destroy(LocationDnsSetting $locationDnsSetting)
     {
         $podResult = $this->dnsProviderService->deleteRecord([

@@ -36,6 +36,15 @@ class LocationDnsSettingController extends Controller
 
     }
 
+/**
+ * get Group/孤兒 Domain 名單列表 的 function
+ * 
+ * 有回傳 cdn provider 是為了前端多給的。
+ * 
+ * @param Request $request
+ * @param Domain $domain
+ * @return void
+ */
     public function indexByGroup(Request $request,Domain $domain)
     {
         $user_group_id = $this->getUgid($request);
@@ -59,17 +68,26 @@ class LocationDnsSettingController extends Controller
 
     }
 
+/**
+ * get Group/孤兒 Domain 的 iRoute 設定列表 function
+ *
+ * @param Request $request
+ * @param Domain $domain
+ * @return void
+ */
     public function indexAll(Request $request,Domain $domain)
     {
         $user_group_id = $this->getUgid($request);
 
         $domainGroupCollection = DomainGroup::where(compact('user_group_id'))->get();
 
+        $domainGroup = [];
         foreach($domainGroupCollection as $domainGroupModel){
             $domainGroup[] = $this->domainGroupService->indexGroupIroute($domainGroupModel);
         }
         $domainsCollection = $domain->with('domainGroup')->where(compact('user_group_id'))->get();
 
+        //找出孤兒
         $domainsCollection = $domainsCollection->filter(function ($item) {
             return $item->domainGroup->isEmpty();
         });
@@ -83,7 +101,16 @@ class LocationDnsSettingController extends Controller
 
         return $this->response('',null,compact('domainGroup','domains'));
     }
-
+/**
+ * 新增/修改 iRoute 設定的 function
+ * 
+ * 拿 cdn_provider_id 換到該 domain 下的 cdn ，再判斷要走 update 還是 create 。
+ * 
+ * @param LocationDnsSettingRequest $request
+ * @param Domain $domain
+ * @param LocationNetwork $locationNetworkId
+ * @return void
+ */
     public function editSetting(LocationDnsSettingRequest $request, Domain $domain, LocationNetwork $locationNetworkId)
     {
         $message = '';
@@ -104,7 +131,7 @@ class LocationDnsSettingController extends Controller
             'edited_by' => $this->getJWTPayload()['uuid']
         ];
 
-        $existLocationDnsSetting = $this->checkExist($domain, $locationNetworkId);
+        $existLocationDnsSetting = $this->checkSettingExist($domain, $locationNetworkId);
 
         if (!collect($existLocationDnsSetting)->isEmpty()) {
             $result = $this->locationDnsSettingService->updateSetting($data, $domain, $cdnModel, $existLocationDnsSetting);
@@ -128,7 +155,7 @@ class LocationDnsSettingController extends Controller
         return $domain->cdns()->where('id', $cdnId)->first();
     }
 
-    private function checkExist(Domain $domain,LocationNetwork $locationNetwork)
+    private function checkSettingExist(Domain $domain,LocationNetwork $locationNetwork)
     {
         $cdnId = Cdn::where('domain_id',$domain->id)->pluck('id');
         return LocationDnsSetting::where('location_networks_id',$locationNetwork->id)->whereIn('cdn_id',$cdnId)->first();
