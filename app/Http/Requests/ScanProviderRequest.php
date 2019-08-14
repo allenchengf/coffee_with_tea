@@ -31,11 +31,6 @@ class ScanProviderRequest extends FormRequest
                     "new_cdn_provider_id" => "required|integer|exists:cdn_providers,id",
                 ];
                 break;
-            case ($routeName == "$prefix.chage2"):
-                return [
-                    "cdn_provider_id" => "required|integer|exists:cdn_providers,id",
-                ];
-                break;
             default :
                 return [];
                 break;
