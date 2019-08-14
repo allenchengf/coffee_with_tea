@@ -5,11 +5,13 @@ namespace App\Http\Controllers\Api\v1;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\ScanProviderRequest;
 use Hiero7\Models\Domain;
+use Hiero7\Models\LocationNetwork;
 use Hiero7\Services\ScanProviderService;
 
 class ScanProviderController extends Controller
 {
     protected $scanProviderService;
+
     /**
      * NetworkService constructor.
      */
@@ -32,12 +34,12 @@ class ScanProviderController extends Controller
      * @param ScanProviderRequest $request
      * @return array
      */
-    public function selectAchangeToBCdnProvider(ScanProviderRequest $request)
+    public function selectAchangeToBCdnProvider(ScanProviderRequest $request, LocationNetwork $locationNetworkId)
     {
         $oldCdnProviderId = $request->get('old_cdn_provider_id');
         $newCdnProviderId = $request->get('new_cdn_provider_id');
 
-        $this->scanProviderService->selectAchangeToBCdnProvider($oldCdnProviderId, $newCdnProviderId);
+        $this->scanProviderService->changeCDNProviderByIRoute($locationNetworkId, $oldCdnProviderId, $newCdnProviderId);
 
         return $this->response();
 

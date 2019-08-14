@@ -1,11 +1,15 @@
 <?php
+
 namespace Hiero7\Repositories;
 
 use Hiero7\Enums\DbError;
 use Hiero7\Models\Domain;
+use Hiero7\Traits\JwtPayloadTrait;
 
 class DomainRepository
 {
+    use JwtPayloadTrait;
+
     protected $domain;
 
     public function __construct(Domain $domain)
@@ -52,5 +56,17 @@ class DomainRepository
     public function checkUniqueCname(string $cname)
     {
         return $this->domain->where('cname', $cname)->exists();
+    }
+
+    public function getDomainsByCDNProviderList(array $cdnProviderIdList = [])
+    {
+        $countList = count($cdnProviderIdList);
+
+        return $this->domain->where('user_group_id', $this->getJWTUserGroupId())
+            ->with(array('cdnProvider' => function ($query) use ($cdnProviderIdList) {
+                $query->whereIn('cdn_providers.id', $cdnProviderIdList);
+            }))->get()->filter(function ($item) use ($countList) {
+                return (count($item->cdnProvider) == $countList) ? true : false;
+            })->values();
     }
 }
