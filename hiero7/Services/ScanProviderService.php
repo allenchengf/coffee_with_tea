@@ -78,7 +78,10 @@ class ScanProviderService
         $data = [];
         $data['url'] = $cdnProviderUrl;
         $data['wait'] = env('SCAN_SECOND');
-        $locationNetwork = LocationNetwork::whereNotNull('mapping_value')->get()->all();
+
+        $locationNetwork = LocationNetwork::all()->filter(function ($item) {
+            return $item->network->scheme_id ==env('SCHEME');
+        });
 
         if (count($locationNetwork) > 0) {
             $crawlerData = $this->curlToCrawler($scanPlatform->url, $data);
@@ -107,7 +110,9 @@ class ScanProviderService
      */
     private function mappingData($crawlerData)
     {
-        $locationNetwork = LocationNetwork::whereNotNull('mapping_value')->get()->all();
+        $locationNetwork = LocationNetwork::all()->filter(function ($item) {
+            return $item->network->scheme_id ==env('SCHEME');
+        });
 
         $result = collect($locationNetwork)->map(function ($item, $key) use ($crawlerData) {
             $result = new \stdClass();
