@@ -5,6 +5,7 @@ namespace Tests\Unit\Controller;
 use App\Http\Controllers\Api\v1\ScanProviderController;
 use App\Http\Requests\ScanProviderRequest as Request;
 use Hiero7\Models\LocationNetwork;
+use Hiero7\Models\ScanPlatform;
 use Hiero7\Services\LocationDnsSettingService;
 use Hiero7\Services\ScanProviderService;
 use Mockery as m;
@@ -27,13 +28,12 @@ class ScanProviderTest extends TestCase
         $this->seed('DomainTableSeeder');
         $this->seed('CdnTableSeeder');
         $this->seed('LocationDnsSettingSeeder');
+        $this->seed('ScanPlatformTableSeeder');
+        $this->setLocationNetwork();
 
         $this->spyLocationDnsSettingService = m::spy(LocationDnsSettingService::class);
-
-        $this->controller = new ScanProviderController(
-            (new ScanProviderService($this->spyLocationDnsSettingService))
-        );
-
+        $this->fakeScanProviderService = new FakeScanProviderService($this->spyLocationDnsSettingService);
+        $this->controller = new ScanProviderController($this->fakeScanProviderService);
     }
 
     protected function tearDown()
@@ -62,6 +62,26 @@ class ScanProviderTest extends TestCase
         $this->shouldUseDecideAction();
     }
 
+    /**
+     * @test
+     */
+    public function scannedData()
+    {
+        $scanPlatform = ScanPlatform::find(1);
+
+        $request = $this->createRequestAndJwt([
+            'cdn_provider_id' => 1,
+        ]);
+
+        $this->setCrawData();
+
+        $response = $this->controller->scannedData($scanPlatform, $request);
+
+        $data = $this->checkStatusAndReturnData($response, 200);
+
+        $this->assertEquals(3, count($data['data']['scanned']));
+    }
+
     private function shouldUseDecideAction()
     {
         $this->spyLocationDnsSettingService
@@ -80,6 +100,58 @@ class ScanProviderTest extends TestCase
             ->setJwtTokenPayload($loginUid, $this->jwtPayload);
 
         return $request;
+    }
+
+    private function checkStatusAndReturnData($response, int $statusCode = 200)
+    {
+        $this->assertEquals(200, $response->status());
+
+        return json_decode($response->getContent(), true);
+    }
+
+    private function setLocationNetwork()
+    {
+        $data = [
+            [
+                "id" => 1,
+                'mapping_value' => 'Zhejiang Wenzho Telecom',
+            ],
+            [
+                "id" => 2,
+                'mapping_value' => 'Shaanxi Xi an Telecom',
+            ],
+            [
+                "id" => 3,
+                'mapping_value' => 'Jiangsu Suqian Unicom',
+            ],
+
+        ];
+
+        foreach ($data as $key => $value) {
+            LocationNetwork::find($value['id'])->update($value);
+        }
+    }
+
+    private function setCrawData()
+    {
+        $this->fakeScanProviderService->setcrawlerData(json_decode('{"url":"www.hiero7.com","time":1565750039,"source":"chinaz","method":"ping","results":[{"nameEn":"Zhejiang Wenzho Telecom","latency":555},{"nameEn":"Shaanxi Xi\'an Telecom","latency":221},{"nameEn":"Jiangsu Suqian Unicom","latency":331},{"nameEn":"Jiangsu Suqian Telecom","latency":123}]}', true));
+    }
+
+}
+
+class FakeScanProviderService extends ScanProviderService
+{
+
+    protected $crawlerData = [];
+
+    public function setcrawlerData(array $data = [])
+    {
+        return $this->crawlerData = $data;
+    }
+
+    protected function curlToCrawler($url, array $data = [])
+    {
+        return $this->crawlerData;
     }
 
 }
