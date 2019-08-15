@@ -98,7 +98,7 @@ Route::group(['middleware' => ['api','check.config'], 'namespace' => 'Api\v1', '
     });
 
     Route::group(['prefix' => 'scan-provider'],function () {
-        Route::post('{scan-provider}/scanned-data', 'ScanProviderController@scannedData');
+        Route::post('{scanPlatform}/scanned-data', 'ScanProviderController@scannedData');
         Route::put('cdn-provider', 'ScanProviderController@selectAchangeToBCdnProvider')->name('scan.chage');
     });
 
