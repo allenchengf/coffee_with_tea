@@ -71,7 +71,7 @@ class ScanProviderService
     public function getScannedData($scanPlatform, $cdnProviderUrl)
     {
         $crawlerData = [];
-        $locationNetwork = LocationNetwork::all()->filter(function ($item) {
+        $locationNetwork = LocationNetwork::whereNotNull('mapping_value')->get()->filter(function ($item) {
             return $item->network->scheme_id ==env('SCHEME');
         });
 
@@ -108,7 +108,7 @@ class ScanProviderService
      */
     private function mappingData($crawlerData)
     {
-        $locationNetwork = LocationNetwork::all()->filter(function ($item) {
+        $locationNetwork = LocationNetwork::whereNotNull('mapping_value')->get()->filter(function ($item) {
             return $item->network->scheme_id ==env('SCHEME');
         });
 
