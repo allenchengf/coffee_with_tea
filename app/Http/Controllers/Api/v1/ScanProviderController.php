@@ -38,6 +38,11 @@ class ScanProviderController extends Controller
         return $this->response('', null, $domains);
     }
 
+    /**
+     * @param ScanPlatform $scanPlatform
+     * @param ScanProviderRequest $request
+     * @return ScanProviderController
+     */
     public function scannedData(ScanPlatform $scanPlatform,ScanProviderRequest $request)
     {
         $cdnProvider = CdnProvider::find($request->get('cdn_provider_id'));
