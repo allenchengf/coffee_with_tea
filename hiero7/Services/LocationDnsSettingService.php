@@ -53,7 +53,7 @@ class LocationDnsSettingService
 
         $dnsSetting = $domain->locationDnsSettings->keyBy('location_networks_id');
 
-        //如果沒有設定在 locationDnsSetting 就放預設 cdn。 
+        //如果沒有設定在 locationDnsSetting 就放預設 cdn。
         foreach($lineCollection as $lineModel){
 
             if(!$dnsSetting->has($lineModel->id)){
@@ -111,7 +111,7 @@ class LocationDnsSettingService
     public function decideAction(Int $cdnProviderId, Domain $domain, LocationNetwork $locationNetwork)
     {
         $cdnModel = $this->getTargetCdn($cdnProviderId, $domain);
-        
+
         if(is_null($cdnModel)){
             return 'differentGroup';
         }
