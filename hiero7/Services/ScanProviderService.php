@@ -58,7 +58,7 @@ class ScanProviderService
      * @param array $cdnProviderIdList
      * @return Collection
      */
-    public function getDomainsByCDNProviderIdList(DomainRepository $domainRepository, $cdnProviderIdList = []): Collection
+    public function getDomainsByCDNProviderIdList(DomainRepository $domainRepository, array $cdnProviderIdList = []): Collection
     {
         return $domainRepository->getDomainsByCDNProviderList($cdnProviderIdList);
     }
