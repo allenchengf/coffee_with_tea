@@ -4,7 +4,9 @@ namespace App\Http\Controllers\Api\v1;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\ScanProviderRequest;
+use Hiero7\Models\CdnProvider;
 use Hiero7\Models\LocationNetwork;
+use Hiero7\Models\ScanPlatform;
 use Hiero7\Services\ScanProviderService;
 
 class ScanProviderController extends Controller
@@ -18,14 +20,6 @@ class ScanProviderController extends Controller
     {
         $this->scanProviderService = $scanProviderService;
     }
-
-    public function index()
-    {
-        $scanProvider = collect(config('scanProvider'))->keys();
-
-        return $this->response("", null, $scanProvider);
-    }
-
 
     /**
      * Select A Change To B Cdn Provider by IRoute
@@ -42,5 +36,22 @@ class ScanProviderController extends Controller
         $domains = $this->scanProviderService->changeCDNProviderByIRoute($locationNetworkId, $oldCdnProviderId, $newCdnProviderId);
 
         return $this->response('', null, $domains);
+    }
+
+    /**
+     * @param ScanPlatform $scanPlatform
+     * @param ScanProviderRequest $request
+     * @return ScanProviderController
+     */
+    public function scannedData(ScanPlatform $scanPlatform,ScanProviderRequest $request)
+    {
+        $cdnProvider = CdnProvider::find($request->get('cdn_provider_id'));
+        $cdnProviderUrl = $cdnProvider->url;
+        $scanned = [];
+
+        if(isset($cdnProviderUrl)){
+            $scanned = $this->scanProviderService->getScannedData($scanPlatform, $cdnProvider->url);
+        }
+        return $this->response("", null, compact('cdnProvider', 'scanned'));
     }
 }

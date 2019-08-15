@@ -1,6 +1,4 @@
 <?php
-ini_set('max_execution_time', 600);
-ini_set('memory_limit', '1024M');
 
 Route::group(['middleware' => ['api','check.config'], 'namespace' => 'Api\v1', 'prefix' => 'v1'], function () {
     Route::group(['prefix' => 'domains'], function () {
@@ -100,9 +98,16 @@ Route::group(['middleware' => ['api','check.config'], 'namespace' => 'Api\v1', '
     });
 
 
-    Route::group(['prefix' => 'scan-provider'],function () {
+    Route::group(['prefix' => 'scan-platform'],function () {
+        Route::get('', 'ScanPlatformController@index')->name('scanPlatform.index');
+        Route::post('', 'ScanPlatformController@create')->name('scanPlatform.create');
+        Route::patch('{scanPlatform}', 'ScanPlatformController@edit')->name('scanPlatform.edit');
+        Route::delete('{scanPlatform}', 'ScanPlatformController@destroy')->name('scanPlatform.destroy');
         Route::get('', 'ScanProviderController@index');
 
         Route::put('/routing-rules/{locationNetworkId}', 'ScanProviderController@changeCDNProviderByIRoute')->name('scan.chage.routing-rule');
+
+        Route::post('{scanPlatform}/scanned-data', 'ScanProviderController@scannedData');
+        Route::put('cdn-provider', 'ScanProviderController@selectAchangeToBCdnProvider')->name('scan.chage');
     });
 });

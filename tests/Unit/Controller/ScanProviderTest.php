@@ -44,23 +44,6 @@ class ScanProviderTest extends TestCase
     /**
      * @test
      */
-    public function scanInedex()
-    {
-        $response = $this->controller->index();
-        $data = json_decode($response->getContent(), true);
-
-        $this->assertEquals(
-            [
-                '17ce',
-                'chinaz',
-            ]
-            , $data['data']
-        );
-    }
-
-    /**
-     * @test
-     */
     public function selectAchangeToBCdnProvider()
     {
         $selectCdnProvider = [
