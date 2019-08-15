@@ -22,12 +22,13 @@ class DomainGroupController extends Controller
         $this->domainGroupService = $domainGroupService;
         $this->cdnService = $cdnService;
     }
-/**
- * Grouping 頁面
- *
- * @param DomainGroupRequest $request
- * @return void
- */
+
+    /**
+     * Grouping 頁面
+     *
+     * @param DomainGroupRequest $request
+     * @return void
+     */
     public function index(DomainGroupRequest $request)
     {
         $this->formatRequestAndThis($request);
@@ -37,6 +38,13 @@ class DomainGroupController extends Controller
         return $this->response('', null, $result);
     }
 
+    /**
+     * get DomainGroup 的 iRoute 列表 function
+     *
+     * @param DomainGroupRequest $request
+     * @param DomainGroup $domainGroup
+     * @return void
+     */
     public function indexGroupIroute(DomainGroupRequest $request, DomainGroup $domainGroup)
     {
         $this->formatRequestAndThis($request);
@@ -45,13 +53,14 @@ class DomainGroupController extends Controller
 
         return $this->response('', null, $result);
     }
-/**
- * Groping/General 頁面
- *
- * @param DomainGroupRequest $request
- * @param DomainGroup $domainGroup
- * @return void
- */
+
+    /**
+     * 取特定 Group 的 Domain 和 cdn Provider 資訊
+     *
+     * @param DomainGroupRequest $request
+     * @param DomainGroup $domainGroup
+     * @return void
+     */
     public function indexByDomainGroupId(DomainGroupRequest $request, DomainGroup $domainGroup)
     {
         $this->formatRequestAndThis($request);
@@ -61,6 +70,12 @@ class DomainGroupController extends Controller
         return $this->response('', null, $result);
     }
 
+    /**
+     * 純 crete group function
+     *
+     * @param DomainGroupRequest $request
+     * @return void
+     */
     public function create(DomainGroupRequest $request)
     {
         $request = $this->formatRequestAndThis($request);
@@ -108,6 +123,13 @@ class DomainGroupController extends Controller
         return $this->setStatusCode($this->error ? 400 : 200)->response($this->message, $this->error, $result);
     }
 
+    /**
+     * 純 修改 Group 
+     *
+     * @param DomainGroupRequest $request
+     * @param DomainGroup $domainGroup
+     * @return void
+     */
     public function edit(DomainGroupRequest $request, DomainGroup $domainGroup)
     {
         $request = $this->formatRequestAndThis($request);
@@ -124,24 +146,37 @@ class DomainGroupController extends Controller
         return $this->setStatusCode($this->error ? 400 : 200)->response($this->message, $this->error, $result);
     }
 
+    /**
+     * 純 刪除 Group
+     *
+     * @param DomainGroupRequest $request
+     * @param DomainGroup $domainGroup
+     * @return void
+     */
     public function destroy(DomainGroupRequest $request, DomainGroup $domainGroup)
     {
         $this->formatRequestAndThis($request);
-        $this->domainGroupService->destroy($domainGroup->id);
+        $result =  $this->domainGroupService->destroy($request, $domainGroup);
 
-        return $this->response();
+        if ($result == false) {
+            $this->error = PermissionError::PERMISSION_DENIED;
+            $result = [];
+        }
+
+        return $this->setStatusCode($this->error ? 400 : 200)->response($this->message, $this->error, $result);
     }
-/**
- * Groping/General 頁面
- *
- * @param DomainGroupRequest $request
- * @param Domain $domain
- * @return void
- */
+
+    /**
+     *  從 Group 移除特定 Domain
+     *
+     * @param DomainGroupRequest $request
+     * @param Domain $domain
+     * @return void
+     */
     public function destroyByDomainId(DomainGroupRequest $request, DomainGroup $domainGroup ,Domain $domain)
     {
         $this->formatRequestAndThis($request);
-        $result = $this->domainGroupService->destroyByDomainId($domainGroup,$domain);
+        $result = $this->domainGroupService->destroyByDomainId($request ,$domainGroup,$domain);
 
         if($result ==false){
             $this->error = PermissionError::CANT_DELETE_LAST_DOMAIN;
@@ -152,6 +187,13 @@ class DomainGroupController extends Controller
         return $this->setStatusCode($this->error ? 400 : 200)->response($this->message, $this->error, $result);
     }
 
+    /**
+     * 修改 Group 內所有 domain 的 default cdn
+     *
+     * @param DomainGroupRequest $request
+     * @param DomainGroup $domainGroup
+     * @return void
+     */
     public function changeDefaultCdn(DomainGroupRequest $request, DomainGroup $domainGroup)
     {
         $domainModel = $domainGroup->domains;
@@ -187,6 +229,7 @@ class DomainGroupController extends Controller
             'edited_by' => $this->uuid,
         ]);
     }
+
     protected function handleResponse($result){
         if (method_exists($result, 'getStatusCode') && $result->getStatusCode() == 404)
             return abort(404);        

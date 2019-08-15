@@ -3,12 +3,11 @@
 namespace Hiero7\Services;
 
 use Hiero7\Models\Domain;
-use Hiero7\Models\Cdn;
-use Hiero7\Models\LocationNetwork;
-use Hiero7\Repositories\LocationDnsSettingRepository;
-use Hiero7\Traits\JwtPayloadTrait;
 use Illuminate\Support\Collection;
 use Ixudra\Curl\Facades\Curl;
+use Hiero7\Models\LocationNetwork;
+use Hiero7\Traits\JwtPayloadTrait;
+use Hiero7\Repositories\DomainRepository;
 
 class ScanProviderService
 {
@@ -18,129 +17,65 @@ class ScanProviderService
     protected $dnsPodRecordSyncService;
     const CURL_TIMEOUT = 60;
 
+
+    protected $locationDnsSettionService;
+
     /**
      * NetworkService constructor.
      */
-    public function __construct(
-        CdnService $cdnService,
-        DnsPodRecordSyncService $dnsPodRecordSyncService,
-        LocationDnsSettingRepository $locationDnsSettingRepository
-    )
+    public function __construct(LocationDnsSettingService $locationDnsSettingService)
     {
-        $this->cdnService = $cdnService;
-        $this->dnsPodRecordSyncService = $dnsPodRecordSyncService;
-        $this->locationDnsSettingRepository = $locationDnsSettingRepository;
-
-    }
-
-    public function selectAchangeToBCdnProvider($fromCdnProviderId, $toCdnProviderId)
-    {
-        $cdnProviderIdList = [$fromCdnProviderId, $toCdnProviderId];
-
-        $deleteCdnIdList = [];
-        $tagertCdn = [];
-
-        $domains = Domain::where('user_group_id', $this->getJWTUserGroupId())->with(array('cdnProvider' => function ($query) use ($cdnProviderIdList) {
-            $query->whereIn('cdn_providers.id', $cdnProviderIdList);
-        }))->get()->filter(function ($item) use (&$deleteCdnIdList, &$tagertCdn, $toCdnProviderId) {
-            if (count($item->cdnProvider) == 2) {
-                collect($item->cdnProvider)->map(function ($cdnProvider) use (&$deleteCdnIdList, &$tagertCdn, $toCdnProviderId) {
-
-                    // 找出要刪除 Location Network 的 Cdn ID
-                    $deleteCdnIdList[] = $cdnProvider->cdns->id;
-
-                    //找出 要切換的目標 cdn
-                    if ($cdnProvider->id == $toCdnProviderId && $cdnProvider->cdns->default == 0) {
-                        $tagertCdn[] = $cdnProvider->cdns;
-                    }
-                });
-                return true;
-            }
-        });
-
-        $this->deleteLocationDnsSettingByIdList($deleteCdnIdList);
-        $this->changeDefaultCdnByCdnList($tagertCdn);
-        $this->syncReocordByDomains($domains);
-
-        return $domains;
+        $this->locationDnsSettionService = $locationDnsSettingService;
     }
 
     /**
-     * 將全部的 Domain 切換至指定的 Cdn Provider 包含 Default
+     *  Select A Change To B Cdn Provider by IRoute
      *
-     * @param int $cdnProviderId
-     * @return mixed
+     * @param LocationNetwork $locationNetwork
+     * @param int $fromCdnProviderId
+     * @param int $toCdnProviderId
+     * @return array
      */
-    public function changeCdnProviderById(int $cdnProviderId)
+    public function changeCDNProviderByIRoute(LocationNetwork $locationNetwork, int $fromCdnProviderId, int $toCdnProviderId): array
     {
-        $tagertDefaultCdn = [];
+        $domainAction = [];
 
-        $domains = Domain::where('user_group_id', $this->getJWTUserGroupId())->with(array('cdnProvider' => function ($query) use ($cdnProviderId) {
-            $query->whereIn('cdn_providers.id', [$cdnProviderId]);
-        }))->get()->filter(function ($item) use (&$tagertDefaultCdn, $cdnProviderId) {
-            if (count($item->cdnProvider) >= 1) {
-                $item->locationDnsSettings()->delete();
+        $domains = app()->call([$this, 'getDomainsByCDNProviderIdList'], [
+            'cdnProviderIdList' => [$fromCdnProviderId, $toCdnProviderId],
+        ]);
 
-                collect($item->cdnProvider)->map(function ($cdnProvider) use (&$tagertDefaultCdn, $cdnProviderId) {
-                    //找出 要切換的目標 cdn
-                    if ($cdnProvider->id == $cdnProviderId && $cdnProvider->cdns->default == 0) {
-                        $tagertDefaultCdn[] = $cdnProvider->cdns;
-                    }
-                });
-                return true;
-            }
+        $domains->map(function (Domain $domain) use ($locationNetwork, $toCdnProviderId, &$domainAction) {
+            $domainAction[] = [
+                'domain' => $domain->only('id', 'user_group_id', 'name', 'cname', 'label'),
+                'action' => $this->locationDnsSettionService->decideAction($toCdnProviderId, $domain, $locationNetwork)
+            ];
         });
 
-        $this->changeDefaultCdnByCdnList($tagertDefaultCdn);
-        $this->syncReocordByDomains($domains);
-
-        return $domains;
+        return $domainAction;
     }
 
     /**
-     * 刪除 Location Dns Setting 的資料 By Id List
-     * @param array $idList
-     */
-    private function deleteLocationDnsSettingByIdList(array $idList)
-    {
-        collect($idList)->map(function ($id) {
-            $this->locationDnsSettingRepository->deleteByCdnId($id);
-        });
-    }
-
-    /**
-     * Change To Default Cdn By Cdn List
+     * Get Domains By CDN Provider Id List
      *
-     * @param array $cdnIdList
+     * @param DomainRepository $domainRepository
+     * @param array $cdnProviderIdList
+     * @return Collection
      */
-    private function changeDefaultCdnByCdnList(array $cdnIdList)
-    {
-        collect($cdnIdList)->map(function ($cdn) {
-            $targetCdn = Cdn::find($cdn->id);
-            $this->cdnService->changeDefaultToTrue($targetCdn->domain, $targetCdn, $this->getJWTUuid());
-        });
-    }
-
-    /**
-     * Sync Record By Domain List
-     *
-     * @param Collection $domains
-     */
-    private function syncReocordByDomains(Collection $domains)
-    {
-        $domains->map(function ($domain) {
-            $this->dnsPodRecordSyncService->syncAndCheckRecords($domain);
-        });
+    public function getDomainsByCDNProviderIdList(
+        DomainRepository $domainRepository,
+        $cdnProviderIdList = []
+    ): Collection {
+        return $domainRepository->getDomainsByCDNProviderList($cdnProviderIdList);
     }
 
     public function getScannedData($scanPlatform, $cdnProviderUrl)
     {
         $data = [];
-        $data['url'] =  $cdnProviderUrl;
+        $data['url'] = $cdnProviderUrl;
         $data['wait'] = env('SCAN_SECOND');
         $locationNetwork = LocationNetwork::whereNotNull('mapping_value')->get()->all();
 
-        if (count($locationNetwork) >0){
+        if (count($locationNetwork) > 0) {
             $crawlerData = $this->curlToCrawler($scanPlatform->url, $data);
         }
 
@@ -160,10 +95,11 @@ class ScanProviderService
     {
         $locationNetwork = LocationNetwork::whereNotNull('mapping_value')->get()->all();
 
-        $result = collect($locationNetwork)->map(function ($item, $key) use($crawlerData){
+        $result = collect($locationNetwork)->map(function ($item, $key) use ($crawlerData) {
             $result = new \stdClass();
-            $result->latency = collect($crawlerData->results)->whereIn('nameEn', $item->mapping_value)->pluck('latency')->first();
-            $location_networks =new \stdClass();
+            $result->latency = collect($crawlerData->results)->whereIn('nameEn',
+                $item->mapping_value)->pluck('latency')->first();
+            $location_networks = new \stdClass();
             $location_networks->id = $item->id;
             $location_networks->continent_id = $item->continent_id;
             $location_networks->country_id = $item->country_id;

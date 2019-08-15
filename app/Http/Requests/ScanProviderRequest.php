@@ -25,7 +25,7 @@ class ScanProviderRequest extends FormRequest
         $routeName = $this->route()->getName() ?? $prefix;
 
         switch ($routeName) {
-            case ($routeName == "$prefix.chage"):
+            case ($routeName == "$prefix.chage.routing-rule"):
                 return [
                     "old_cdn_provider_id" => "required|integer|exists:cdn_providers,id",
                     "new_cdn_provider_id" => "required|integer|exists:cdn_providers,id",

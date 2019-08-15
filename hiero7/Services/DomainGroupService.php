@@ -44,17 +44,24 @@ class DomainGroupService
         return $groupLists;
     }
 
+    /**
+     * 拿 DomainGroup 去換 iRoute 設定
+     *
+     * @param DomainGroup $domainGroup
+     * @return void
+     */
     public function indexGroupIroute(DomainGroup $domainGroup)
     {
         $domainGroup->location_network = $this->locationDnsSettingService->indexByDomain($domainGroup->domains()->first());
         return $domainGroup;
     }
-/**
- * 取得 DomainGroup 和 Domain 的關聯。在各自從 Domain 找 Cdn，再找 Cdn Provider 的名字。
- *
- * @param integer $domainGroup
- * @return void
- */
+
+    /**
+     * 取得 DomainGroup 和 Domain 的關聯。在各自從 Domain 找 Cdn，再找 Cdn Provider 的名字。
+     *
+     * @param integer $domainGroup
+     * @return void
+     */
     public function indexByDomainGroupId(DomainGroup $domainGroup)
     {
         foreach ($domainGroup->domains as $key => $domain) {
@@ -64,13 +71,13 @@ class DomainGroupService
         return $domainGroup;
     }
 
-/**
- * Create Group function
- *
- * 先檢查 Domain 和 操作人的 user_group_id 是否相同，若 user_group_id ＝ 1 例外。
- * 若 user_group_id = 1 會依照欲加入的 Domain 的 user_group_id 給與新建立的 Group 相同 user_group_id。
- * @param array $request
- */
+    /**
+     * Create Group function
+     *
+     * 先檢查 Domain 和 操作人的 user_group_id 是否相同，若 user_group_id ＝ 1 例外。
+     * 若 user_group_id = 1 會依照欲加入的 Domain 的 user_group_id 給與新建立的 Group 相同 user_group_id。
+     * @param array $request
+     */
     public function create(DomainGroupRequest $request)
     {
         $domainModle = Domain::where('id', $request->domain_id)->first();
@@ -93,13 +100,14 @@ class DomainGroupService
 
         return $result->domains;
     }
-/**
- * 新增 Domain 進 Group，會先檢查 Domain 本身的 Cdn Provider 是否相同，再去修改 Domain 的 Default CDN 和 iRoute 設定。
- *
- * @param array $request
- * @param DomainGroup $domainGroup
- * @return void
- */
+
+    /**
+     * 新增 Domain 進 Group，會先檢查 Domain 本身的 Cdn Provider 是否相同，再去修改 Domain 的 Default CDN 和 iRoute 設定。
+     *
+     * @param array $request
+     * @param DomainGroup $domainGroup
+     * @return void
+     */
     public function createDomainToGroup(DomainGroupRequest $request, DomainGroup $domainGroup)
     {
         $checkDomainCdnSetting = $this->compareDomainCdnSetting($domainGroup, $request->domain_id);
@@ -120,31 +128,66 @@ class DomainGroupService
         return $result;
     }
 
+    /**
+     * 純 update Group function
+     *  
+     *  判斷使用者和要修改的 Group 是否為相同 user_group_id。
+     *  
+     * @param DomainGroupRequest $request
+     * @param DomainGroup $domainGroup
+     * @return void
+     */
     public function edit(DomainGroupRequest $request, DomainGroup $domainGroup)
     {
-        $domain = $domainGroup->domains()->first();
-        if ($request->user_group_id != 1 && $request->user_group_id != $domain->user_group_id) {
-            return false;
-        }
+        $result = $this->checkUserGroupId($request, $domainGroup);
 
-        return $this->domainGroupRepository->update($request, $domainGroup->id);
+        return $result ? $this->domainGroupRepository->update($request, $domainGroup->id) : $result;
     }
 
-    public function destroy(int $domainGroupId)
+    /**
+     * 純 刪除 Group function
+     * 
+     * 判斷使用者和要修改的 Group 是否為相同 user_group_id。
+     *
+     * @param integer $domainGroupId
+     * @return void
+     */
+    public function destroy(DomainGroupRequest $request, DomainGroup $domainGroup)
     {
-        return $this->domainGroupRepository->destroy($domainGroupId);
+        $result = $this->checkUserGroupId($request, $domainGroup);
+        
+        return $result ? $this->domainGroupRepository->destroy($domainGroup->id) : $result;
     }
 
-    public function destroyByDomainId(DomainGroup $domainGroup, Domain $domain)
+    /**
+     * 從 Group 移除某個 Domain
+     *
+     * 先判斷是否為該 Group 內最後一個 Domain，
+     * 
+     * @param DomainGroup $domainGroup
+     * @param Domain $domain
+     * @return void
+     */
+    public function destroyByDomainId(DomainGroupRequest $request, DomainGroup $domainGroup, Domain $domain)
     {
+        $result = $this->checkUserGroupId($request, $domainGroup);
+        
         $domainCollection = $domainGroup->domains;
 
         if ($domainCollection->count() == 1) {
             return false;
         }
-        return $this->domainGroupRepository->destroyByDomainId($domainGroup->id, $domain->id);
+
+        return $result ? $this->domainGroupRepository->destroyByDomainId($domainGroup->id, $domain->id) : $result;
     }
 
+    /**
+     * 比較 domainGroup 的 cdn 是否和要被加進去的 domain 的 cdn 設定相同
+     *
+     * @param DomainGroup $domainGroup
+     * @param [type] $targetDomainId
+     * @return void
+     */
     public function compareDomainCdnSetting(DomainGroup $domainGroup, $targetDomainId)
     {
         $controlDomain = $domainGroup->domains;
@@ -160,6 +203,14 @@ class DomainGroupService
         return !$different->isEmpty() ? false : true;
     }
 
+    /**
+     * 修改 要被加入 domainGroup 的 domain 的 defaultCdn
+     *
+     * @param DomainGroup $domainGroup
+     * @param integer $domainId
+     * @param string $editedBy
+     * @return void
+     */
     public function changeCdnDefault(DomainGroup $domainGroup, int $domainId, string $editedBy)
     {
         $domain = Domain::find($domainId);
@@ -169,6 +220,15 @@ class DomainGroupService
         return $this->cdnService->changeDefaultToTrue($domain, $targetCdn, $editedBy);
     }
 
+    /**
+     * 修改 要被加入 domainGroup 的 domain 的 iRoute 設定。
+     * 
+     *
+     * @param DomainGroup $domainGroup
+     * @param integer $domainId
+     * @param string $editedBy
+     * @return void
+     */
     public function changeIrouteSetting(DomainGroup $domainGroup, int $domainId, string $editedBy)
     {
 
@@ -176,24 +236,14 @@ class DomainGroupService
         list($originIrouteSetting,$nonSettingCdn) = $this->getLocationSetting($originCdnSetting);
 
         if (empty($originIrouteSetting)) {
-            return true; //如果 Group 內 cdn 沒有設定 iroute 就不做更改。
+            return true; //如果 Group 內 cdn 沒有 iroute 設定就不做更改。
         }
 
         $targetDomain = Domain::find($domainId);
         $result = '';
 
         foreach ($originIrouteSetting as $iRouteSetting) {
-            $targetCdn = $this->cdnRepository->indexByWhere(['cdn_provider_id' => $iRouteSetting->cdn_provider_id, 'domain_id' => $domainId])->first();
-            $existLocationDnsSetting = $this->checkExist($targetDomain, $iRouteSetting->location_networks_id);
-
-            $data = ['cdn_id' => $targetCdn->id,
-                'edited_by' => $editedBy];
-
-            if (!collect($existLocationDnsSetting)->isEmpty()) {
-                $result = $this->locationDnsSettingService->updateSetting($data, $targetDomain, $targetCdn, $existLocationDnsSetting);
-            } else {
-                $result = $this->locationDnsSettingService->createSetting($data, $targetDomain, $targetCdn, $iRouteSetting->location);
-            }
+            $result = $this->locationDnsSettingService->decideAction($iRouteSetting->cdn_provider_id, $targetDomain, $iRouteSetting->location);
         }
 
         foreach($nonSettingCdn as $cdnProviderId ){
@@ -283,6 +333,17 @@ class DomainGroupService
         }
     }
 
+    /**
+     * 依照 cdn 的設定分辨，哪些 cdn 是有存在  locationDnsSetting table 內，有哪些 cdn 是沒有設定的。
+     * 
+     * 會回傳 targetIrouteSetting 和 nonSettingCdn 兩個參數。
+     * 
+     *  targetIrouteSetting 是有設定的 locationDnsSetting 物件
+     *  nonSettingCdn 是 cdn 沒有被設定的 cdn_provider_id 
+     * 
+     * @param Collection $cdnSetting
+     * @return void
+     */
     private function getLocationSetting(Collection $cdnSetting)
     {
         $targetIrouteSetting = [];
@@ -302,9 +363,32 @@ class DomainGroupService
         return [$targetIrouteSetting, $nonSettingCdn];
     }
 
-    private function checkExist(Domain $domain, int $locationNetworkId)
+    /**
+     * 檢查此 domain 下有沒有 locationDnsSetting
+     *
+     * @param Domain $domain
+     * @param integer $locationNetworkId
+     * @return void
+     */
+    private function checkSettingExist(Domain $domain, int $locationNetworkId)
     {
         $cdnId = $domain->cdns->pluck('id');
         return LocationDnsSetting::where('location_networks_id', $locationNetworkId)->whereIn('cdn_id', $cdnId)->first();
+    }
+
+    /**
+     * 檢查 使用者 是否操作 相同 userGroup 的 DomainGroup
+     *
+     * @param DomainGroupRequest $request
+     * @param DomainGroup $domainGroup
+     * @return void
+     */
+    private function checkUserGroupId(DomainGroupRequest $request, DomainGroup $domainGroup)
+    {
+        if ($request->user_group_id != 1 && $request->user_group_id != $domainGroup->user_group_id) {
+            return false;
+        }
+
+        return true;
     }
 }

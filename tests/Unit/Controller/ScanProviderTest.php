@@ -3,9 +3,9 @@
 namespace Tests\Unit\Controller;
 
 use App\Http\Controllers\Api\v1\ScanProviderController;
-use Hiero7\Repositories\LocationDnsSettingRepository;
-use Hiero7\Services\CdnService;
-use Hiero7\Services\DnsPodRecordSyncService;
+use App\Http\Requests\ScanProviderRequest as Request;
+use Hiero7\Models\LocationNetwork;
+use Hiero7\Services\LocationDnsSettingService;
 use Hiero7\Services\ScanProviderService;
 use Mockery as m;
 use Tests\TestCase;
@@ -16,6 +16,7 @@ class ScanProviderTest extends TestCase
      * @var ScanProviderController
      */
     private $controller;
+    private $spyLocationDnsSettingService;
 
     protected function setUp()
     {
@@ -26,25 +27,13 @@ class ScanProviderTest extends TestCase
         $this->seed('DomainTableSeeder');
         $this->seed('CdnTableSeeder');
         $this->seed('LocationDnsSettingSeeder');
-        
-        app()->call([$this, 'repository']);
 
-        $this->mockcdnService = m::mock(CdnService::class);
-        $this->mockdnsPodRecordSyncService = m::mock(DnsPodRecordSyncService::class);
+        $this->spyLocationDnsSettingService = m::spy(LocationDnsSettingService::class);
 
         $this->controller = new ScanProviderController(
-            (
-                new ScanProviderService(
-                    $this->mockcdnService,
-                    $this->mockdnsPodRecordSyncService,
-                    $this->locationDnsSettingRepository)
-            )
+            (new ScanProviderService($this->spyLocationDnsSettingService))
         );
 
-    }
-    public function repository(LocationDnsSettingRepository $locationDnsSettingRepository)
-    {
-        $this->locationDnsSettingRepository = $locationDnsSettingRepository;
     }
 
     protected function tearDown()
@@ -55,18 +44,42 @@ class ScanProviderTest extends TestCase
     /**
      * @test
      */
-    public function scanInedex()
+    public function selectAchangeToBCdnProvider()
     {
-        $this->assertTrue(true);
-        $response = $this->controller->index();
-        $data = json_decode($response->getContent(), true);
+        $selectCdnProvider = [
+            'old_cdn_provider_id' => 1,
+            'new_cdn_provider_id' => 2,
+        ];
 
-        $this->assertEquals(
-            [
-                '17ce',
-                'chinaz',
-            ]
-            , $data['data']
-        );
+        $request = $this->createRequestAndJwt($selectCdnProvider);
+
+        $locationNetwork = LocationNetwork::find(1);
+
+        $response = $this->controller->changeCDNProviderByIRoute($request, $locationNetwork);
+
+        $this->assertEquals(200, $response->status());
+
+        $this->shouldUseDecideAction();
     }
+
+    private function shouldUseDecideAction()
+    {
+        $this->spyLocationDnsSettingService
+            ->shouldHaveReceived('decideAction')
+            ->twice();
+    }
+
+    private function createRequestAndJwt(array $requestList = [], int $loginUid = 1, int $LoginUserGroupId = 1)
+    {
+        $request = new Request();
+
+        $request->merge($requestList);
+
+        $this->addUuidforPayload()
+            ->addUserGroupId($LoginUserGroupId)
+            ->setJwtTokenPayload($loginUid, $this->jwtPayload);
+
+        return $request;
+    }
+
 }

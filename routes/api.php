@@ -21,7 +21,7 @@ Route::group(['middleware' => ['api','check.config'], 'namespace' => 'Api\v1', '
                 Route::group(['prefix' => '/routing-rules'], function () {
                     Route::get('', 'LocationDnsSettingController@indexByDomain')->name('iRoute.indexByDomain');
                     Route::middleware(['admin.check'])->group(function() {
-                        Route::put('/{locationNetworkId}', 'LocationDnsSettingController@editSetting')->name('iRoute.edit');
+                        Route::put('/{locationNetwork}', 'LocationDnsSettingController@editSetting')->name('iRoute.edit');
                     });
                 });
             });
@@ -97,15 +97,17 @@ Route::group(['middleware' => ['api','check.config'], 'namespace' => 'Api\v1', '
         Route::get('', 'OperationLogController@index')->name('operation_log.index');
     });
 
-    Route::group(['prefix' => 'scan-provider'],function () {
-        Route::post('{scanPlatform}/scanned-data', 'ScanProviderController@scannedData');
-        Route::put('cdn-provider', 'ScanProviderController@selectAchangeToBCdnProvider')->name('scan.chage');
-    });
 
     Route::group(['prefix' => 'scan-platform'],function () {
         Route::get('', 'ScanPlatformController@index')->name('scanPlatform.index');
         Route::post('', 'ScanPlatformController@create')->name('scanPlatform.create');
         Route::patch('{scanPlatform}', 'ScanPlatformController@edit')->name('scanPlatform.edit');
         Route::delete('{scanPlatform}', 'ScanPlatformController@destroy')->name('scanPlatform.destroy');
+        Route::get('', 'ScanProviderController@index');
+
+        Route::put('/routing-rules/{locationNetworkId}', 'ScanProviderController@changeCDNProviderByIRoute')->name('scan.chage.routing-rule');
+
+        Route::post('{scanPlatform}/scanned-data', 'ScanProviderController@scannedData');
+        Route::put('cdn-provider', 'ScanProviderController@selectAchangeToBCdnProvider')->name('scan.chage');
     });
 });
