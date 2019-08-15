@@ -12,9 +12,6 @@ use Hiero7\Repositories\DomainRepository;
 class ScanProviderService
 {
     use JwtPayloadTrait;
-    protected $locationDnsSettingRepository;
-    protected $cdnService;
-    protected $dnsPodRecordSyncService;
     const CURL_TIMEOUT = 60;
 
 
@@ -61,10 +58,8 @@ class ScanProviderService
      * @param array $cdnProviderIdList
      * @return Collection
      */
-    public function getDomainsByCDNProviderIdList(
-        DomainRepository $domainRepository,
-        $cdnProviderIdList = []
-    ): Collection {
+    public function getDomainsByCDNProviderIdList(DomainRepository $domainRepository, $cdnProviderIdList = []): Collection
+    {
         return $domainRepository->getDomainsByCDNProviderList($cdnProviderIdList);
     }
 
@@ -75,9 +70,13 @@ class ScanProviderService
      */
     public function getScannedData($scanPlatform, $cdnProviderUrl)
     {
-        $data = [];
-        $data['url'] = $cdnProviderUrl;
-        $data['wait'] = env('SCAN_SECOND');
+        $crawlerData = null;
+
+        $data = [
+            'url' => $cdnProviderUrl,
+            'wait' => env('SCAN_SECOND'),
+        ];
+
         $locationNetwork = LocationNetwork::whereNotNull('mapping_value')->get()->all();
 
         if (count($locationNetwork) > 0) {
@@ -109,24 +108,25 @@ class ScanProviderService
     {
         $locationNetwork = LocationNetwork::whereNotNull('mapping_value')->get()->all();
 
-        $result = collect($locationNetwork)->map(function ($item, $key) use ($crawlerData) {
-            $result = new \stdClass();
-            $result->latency = collect($crawlerData->results)->whereIn('nameEn',
-                $item->mapping_value)->pluck('latency')->first();
-            $location_networks = new \stdClass();
-            $location_networks->id = $item->id;
-            $location_networks->continent_id = $item->continent_id;
-            $location_networks->country_id = $item->country_id;
-            $location_networks->location = $item->location;
-            $location_networks->isp = $item->isp;
-            $location_networks->network_id = $item->network_id;
-            $location_networks->continent = $item->continent;
-            $location_networks->country = $item->country;
-            $location_networks->network = $item->network;
-            $result->location_networks = $location_networks;
-            return $result;
+        $crawlerResults = isset($crawlerData->results) ? $crawlerData->results : [];
+
+        $scanneds = collect($locationNetwork)->map(function ($item, $key) use ($crawlerResults) {
+
+            $scanned = new \stdClass();
+
+            $scanned->latency = collect($crawlerResults)->whereIn('nameEn', $item->mapping_value)->pluck('latency')->first() ?? null;
+
+            $item->continent;
+            $item->country;
+            $item->network;
+
+            $scanned->location_networks = $item;
+
+            return $scanned;
         });
 
-        return $result;
+        return $scanneds;
     }
 }
+
+

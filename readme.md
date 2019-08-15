@@ -23,6 +23,7 @@ OPERATION_LOG_URL=http://10.88.55.122:39452/api/v1
 PLATFORM_KEY=eu7nxsfttc
 
 CONFIG_WAIT_TIME=2 (分鐘)
+SCAN_SECOND=30 (爬蟲執行的時間 秒)
 ```
 
 #### Database
