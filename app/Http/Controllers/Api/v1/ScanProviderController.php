@@ -39,8 +39,8 @@ class ScanProviderController extends Controller
         $oldCdnProviderId = $request->get('old_cdn_provider_id');
         $newCdnProviderId = $request->get('new_cdn_provider_id');
 
-        $domaains = $this->scanProviderService->changeCDNProviderByIRoute($locationNetworkId, $oldCdnProviderId, $newCdnProviderId);
+        $domains = $this->scanProviderService->changeCDNProviderByIRoute($locationNetworkId, $oldCdnProviderId, $newCdnProviderId);
 
-        return $this->response('', null, $domaains);
+        return $this->response('', null, $domains);
     }
 }
