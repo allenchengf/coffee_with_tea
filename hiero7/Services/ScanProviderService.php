@@ -68,6 +68,11 @@ class ScanProviderService
         return $domainRepository->getDomainsByCDNProviderList($cdnProviderIdList);
     }
 
+    /**
+     * @param $scanPlatform
+     * @param $cdnProviderUrl
+     * @return Collection
+     */
     public function getScannedData($scanPlatform, $cdnProviderUrl)
     {
         $data = [];
@@ -82,6 +87,11 @@ class ScanProviderService
         return $this->mappingData($crawlerData);
     }
 
+    /**
+     * @param $url
+     * @param array $data
+     * @return mixed
+     */
     protected function curlToCrawler($url, array $data = [])
     {
         return Curl::to($url)
@@ -91,6 +101,10 @@ class ScanProviderService
             ->post();
     }
 
+    /**
+     * @param $crawlerData
+     * @return Collection
+     */
     private function mappingData($crawlerData)
     {
         $locationNetwork = LocationNetwork::whereNotNull('mapping_value')->get()->all();
