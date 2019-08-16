@@ -2,10 +2,8 @@
 
 namespace App\Http\Requests;
 
-
-class LocationDnsSettingRequest extends FormRequest
+class ScanProviderRequest extends FormRequest
 {
-        protected $prefix = 'iRoute';
     /**
      * Determine if the user is authorized to make this request.
      *
@@ -13,10 +11,6 @@ class LocationDnsSettingRequest extends FormRequest
      */
     public function authorize()
     {
-        if($this->route()->getName() == "$this->prefix.edit" && !$this->domain->domainGroup->isEmpty()){
-                return false;
-        }
-
         return true;
     }
 
@@ -27,12 +21,14 @@ class LocationDnsSettingRequest extends FormRequest
      */
     public function rules()
     {
-        $routeName = $this->route()->getName();
+        $prefix = 'scan';
+        $routeName = $this->route()->getName() ?? $prefix;
 
         switch ($routeName) {
-            case ($routeName == "$this->prefix.edit"):
+            case ($routeName == "$prefix.chage.routing-rule"):
                 return [
-                    "cdn_provider_id" => "required|integer",
+                    "old_cdn_provider_id" => "required|integer|exists:cdn_providers,id",
+                    "new_cdn_provider_id" => "required|integer|exists:cdn_providers,id",
                 ];
                 break;
             default :

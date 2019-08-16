@@ -4,6 +4,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.0] - 2019-08-16
+### Added
+- CRUD Scan Platform Table 
+- 串接檢測平台爬蟲
+- 檢測平台爬蟲資料 Mapping 表
+- 根據 Region 選擇 A 切換至 B CDN Provider
+
+### Fixed
+- 優化 Region 切換 CDN Provider 的 Logic
+
 ## [0.1.5] - 2019-08-01
 ### Fixed
 - Change CDN Provider TTL No Include Location Dns Setting

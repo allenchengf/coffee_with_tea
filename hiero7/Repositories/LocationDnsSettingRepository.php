@@ -44,6 +44,5 @@ class LocationDnsSettingRepository
     {
         return $this->locationDnsSetting->where('cdn_id', $targetCdnId)
         ->update(['cdn_id' => $defaultCdnId]);
-
     }
 }
