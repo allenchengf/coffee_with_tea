@@ -134,7 +134,30 @@ class ScanProviderTest extends TestCase
 
     private function setCrawData()
     {
-        $this->fakeScanProviderService->setcrawlerData(json_decode('{"url":"www.hiero7.com","time":1565750039,"source":"chinaz","method":"ping","results":[{"nameEn":"Zhejiang Wenzho Telecom","latency":555},{"nameEn":"Shaanxi Xi\'an Telecom","latency":221},{"nameEn":"Jiangsu Suqian Unicom","latency":331},{"nameEn":"Jiangsu Suqian Telecom","latency":123}]}', true));
+        $this->fakeScanProviderService->setcrawlerData([
+            "url" => "www.hiero7.com",
+            "time" => 1565750039,
+            "source" => "chinaz",
+            "method" => "ping",
+            "results" => [
+                [
+                    "nameEn" => "Zhejiang Wenzho Telecom",
+                    "latency" => 555,
+                ],
+                [
+                    "nameEn" => "Shaanxi Xi'an Telecom",
+                    "latency" => 221,
+                ],
+                [
+                    "nameEn" => "Jiangsu Suqian Unicom",
+                    "latency" => 331
+                ],
+                [
+                    "nameEn" => "Jiangsu Suqian Telecom",
+                    "latency" => 123
+                ]
+            ]
+        ]);
     }
 
 }
