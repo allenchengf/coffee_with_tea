@@ -103,11 +103,8 @@ Route::group(['middleware' => ['api','check.config'], 'namespace' => 'Api\v1', '
         Route::post('', 'ScanPlatformController@create')->name('scanPlatform.create');
         Route::patch('{scanPlatform}', 'ScanPlatformController@edit')->name('scanPlatform.edit');
         Route::delete('{scanPlatform}', 'ScanPlatformController@destroy')->name('scanPlatform.destroy');
-        Route::get('', 'ScanProviderController@index');
-
-        Route::put('/routing-rules/{locationNetworkId}', 'ScanProviderController@changeCDNProviderByIRoute')->name('scan.chage.routing-rule');
 
         Route::post('{scanPlatform}/scanned-data', 'ScanProviderController@scannedData');
-        Route::put('cdn-provider', 'ScanProviderController@selectAchangeToBCdnProvider')->name('scan.chage');
+        Route::put('/routing-rules/{locationNetworkId}', 'ScanProviderController@changeCDNProviderByIRoute')->name('scan.chage.routing-rule');
     });
 });
