@@ -11,6 +11,7 @@ Route::group(['middleware' => ['api', 'check.config'], 'namespace' => 'Api\v1', 
         });
 
         Route::get('', 'DomainController@getDomain')->name('domain.index');
+
         Route::middleware(['auth.user.module', 'domain.permission'])->group(function () {
             Route::post('', 'DomainController@create')->name('domain.create');
 
@@ -36,25 +37,26 @@ Route::group(['middleware' => ['api', 'check.config'], 'namespace' => 'Api\v1', 
             Route::put('{domain}', 'DomainController@editDomain')->name('domain.edit');
             Route::delete('{domain}', 'DomainController@destroy');
         });
-
     });
 
-    Route::group(['middleware' => ['internal.group'], 'prefix' => 'lines'], function () {
-        Route::get('', 'LineController@index')->name('lines.index');
-        Route::post('', 'LineController@create')->name('lines.create');
-        Route::put('{line}', 'LineController@edit')->name('lines.edit');
-        Route::delete('{line}', 'LineController@destroy')->name('lines.destroy');
-    });
+    Route::group(['middleware' => ['internal.group']], function () {
+        Route::group(['prefix' => 'lines'], function () {
+            Route::get('', 'LineController@index')->name('lines.index');
+            Route::post('', 'LineController@create')->name('lines.create');
+            Route::put('{line}', 'LineController@edit')->name('lines.edit');
+            Route::delete('{line}', 'LineController@destroy')->name('lines.destroy');
+        });
 
-    Route::get('continents', 'ContinentController@index')->name('continents.index');
-    Route::get('countries', 'CountryController@index')->name('countries.index');
-    Route::get('schemes/{scheme_id}/networks', 'NetworkController@index')->name('networks.index');
+        Route::group(['prefix' => 'schemes'], function () {
+            Route::get('', 'SchemeController@index')->name('schemes.index');
+            Route::post('', 'SchemeController@create')->name('schemes.create');
+            Route::put('{scheme}', 'SchemeController@edit')->name('schemes.edit');
+            Route::delete('{scheme}', 'SchemeController@destroy')->name('schemes.destroy');
+        });
 
-    Route::group(['middleware' => ['auth.user.module', 'internal.group'], 'prefix' => 'schemes'], function () {
-        Route::get('', 'SchemeController@index')->name('schemes.index');
-        Route::post('', 'SchemeController@create')->name('schemes.create');
-        Route::put('{scheme}', 'SchemeController@edit')->name('schemes.edit');
-        Route::delete('{scheme}', 'SchemeController@destroy')->name('schemes.destroy');
+        Route::get('continents', 'ContinentController@index')->name('continents.index');
+        Route::get('countries', 'CountryController@index')->name('countries.index');
+        Route::get('schemes/{scheme_id}/networks', 'NetworkController@index')->name('networks.index');
     });
 
     Route::group(['middleware' => ['auth.user.module'], 'prefix' => 'cdn_providers'], function () {
@@ -77,9 +79,7 @@ Route::group(['middleware' => ['api', 'check.config'], 'namespace' => 'Api\v1', 
         Route::put('{domainGroup}/routing-rules/{locationNetwork}', 'DomainGroupController@updateRouteCdn')->name('groups.updateRouteCdn');
         Route::delete('{domainGroup}', 'DomainGroupController@destroy')->name('groups.destroy');
         Route::delete('{domainGroup}/domain/{domain}', 'DomainGroupController@destroyByDomainId')->name('groups.destroyByDomainId');
-
         Route::post('{domainGroup}/batch', 'BatchController@storeDomainToGroup')->name('groups.batch');
-
     });
 
 
@@ -88,12 +88,12 @@ Route::group(['middleware' => ['api', 'check.config'], 'namespace' => 'Api\v1', 
         Route::get('/all', 'LocationDnsSettingController@indexAll')->name('iRoute.indexAll');
     });
 
-    Route::group(['middleware' => ['check.config'], 'prefix' => 'config'], function () {
+    Route::group(['prefix' => 'config'], function () {
         Route::get('', 'ConfigController@index')->name('config.index');
         Route::post('', 'ConfigController@import')->name('config.indexByGroup');
     });
 
-    Route::group(['middleware' => ['auth.user.module'], 'prefix' => 'operation_log'], function () {
+    Route::group(['prefix' => 'operation_log'], function () {
         Route::get('', 'OperationLogController@index')->name('operation_log.index');
     });
 
