@@ -21,17 +21,21 @@ use Tests\TestCase;
 class LineTest extends TestCase
 {
     use DatabaseMigrations;
+
     protected $lineService;
     protected $schemeService;
     protected $line;
     protected $jwtPayload = [];
-    protected $spyDnsProviderService;
+    protected $mockDnsProviderService;
 
     protected function setUp()
     {
         parent::setUp();
 
         $this->seed();
+        $this->seed('DomainTableSeeder');
+        $this->seed('CdnTableSeeder');
+        $this->seed('LocationDnsSettingSeeder');
 
         app()->call([$this, 'service']);
 
@@ -39,7 +43,7 @@ class LineTest extends TestCase
 
         $this->line = new Line();
 
-        $this->spyDnsProviderService = m::spy(DnsProviderService::class);
+        $this->mockDnsProviderService = m::mock(DnsProviderService::class);
     }
 
     public function service(LineService $lineService, SchemeService $schemeService)
@@ -139,25 +143,26 @@ class LineTest extends TestCase
     public function delete_line()
     {
         $loginUid = 1;
-        $request = new Request;
 
         $line = $this->line->find(1);
 
         $this->addUuidforPayload()
             ->setJwtTokenPayload($loginUid, $this->jwtPayload);
 
-        $response = $this->controller->destroy($line, $this->spyDnsProviderService);
-
         $this->shouldUseSyncRecordToDnsPod();
+
+        $response = $this->controller->destroy($line, $this->mockDnsProviderService);
 
         $this->assertEquals(200, $response->status());
     }
 
     private function shouldUseSyncRecordToDnsPod()
     {
-        $this->spyDnsProviderService
-            ->shouldHaveReceived('syncRecordToDnsPod')
-            ->once();
+        $this->mockDnsProviderService
+            ->shouldReceive('syncRecordToDnsPod')
+            ->andReturn(
+                json_decode('{"message":"Success","errorCode":null,"data":{"createSync":[],"diffSync":[],"deleteSync":[{"123456":"Record id invalid"}]}}', true)
+            );
     }
 
 }

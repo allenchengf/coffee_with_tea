@@ -3,16 +3,17 @@
 namespace App\Http\Controllers\Api\v1;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\LineRequest as Request;
 use Hiero7\Enums\InputError;
+use Hiero7\Enums\InternalError;
 use Hiero7\Models\LocationNetwork as Line;
 use Hiero7\Services\DnsProviderService;
 use Hiero7\Services\LineService;
-use App\Http\Requests\LineRequest as Request;
 use Hiero7\Services\SchemeService;
+use Illuminate\Support\Collection;
 
 class LineController extends Controller
 {
-
     protected $lineService;
     protected $schemeService;
 
@@ -66,14 +67,31 @@ class LineController extends Controller
             return ['id' => $locationDnsSetting->provider_record_id];
         });
 
-        $dnsProviderService->syncRecordToDnsPod([
-            'delele' => json_encode($deleteData)
-        ]);
+        if (!$this->deletDNSRecord($dnsProviderService, $deleteData)) {
+            return $this->setStatusCode(409)->response('please contact the admin', InternalError::INTERNAL_ERROR);
+        }
 
         $line->locationDnsSetting()->delete();
 
         $line->delete();
 
         return $this->response();
+    }
+
+    private function deletDNSRecord(DnsProviderService $dnsProviderService, Collection $deleteData): bool
+    {
+        if (!$deleteData->count()) {
+            return true;
+        }
+
+        $response = $dnsProviderService->syncRecordToDnsPod([
+            'delele' => json_encode($deleteData),
+        ]);
+
+        if ($response && !$response['errorCode']) {
+            return ($deleteData->count() == count($response['data']['deleteSync'])) ? true : false;
+        }
+
+        return false;
     }
 }
