@@ -40,6 +40,7 @@ class InputError extends Enum
     const GROUP_EXIST = 4028;
     const DOMAIN_CDNPROVIDER_DIFFERENT = 4029;
     const DOMAIN_ALREADY_EXIST_GROUP = 4030;
+    const THE_SCAN_PLATFORM_NAME_EXIST = 4031;
     /**
      * @var array
      */
@@ -69,12 +70,12 @@ class InputError extends Enum
         self::DOMAIN_FORMAT_ERROR => 'Domain format error.',
         self::BATCH_INPUT_FORMAT_ERROR => 'Batch input format error.',
         self::DOMAIN_VERIFICATION_ERROR => 'Domain verification Error.',
-        self::BATCH_INPUT_FORMAT_ERROR=> 'Batch input format error.',
         self::THE_NETWORK_ID_EXIST => 'The network id exist',
         self::THE_SCHEME_NAME_EXIST => 'The scheme name exist',
         self::PARAMETERS_IN_DIFFERENT_USERGROUP => 'Parameters are in different user_group',
         self::GROUP_EXIST => 'Group Already Exist',
         self::DOMAIN_CDNPROVIDER_DIFFERENT => 'Domain\'s Cdn Provider are different with Group\'s.',
-        self::DOMAIN_ALREADY_EXIST_GROUP => 'Domain Already Exist At this Group.'
+        self::DOMAIN_ALREADY_EXIST_GROUP => 'Domain Already Exist At this Group.',
+        self::THE_SCAN_PLATFORM_NAME_EXIST => 'The Scan platform name exist'
     ];
 }

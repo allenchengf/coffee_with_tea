@@ -50,7 +50,7 @@ class LineController extends Controller
     public function edit(Request $request, Line $line)
     {
         $request->merge(['edited_by' => $this->getJWTPayload()['uuid']]);
-        $line->update($request->only('continent_id', 'country_id', 'location', 'isp'));
+        $line->update($request->only('continent_id', 'country_id', 'location', 'isp', 'mapping_value'));
         return $this->response("Success", null, $line);
     }
 
