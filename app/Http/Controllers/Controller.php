@@ -14,6 +14,7 @@ use Illuminate\Routing\Controller as BaseController;
 use Tymon\JWTAuth\Facades\JWTAuth;
 use Validator;
 use Illuminate\Http\Request;
+
 class Controller extends BaseController
 {
     use AuthorizesRequests, DispatchesJobs, ValidatesRequests;
@@ -109,5 +110,10 @@ class Controller extends BaseController
             $getPayload['user_group_id'];
 
         return $ugid;
+    }
+
+    protected function requestMergeEditedBy(Request $request)
+    {
+        $request->merge(['edited_by' => $this->getJWTPayload()['uuid']]);
     }
 }
