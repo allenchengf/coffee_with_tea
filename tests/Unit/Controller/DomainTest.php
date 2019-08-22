@@ -67,6 +67,11 @@ class DomainTest extends TestCase
 
         $data = json_decode($response->getContent(), true);
         $this->assertEquals($target_user_group_id, $data['data']['domains'][0]['user_group_id']);
+
+        // 換頁
+        $this->assertArrayHasKey('current_page',$data['data']);
+        $this->assertArrayHasKey('last_page',$data['data']);
+        $this->assertArrayHasKey('total',$data['data']);
     }
 
     /**
@@ -116,6 +121,11 @@ class DomainTest extends TestCase
 
         $data = json_decode($response->getContent(), true);
         $this->assertEquals($user_group_id, $data['data']['domains'][0]['user_group_id']);
+        
+        // 換頁
+        $this->assertArrayHasKey('current_page',$data['data']);
+        $this->assertArrayHasKey('last_page',$data['data']);
+        $this->assertArrayHasKey('total',$data['data']);
     }
 
     /**
@@ -142,6 +152,11 @@ class DomainTest extends TestCase
 
         $data = json_decode($response->getContent(), true);
         $this->assertEquals($user_group_id, $data['data']['domains'][0]['user_group_id']);
+        
+        // 換頁
+        $this->assertArrayHasKey('current_page',$data['data']);
+        $this->assertArrayHasKey('last_page',$data['data']);
+        $this->assertArrayHasKey('total',$data['data']);
     }
 
     /**
@@ -170,6 +185,11 @@ class DomainTest extends TestCase
 
         $data = json_decode($response->getContent(), true);
         $this->assertCount($expectedCount, $data['data']['domains']);
+        
+        // 換頁
+        $this->assertArrayHasKey('current_page',$data['data']);
+        $this->assertArrayHasKey('last_page',$data['data']);
+        $this->assertArrayHasKey('total',$data['data']);
     }
 
     /**
@@ -198,6 +218,11 @@ class DomainTest extends TestCase
 
         $data = json_decode($response->getContent(), true);
         $this->assertCount($expectedCount, $data['data']['domains']);
+        
+        // 換頁
+        $this->assertArrayHasKey('current_page',$data['data']);
+        $this->assertArrayHasKey('last_page',$data['data']);
+        $this->assertArrayHasKey('total',$data['data']);
     }
 
     /**

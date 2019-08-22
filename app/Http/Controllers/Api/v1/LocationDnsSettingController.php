@@ -147,6 +147,10 @@ class LocationDnsSettingController extends Controller
                             ->whereNull('domain_group_mapping.domain_group_id')
                             ->paginate($perPage, $columns, $pageName, $currentPage);
 
+        foreach($domainsCollection as $domainModel){
+            $domainModel->location_network = $this->locationDnsSettingService->indexByDomain($domainModel);
+        }
+        
         $domains = $domainsCollection->flatten();
 
         $last_page = $domainsCollection->lastPage();
