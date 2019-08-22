@@ -86,6 +86,8 @@ Route::group(['middleware' => ['api','check.config'], 'namespace' => 'Api\v1', '
     Route::group(['prefix' => 'routing-rules'], function () {
         Route::get('/lists', 'LocationDnsSettingController@indexByGroup')->name('iRoute.indexByGroup');
         Route::get('/all', 'LocationDnsSettingController@indexAll')->name('iRoute.indexAll');
+        Route::get('groups', 'LocationDnsSettingController@indexGroups')->name('iRoute.indexGroups');
+        Route::get('domains', 'LocationDnsSettingController@indexDomains')->name('iRoute.indexDomains');
     });
 
     Route::group(['middleware' => ['check.config'],'prefix' => 'config'], function () {

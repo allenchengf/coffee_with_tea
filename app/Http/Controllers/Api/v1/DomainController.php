@@ -8,12 +8,13 @@ use Hiero7\Models\Domain;
 use Hiero7\Services\DomainService;
 use Hiero7\Enums\PermissionError;
 use App\Events\CdnWasDelete;
-use Hiero7\Traits\OperationLogTrait;
+use Hiero7\Traits\{OperationLogTrait, PaginationTrait};
 
 
 class DomainController extends Controller
 {
     use OperationLogTrait;
+    use PaginationTrait;
     protected $domainService;
     protected $status;
 
@@ -55,7 +56,6 @@ class DomainController extends Controller
         $domains = !$request->has('user_group_id') && $user_group_id == 1 ?
         $domain->with('cdns', 'domainGroup')->get() :
         $domain->with('cdns', 'domainGroup')->where(compact('user_group_id'))->get();
-        $domains->toArray();
 
         if($request->has('domain_group_id') && $request->domain_group_id >= 0){
             //取孤兒domain
@@ -77,7 +77,14 @@ class DomainController extends Controller
 
         $dnsPodDomain = env('DNS_POD_DOMAIN');
 
-        return $this->response('', null, compact('domains', 'dnsPodDomain'));
+        // 換頁
+        list($perPage, $columns, $pageName, $currentPage) = $this->getPaginationInfo($request->per_page, $request->current_page);
+        $current_page = (int)$currentPage;
+        $total = $domains->count();
+        $last_page = ceil($total / $perPage);
+        $domains = $domains->forPage($currentPage, $perPage)->all();
+
+        return $this->response('', null, compact('current_page', 'last_page', 'total', 'domains', 'dnsPodDomain'));
     }
 
     public function create(Request $request, Domain $domain)

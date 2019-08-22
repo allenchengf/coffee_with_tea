@@ -8,12 +8,13 @@ use App\Http\Requests\LocationDnsSettingRequest;
 use Hiero7\Services\{LocationDnsSettingService, DomainGroupService};
 use Hiero7\Repositories\CdnRepository;
 use Hiero7\Models\{Domain, Cdn, LocationDnsSetting, DomainGroup, LocationNetwork, CdnProvider};
-use Hiero7\Traits\OperationLogTrait;
+use Hiero7\Traits\{OperationLogTrait, PaginationTrait};
 use Hiero7\Enums\{InputError, InternalError};
 
 class LocationDnsSettingController extends Controller
 {
     use OperationLogTrait;
+    use PaginationTrait;
     protected $locationDnsSettingService;
     protected $status;
 
@@ -95,6 +96,64 @@ class LocationDnsSettingController extends Controller
 
 
         return $this->response('',null,compact('domainGroup','domains'));
+    }
+
+    /**
+     * get Group 的 iRoute 設定列表
+     *
+     * @param Request $request
+     * @param DomainGroup $domainGroup
+     * @return void
+     */
+    public function indexGroups(Request $request, DomainGroup $domainGroup)
+    {
+        // 取得換頁資訊
+        list($perPage, $columns, $pageName, $currentPage) = $this->getPaginationInfo($request->get('per_page'), $request->get('current_page'));
+
+        // 主表使用換頁
+        $domainGroupCollection = $domainGroup->where(['user_group_id' => $this->getUgid($request)])->paginate($perPage, $columns, $pageName, $currentPage);
+
+        $domain_groups = [];
+        foreach($domainGroupCollection as $domainGroupModel){
+            $domain_groups[] = $this->domainGroupService->indexGroupIroute($domainGroupModel);
+        }
+
+        $last_page = $domainGroupCollection->lastPage();
+        $current_page = $domainGroupCollection->currentPage();
+        $total = $domainGroupCollection->total();
+
+        return $this->response('', null, compact('current_page', 'last_page', 'total', 'domain_groups'));
+    }
+
+
+    /**
+     * get 孤兒 Domain 的 iRoute 設定列表
+     *
+     * @param Request $request
+     * @param Domain $domain
+     * @return void
+     */
+    public function indexDomains(Request $request, Domain $domain)
+    {
+        // 取得換頁資訊
+        list($perPage, $columns, $pageName, $currentPage) = $this->getPaginationInfo($request->get('per_page'), $request->get('current_page'));
+
+        // 主表使用換頁
+        // 找出孤兒: domain_group_mapping.domain_group_id = null
+        $domainsCollection = $domain
+                            ->select("domains.*","domain_group_mapping.domain_group_id")
+                            ->leftJoin('domain_group_mapping', 'domain_group_mapping.domain_id', '=', 'domains.id')
+                            ->where(['user_group_id' => $this->getUgid($request)])
+                            ->whereNull('domain_group_mapping.domain_group_id')
+                            ->paginate($perPage, $columns, $pageName, $currentPage);
+
+        $domains = $domainsCollection->flatten();
+
+        $last_page = $domainsCollection->lastPage();
+        $current_page = $domainsCollection->currentPage();
+        $total = $domainsCollection->total();
+
+        return $this->response('', null, compact('current_page', 'last_page', 'total', 'domains'));
     }
 
     /**
