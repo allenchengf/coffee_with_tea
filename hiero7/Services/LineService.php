@@ -15,6 +15,7 @@ class LineService
 {
 
     protected $lineRepository;
+
     /**
      * LineService constructor.
      */

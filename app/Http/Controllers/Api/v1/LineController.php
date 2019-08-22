@@ -4,7 +4,6 @@ namespace App\Http\Controllers\Api\v1;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\LineRequest as Request;
-use Hiero7\Enums\InputError;
 use Hiero7\Enums\InternalError;
 use Hiero7\Models\LocationNetwork as Line;
 use Hiero7\Services\DnsProviderService;
@@ -32,26 +31,24 @@ class LineController extends Controller
         return $this->response("Success", null, $data);
     }
 
+    /**
+     * @param Request $request
+     * @return LineController
+     */
     public function create(Request $request)
     {
         $this->requestMergeEditedBy($request);
 
-        $errorCode = null;
+        $line = $this->lineService->create($request->all());
 
-        $line = [];
-        if ($this->lineService->checkNetworkId($request->get('network_id'))) {
-            $errorCode = InputError::THE_NETWORK_ID_EXIST;
-        } else {
-            $line = $this->lineService->create($request->all());
-        }
-
-        return $this->setStatusCode($errorCode ? 400 : 200)->response(
-            '',
-            $errorCode ? $errorCode : null,
-            $line
-        );
+        return $this->response('', null, $line);
     }
 
+    /**
+     * @param Request $request
+     * @param Line $line
+     * @return LineController
+     */
     public function edit(Request $request, Line $line)
     {
         $this->requestMergeEditedBy($request);
@@ -61,6 +58,13 @@ class LineController extends Controller
         return $this->response("Success", null, $line);
     }
 
+
+    /**
+     * @param Line $line
+     * @param DnsProviderService $dnsProviderService
+     * @return LineController
+     * @throws \Exception
+     */
     public function destroy(Line $line, DnsProviderService $dnsProviderService)
     {
         $deleteData = $line->locationDnsSetting->map(function ($locationDnsSetting) {
@@ -78,6 +82,13 @@ class LineController extends Controller
         return $this->response();
     }
 
+    /**
+     * 刪除 DNS Record 會判斷是否刪除成功
+     *
+     * @param DnsProviderService $dnsProviderService
+     * @param Collection $deleteData
+     * @return bool
+     */
     private function deletDNSRecord(DnsProviderService $dnsProviderService, Collection $deleteData): bool
     {
         if (!$deleteData->count()) {
