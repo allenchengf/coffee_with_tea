@@ -28,7 +28,6 @@ class ScanProviderTest extends TestCase
         $this->seed('DomainTableSeeder');
         $this->seed('CdnTableSeeder');
         $this->seed('LocationDnsSettingSeeder');
-        $this->seed('ScanPlatformTableSeeder');
         $this->setLocationNetwork();
 
         $this->spyLocationDnsSettingService = m::spy(LocationDnsSettingService::class);
