@@ -73,33 +73,6 @@ class LineTest extends TestCase
     }
 
     /** @test */
-    public function create_exist_line()
-    {
-        $loginUid = 1;
-        $errorCode = 4025;
-        $request = new Request;
-
-        $request->merge([
-            'continent_id' => '1',
-            'country_id' => '1',
-            'location' => 'beijing',
-            'network_id' => '5',
-            'isp' => 'yidong',
-        ]);
-
-        $this->addUuidforPayload()
-            ->setJwtTokenPayload($loginUid, $this->jwtPayload);
-
-        $this->controller->create($request, $this->line);
-        $response = $this->controller->create($request, $this->line);
-        $this->assertEquals(400, $response->status());
-
-        $data = json_decode($response->getContent(), true);
-
-        $this->assertEquals($errorCode, $data['errorCode']);
-    }
-
-    /** @test */
     public function edit_line()
     {
         $loginUid = 1;

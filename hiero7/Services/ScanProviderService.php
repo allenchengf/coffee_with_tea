@@ -72,7 +72,7 @@ class ScanProviderService
     {
         $crawlerData = [];
         $locationNetwork = LocationNetwork::whereNotNull('mapping_value')->get()->filter(function ($item) {
-            return $item->network->scheme_id ==env('SCHEME');
+            return $item->network->scheme_id == env('SCHEME');
         });
 
         $data = [
@@ -109,7 +109,7 @@ class ScanProviderService
     private function mappingData($crawlerData)
     {
         $locationNetwork = LocationNetwork::whereNotNull('mapping_value')->get()->filter(function ($item) {
-            return $item->network->scheme_id ==env('SCHEME');
+            return $item->network->scheme_id == env('SCHEME');
         });
 
         $crawlerResults = isset($crawlerData->results) ? $crawlerData->results : [];
