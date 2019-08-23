@@ -107,22 +107,31 @@ class LocationDnsSettingController extends Controller
      */
     public function indexGroups(Request $request, DomainGroup $domainGroup)
     {
+        // 初始換頁資訊
+        $last_page = $current_page = $per_page = $total = null;
+
         // 取得換頁資訊
         list($perPage, $columns, $pageName, $currentPage) = $this->getPaginationInfo($request->get('per_page'), $request->get('current_page'));
 
-        // 主表使用換頁
-        $domainGroupCollection = $domainGroup->where(['user_group_id' => $this->getUgid($request)])->paginate($perPage, $columns, $pageName, $currentPage);
+        $domainGroupCollection = $domainGroup->where(['user_group_id' => $this->getUgid($request)]);
+
+        if (! is_null($perPage)) { // 換頁
+            $domainGroupCollection = $domainGroupCollection->paginate($perPage, $columns, $pageName, $currentPage);
+
+            $last_page = $domainGroupCollection->lastPage();
+            $current_page = $domainGroupCollection->currentPage();
+            $per_page = $perPage;
+            $total = $domainGroupCollection->total();
+        } else { // 全部列表
+            $domainGroupCollection = $domainGroupCollection->get();
+        }
 
         $domain_groups = [];
         foreach($domainGroupCollection as $domainGroupModel){
             $domain_groups[] = $this->domainGroupService->indexGroupIroute($domainGroupModel);
         }
 
-        $last_page = $domainGroupCollection->lastPage();
-        $current_page = $domainGroupCollection->currentPage();
-        $total = $domainGroupCollection->total();
-
-        return $this->response('', null, compact('current_page', 'last_page', 'total', 'domain_groups'));
+        return $this->response('', null, compact('current_page', 'last_page', 'per_page', 'total', 'domain_groups'));
     }
 
 
@@ -135,17 +144,29 @@ class LocationDnsSettingController extends Controller
      */
     public function indexDomains(Request $request, Domain $domain)
     {
+        // 初始換頁資訊
+        $last_page = $current_page = $per_page = $total = null;
+
         // 取得換頁資訊
         list($perPage, $columns, $pageName, $currentPage) = $this->getPaginationInfo($request->get('per_page'), $request->get('current_page'));
 
-        // 主表使用換頁
         // 找出孤兒: domain_group_mapping.domain_group_id = null
         $domainsCollection = $domain
                             ->select("domains.*","domain_group_mapping.domain_group_id")
                             ->leftJoin('domain_group_mapping', 'domain_group_mapping.domain_id', '=', 'domains.id')
                             ->where(['user_group_id' => $this->getUgid($request)])
-                            ->whereNull('domain_group_mapping.domain_group_id')
-                            ->paginate($perPage, $columns, $pageName, $currentPage);
+                            ->whereNull('domain_group_mapping.domain_group_id');
+                            
+        if (! is_null($perPage)) { // 換頁
+            $domainsCollection = $domainsCollection->paginate($perPage, $columns, $pageName, $currentPage);
+
+            $last_page = $domainsCollection->lastPage();
+            $current_page = $domainsCollection->currentPage();
+            $per_page = $perPage;
+            $total = $domainsCollection->total();
+        } else { // 全部列表
+            $domainsCollection = $domainsCollection->get();
+        }
 
         foreach($domainsCollection as $domainModel){
             $domainModel->location_network = $this->locationDnsSettingService->indexByDomain($domainModel);
@@ -153,11 +174,7 @@ class LocationDnsSettingController extends Controller
         
         $domains = $domainsCollection->flatten();
 
-        $last_page = $domainsCollection->lastPage();
-        $current_page = $domainsCollection->currentPage();
-        $total = $domainsCollection->total();
-
-        return $this->response('', null, compact('current_page', 'last_page', 'total', 'domains'));
+        return $this->response('', null, compact('current_page', 'last_page', 'per_page', 'total', 'domains'));
     }
 
     /**

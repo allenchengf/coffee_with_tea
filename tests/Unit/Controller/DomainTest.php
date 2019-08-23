@@ -69,9 +69,7 @@ class DomainTest extends TestCase
         $this->assertEquals($target_user_group_id, $data['data']['domains'][0]['user_group_id']);
 
         // 換頁
-        $this->assertArrayHasKey('current_page',$data['data']);
-        $this->assertArrayHasKey('last_page',$data['data']);
-        $this->assertArrayHasKey('total',$data['data']);
+        $this->pagination($data);
     }
 
     /**
@@ -123,9 +121,7 @@ class DomainTest extends TestCase
         $this->assertEquals($user_group_id, $data['data']['domains'][0]['user_group_id']);
         
         // 換頁
-        $this->assertArrayHasKey('current_page',$data['data']);
-        $this->assertArrayHasKey('last_page',$data['data']);
-        $this->assertArrayHasKey('total',$data['data']);
+        $this->pagination($data);
     }
 
     /**
@@ -154,9 +150,7 @@ class DomainTest extends TestCase
         $this->assertEquals($user_group_id, $data['data']['domains'][0]['user_group_id']);
         
         // 換頁
-        $this->assertArrayHasKey('current_page',$data['data']);
-        $this->assertArrayHasKey('last_page',$data['data']);
-        $this->assertArrayHasKey('total',$data['data']);
+        $this->pagination($data);
     }
 
     /**
@@ -187,9 +181,7 @@ class DomainTest extends TestCase
         $this->assertCount($expectedCount, $data['data']['domains']);
         
         // 換頁
-        $this->assertArrayHasKey('current_page',$data['data']);
-        $this->assertArrayHasKey('last_page',$data['data']);
-        $this->assertArrayHasKey('total',$data['data']);
+        $this->pagination($data);
     }
 
     /**
@@ -220,9 +212,7 @@ class DomainTest extends TestCase
         $this->assertCount($expectedCount, $data['data']['domains']);
         
         // 換頁
-        $this->assertArrayHasKey('current_page',$data['data']);
-        $this->assertArrayHasKey('last_page',$data['data']);
-        $this->assertArrayHasKey('total',$data['data']);
+        $this->pagination($data);
     }
 
     /**
@@ -301,5 +291,16 @@ class DomainTest extends TestCase
 
         $response = $this->controller->destroy($domain);
         $this->assertEquals(200, $response->status());
+    }
+
+    /**
+     * Pagination
+     */
+    public function pagination($data)
+    {
+        // 換頁
+        $this->assertArrayHasKey('current_page', $data['data']);
+        $this->assertArrayHasKey('last_page', $data['data']);
+        $this->assertArrayHasKey('total', $data['data']);
     }
 }

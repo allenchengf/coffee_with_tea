@@ -78,13 +78,22 @@ class DomainController extends Controller
         $dnsPodDomain = env('DNS_POD_DOMAIN');
 
         // 換頁
+        // 初始換頁資訊
+        $last_page = $current_page = $per_page = $total = null;
         list($perPage, $columns, $pageName, $currentPage) = $this->getPaginationInfo($request->per_page, $request->current_page);
-        $current_page = (int)$currentPage;
-        $total = $domains->count();
-        $last_page = ceil($total / $perPage);
-        $domains = $domains->forPage($currentPage, $perPage)->all();
 
-        return $this->response('', null, compact('current_page', 'last_page', 'total', 'domains', 'dnsPodDomain'));
+        if (! is_null($perPage)) { // 換頁
+            $current_page = $currentPage;
+            $total = $domains->count();
+            $last_page = ceil($total / $perPage);
+            $per_page = $perPage;
+            
+            $domains = $domains->forPage($currentPage, $perPage)->all();
+        } else { // 全部列表
+            //
+        }
+
+        return $this->response('', null, compact('current_page', 'last_page', 'per_page', 'total', 'domains', 'dnsPodDomain'));
     }
 
     public function create(Request $request, Domain $domain)
