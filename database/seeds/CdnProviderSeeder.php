@@ -44,11 +44,11 @@ class CdnProviderSeeder extends Seeder
             'status' => 'active',
             'user_group_id' => 2,
             'ttl' => rand(600,604800),
-            'url' => 'http://www.hostadvice.com',
+            'url' => '',
             'scannable' => 'stop'
         ],[
             'name' => 'AlibabaCloud',
-            'status' => 'active',
+            'status' => 'stop',
             'user_group_id' => 2,
             'ttl' => rand(600,604800),
             'url' => 'http://www.alibabaCloud.com',

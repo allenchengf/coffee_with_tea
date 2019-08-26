@@ -56,7 +56,8 @@ class CdnProviderController extends Controller
     {
         $request->merge([
             'edited_by' => $this->getJWTPayload()['uuid'],
-            'status' => 'active'
+            'status' => 'active',
+            'scannable' => 'stop'
         ]);
         $cdnProvider = $cdnProvider->create($request->all());
         $this->createEsLog($this->getJWTPayload()['sub'], "CDN", "create", "CDN Provider");
@@ -161,15 +162,15 @@ class CdnProviderController extends Controller
         if($scannable == 'active'){
             
             if(!$cdnProvider->status && empty($cdnProvider->url)){
-                return $this->response('', InputError::THIS_CDNPROVIDER_STATUS_AND_URL_ARE_UNAVAILABLE, []);
+                return $this->setStatusCode(400)->response('', InputError::THIS_CDNPROVIDER_STATUS_AND_URL_ARE_UNAVAILABLE, []);
             }
             
             if(!$cdnProvider->status){
-                return $this->response('', InputError::THIS_CDNPROVIDER_STATUS_IS_STOP, []);
+                return $this->setStatusCode(400)->response('', InputError::THIS_CDNPROVIDER_STATUS_IS_STOP, []);
             }
             
             if(empty($cdnProvider->url)){
-                return $this->response('', InputError::THIS_CDNPROVIDER_URL_IS_NULL, []);
+                return $this->setStatusCode(400)->response('', InputError::THIS_CDNPROVIDER_URL_IS_NULL, []);
             }
         }
 

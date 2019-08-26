@@ -290,6 +290,58 @@ class CdnProviderTest extends TestCase
     }
 
     /** @test */
+    public function errorNullUrlAtScannable()
+    {
+        $loginUid = 1;
+        $user_group_id = 1;
+        $target_user_group_id = 1;
+        $request = new Request;
+
+        $request->merge([
+            'user_group_id' => $target_user_group_id,
+            'edited_by' => "de20afd0-d009-4fbf-a3b0-2c3257915d10",
+            'scannable' => 1,
+        ]);
+
+        $this->addUuidforPayload()
+            ->addUserGroupId($user_group_id)
+            ->setJwtTokenPayload($loginUid, $this->jwtPayload);
+
+        $response = $this->controller->changeScannable($request, $this->cdnProvider->find(5));
+
+        $data = json_decode($response->getContent(), true);
+
+        $this->assertEquals(400, $response->status());
+        $this->assertEquals(4033, $data['errorCode']);
+    }
+
+        /** @test */
+    public function errorStopStatusAtScannable()
+    {
+        $loginUid = 1;
+        $user_group_id = 1;
+        $target_user_group_id = 1;
+        $request = new Request;
+
+        $request->merge([
+            'user_group_id' => $target_user_group_id,
+            'edited_by' => "de20afd0-d009-4fbf-a3b0-2c3257915d10",
+            'scannable' => 1,
+        ]);
+
+        $this->addUuidforPayload()
+            ->addUserGroupId($user_group_id)
+            ->setJwtTokenPayload($loginUid, $this->jwtPayload);
+
+        $response = $this->controller->changeScannable($request, $this->cdnProvider->find(6));
+
+        $data = json_decode($response->getContent(), true);
+
+        $this->assertEquals(400, $response->status());
+        $this->assertEquals(4032, $data['errorCode']);
+    }
+
+    /** @test */
     public function check_default_cdn()
     {
         $loginUid = 1;
