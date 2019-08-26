@@ -8,7 +8,7 @@ class CdnProvider extends Model
 {
     protected $table = 'cdn_providers';
 
-    protected $fillable = ['name', 'ttl', 'edited_by', 'user_group_id', 'status', 'url'];
+    protected $fillable = ['name', 'ttl', 'edited_by', 'user_group_id', 'status', 'url','scannable'];
     public $timestamps = true;
 
     protected $hidden = ['created_at', 'updated_at', 'edited_by'];

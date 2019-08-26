@@ -154,6 +154,29 @@ class CdnProviderController extends Controller
         return $this->response();
     }
 
+    public function changeScannable(Request $request, CdnProvider $cdnProvider)
+    {
+        $scannable = $request->get('scannable')?'active':'stop';
+
+        if($scannable == 'active'){
+            
+            if(!$cdnProvider->status && empty($cdnProvider->url)){
+                return $this->response('', InputError::THIS_CDNPROVIDER_STATUS_AND_URL_ARE_UNAVAILABLE, []);
+            }
+            
+            if(!$cdnProvider->status){
+                return $this->response('', InputError::THIS_CDNPROVIDER_STATUS_IS_STOP, []);
+            }
+            
+            if(empty($cdnProvider->url)){
+                return $this->response('', InputError::THIS_CDNPROVIDER_URL_IS_NULL, []);
+            }
+        }
+
+        $cdnProvider->update(['scannable' => $scannable, 'edited_by' => $request->get('edited_by')]);
+        return $this->response('', null, $cdnProvider);
+    }
+
     public function checkDefault(Request $request, CdnProvider $cdnProvider)
     {
         $request->merge([
