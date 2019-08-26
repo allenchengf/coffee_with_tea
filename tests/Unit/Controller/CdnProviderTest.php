@@ -273,7 +273,7 @@ class CdnProviderTest extends TestCase
         $data = json_decode($response->getContent(), true);
 
         $this->assertEquals(200, $response->status());
-        $this->assertEquals('active', $data['data']['scannable']);
+        $this->assertEquals(true, $data['data']['scannable']);
 
         $request->merge([
             'user_group_id' => $target_user_group_id,
@@ -286,7 +286,7 @@ class CdnProviderTest extends TestCase
         $data = json_decode($response->getContent(), true);
 
         $this->assertEquals(200, $response->status());
-        $this->assertEquals('stop', $data['data']['scannable']);
+        $this->assertEquals(false, $data['data']['scannable']);
     }
 
     /** @test */

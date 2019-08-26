@@ -17,42 +17,42 @@ class CdnProviderSeeder extends Seeder
             'user_group_id' => 1,
             'ttl' => rand(600,604800),
             'url' => 'http://www.hiero7.com',
-            'scannable' => 'stop'
+            'scannable' => false
         ], [
             'name' => 'Cloudflare',
             'status' => 'active',
             'user_group_id' => 1,
             'ttl' => rand(600,604800),
             'url' => 'http://www.cloudflare.com',
-            'scannable' => 'stop'
+            'scannable' => false
         ], [
             'name' => 'CloudFront',
             'status' => 'active',
             'user_group_id' => 1,
             'ttl' => rand(600,604800),
             'url' => 'http://www.cloudFront.com',
-            'scannable' => 'stop'
+            'scannable' => false
         ],[
             'name' => 'Akamai',
             'status' => 'active',
             'user_group_id' => 2,
             'ttl' => rand(600,604800),
             'url' => 'http://www.akamai.com',
-            'scannable' => 'stop'
+            'scannable' => false
         ],[
             'name' => 'HostAdvice',
             'status' => 'active',
             'user_group_id' => 2,
             'ttl' => rand(600,604800),
             'url' => '',
-            'scannable' => 'stop'
+            'scannable' => false
         ],[
             'name' => 'AlibabaCloud',
             'status' => 'stop',
             'user_group_id' => 2,
             'ttl' => rand(600,604800),
             'url' => 'http://www.alibabaCloud.com',
-            'scannable' => 'stop'
+            'scannable' => false
         ]];
         DB::table('cdn_providers')->insert($data);
     }

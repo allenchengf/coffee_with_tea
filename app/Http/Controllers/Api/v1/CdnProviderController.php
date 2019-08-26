@@ -57,7 +57,7 @@ class CdnProviderController extends Controller
         $request->merge([
             'edited_by' => $this->getJWTPayload()['uuid'],
             'status' => 'active',
-            'scannable' => 'stop'
+            'scannable' => 0
         ]);
         $cdnProvider = $cdnProvider->create($request->all());
         $this->createEsLog($this->getJWTPayload()['sub'], "CDN", "create", "CDN Provider");
@@ -157,9 +157,9 @@ class CdnProviderController extends Controller
 
     public function changeScannable(Request $request, CdnProvider $cdnProvider)
     {
-        $scannable = $request->get('scannable')?'active':'stop';
+        $scannable = $request->get('scannable')? true: false;
 
-        if($scannable == 'active'){
+        if($scannable){
             
             if(!$cdnProvider->status && empty($cdnProvider->url)){
                 return $this->setStatusCode(400)->response('', InputError::THIS_CDNPROVIDER_STATUS_AND_URL_ARE_UNAVAILABLE, []);

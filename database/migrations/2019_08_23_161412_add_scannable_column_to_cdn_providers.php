@@ -14,7 +14,7 @@ class AddScannableColumnToCdnProviders extends Migration
     public function up()
     {
         Schema::table('cdn_providers', function (Blueprint $table) {
-            $table->enum('scannable', ['active','stop'])->default('stop')->after('url');
+            $table->boolean('scannable')->default(false)->after('url');
         });
     }
 

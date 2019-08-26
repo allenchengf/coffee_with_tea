@@ -12,6 +12,7 @@ class CdnProvider extends Model
     public $timestamps = true;
 
     protected $hidden = ['created_at', 'updated_at', 'edited_by'];
+    protected $casts = ['scannable' => 'boolean'];
 
     public function getStatusAttribute($value)
     {
