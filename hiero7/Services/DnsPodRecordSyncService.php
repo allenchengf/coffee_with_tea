@@ -7,10 +7,8 @@ use Hiero7\Models\Cdn;
 use Hiero7\Models\CdnProvider;
 use Hiero7\Models\Domain;
 use Hiero7\Models\LocationDnsSetting;
-use Hiero7\Models\Network;
 use Hiero7\Repositories\DomainRepository;
 use Hiero7\Repositories\NetworkRepository;
-use Hiero7\Services\DnsProviderService;
 use Illuminate\Database\Eloquent\Collection;
 
 class DnsPodRecordSyncService
@@ -100,7 +98,7 @@ class DnsPodRecordSyncService
      */
     private function syncRecord(array $createData = [], array $diffData = [], array $deleteData = [])
     {
-        if (count($createData) == 0 && count($diffData) == 0 && count($deleteData) == 0){
+        if (count($createData) == 0 && count($diffData) == 0 && count($deleteData) == 0) {
             return [];
         }
 
@@ -182,10 +180,10 @@ class DnsPodRecordSyncService
             $cdnProvider = $this->cdnProvider[$cdnDefault->cdn_provider_id];
 
             $record = [
-                'id' => (int) $cdnDefault->provider_record_id,
-                'ttl' => (int) $cdnProvider['ttl'],
+                'id' => (int)$cdnDefault->provider_record_id,
+                'ttl' => (int)$cdnProvider['ttl'],
                 'value' => $cdnDefault->cname,
-                'enabled' => (bool) $cdnProvider['status'],
+                'enabled' => (bool)$cdnProvider['status'],
                 'name' => $this->domainName,
                 'line' => "默认",
                 'type' => "CNAME",
@@ -216,10 +214,10 @@ class DnsPodRecordSyncService
             $cdnProvider = $this->cdnProvider[$cdn['cdn_provider_id']];
 
             $data = [
-                'id' => (int) $value->provider_record_id,
-                'ttl' => (int) $cdnProvider['ttl'],
+                'id' => (int)$value->provider_record_id,
+                'ttl' => (int)$cdnProvider['ttl'],
                 'value' => $cdn['cname'],
-                'enabled' => (bool) $cdnProvider['status'],
+                'enabled' => (bool)$cdnProvider['status'],
                 'name' => $this->domainName,
                 'line' => $line,
                 'type' => "CNAME",

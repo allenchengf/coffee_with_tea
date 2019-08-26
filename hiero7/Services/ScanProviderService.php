@@ -29,13 +29,14 @@ class ScanProviderService
     }
 
     /**
+     * 根據檢測結果切換 Domain Region
+     *
      * @param Domain $domain
      * @return array
      */
-    public function changeToBestCDNProviderByDomain(Domain $domain): array
+    public function changeDomainRegionByScanData(Domain $domain): array
     {
         $lastScanLogs = app()->call([$this, 'getLastScanLog']);
-
         $result = [];
 
         $lastScanLogs->map(function ($region, $regionKey) use (&$result, $domain) {
@@ -67,10 +68,13 @@ class ScanProviderService
      */
     public function getLastScanLog(ScanLog $scanLog): Collection
     {
+        $regions = [];
         $lastScanLogs = $scanLog::all();
 
         $lastScanLogs->map(function ($lastScanLog) use (&$regions) {
-            $regions[$lastScanLog->location_network_id][$lastScanLog->cdn_provider_id] = $lastScanLog->latency;
+            if ($lastScanLog->latency && $lastScanLog->latency < 1000) {
+                $regions[$lastScanLog->location_network_id][$lastScanLog->cdn_provider_id] = $lastScanLog->latency;
+            }
         });
 
         // $regions['location_network_id']['cdn_provider_id'] = latency
@@ -83,13 +87,12 @@ class ScanProviderService
      * 取得所有 Location Network
      *
      * @param LineRepository $line
-     * @return array|Collection
+     * @return void
      */
     public function getLine(LineRepository $line)
     {
         $lines = $line->getLinesById();
         $this->locationNetwork = collect($lines)->keyBy('id');
-        return $this->locationNetwork;
     }
 
     /**

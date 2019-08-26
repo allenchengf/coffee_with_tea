@@ -22,9 +22,9 @@ class ScanProviderController extends Controller
         $this->scanProviderService = $scanProviderService;
     }
 
-    public function changeToBestCDNProviderByDomain(Domain $domain)
+    public function changeDomainRegionByScanData(Domain $domain)
     {
-        $result = $this->scanProviderService->changeToBestCDNProviderByDomain($domain);
+        $result = $this->scanProviderService->changeDomainRegionByScanData($domain);
 
         return $this->response('', null, $result);
     }
@@ -52,13 +52,13 @@ class ScanProviderController extends Controller
      * @param ScanProviderRequest $request
      * @return ScanProviderController
      */
-    public function scannedData(ScanPlatform $scanPlatform,ScanProviderRequest $request)
+    public function scannedData(ScanPlatform $scanPlatform, ScanProviderRequest $request)
     {
         $cdnProvider = CdnProvider::find($request->get('cdn_provider_id'));
         $cdnProviderUrl = $cdnProvider->url;
         $scanned = [];
 
-        if(isset($cdnProviderUrl)){
+        if (isset($cdnProviderUrl)) {
             $scanned = $this->scanProviderService->getScannedData($scanPlatform, $cdnProvider->url);
         }
         return $this->response("", null, compact('cdnProvider', 'scanned'));
