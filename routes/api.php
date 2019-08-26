@@ -106,5 +106,7 @@ Route::group(['middleware' => ['api', 'check.config'], 'namespace' => 'Api\v1', 
 
         Route::post('{scanPlatform}/scanned-data', 'ScanProviderController@scannedData');
         Route::put('/routing-rules/{locationNetworkId}', 'ScanProviderController@changeCDNProviderByIRoute')->name('scan.chage.routing-rule');
+
+        Route::put('domain/{domain}', 'ScanProviderController@changeToBestCDNProviderByDomain');
     });
 });

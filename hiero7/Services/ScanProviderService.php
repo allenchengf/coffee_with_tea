@@ -3,6 +3,8 @@
 namespace Hiero7\Services;
 
 use Hiero7\Models\Domain;
+use Hiero7\Models\ScanLog;
+use Hiero7\Repositories\LineRepository;
 use Illuminate\Support\Collection;
 use Ixudra\Curl\Facades\Curl;
 use Hiero7\Models\LocationNetwork;
@@ -14,8 +16,8 @@ class ScanProviderService
     use JwtPayloadTrait;
     const CURL_TIMEOUT = 60;
 
-
     protected $locationDnsSettionService;
+    private $locationNetwork = [];
 
     /**
      * NetworkService constructor.
@@ -23,6 +25,71 @@ class ScanProviderService
     public function __construct(LocationDnsSettingService $locationDnsSettingService)
     {
         $this->locationDnsSettionService = $locationDnsSettingService;
+        app()->call([$this, 'getLine']);
+    }
+
+    /**
+     * @param Domain $domain
+     * @return array
+     */
+    public function changeToBestCDNProviderByDomain(Domain $domain): array
+    {
+        $lastScanLogs = app()->call([$this, 'getLastScanLog']);
+
+        $result = [];
+
+        $lastScanLogs->map(function ($region, $regionKey) use (&$result, $domain) {
+            foreach ($region as $cdnProviderKey => $latency) {
+                $actionResult = $this->locationDnsSettionService->decideAction($cdnProviderKey, $domain, $this->locationNetwork[$regionKey]);
+
+                // 如果要切換的CDN Provider，在此 Domain 沒有設定，就換下一個一直切換到有為止
+                if ($actionResult === 'differentGroup') {
+
+                    continue;
+                } else {
+                    $result[] = [
+                        'status' => $actionResult,
+                        'location_network' => $this->locationNetwork[$regionKey]
+                    ];
+                    break;
+                }
+            }
+        });
+
+        return $result;
+    }
+
+    /**
+     *  Get 最後一次掃瞄的結果
+     *
+     * @param ScanLog $scanLog
+     * @return Collection
+     */
+    public function getLastScanLog(ScanLog $scanLog): Collection
+    {
+        $lastScanLogs = $scanLog::all();
+
+        $lastScanLogs->map(function ($lastScanLog) use (&$regions) {
+            $regions[$lastScanLog->location_network_id][$lastScanLog->cdn_provider_id] = $lastScanLog->latency;
+        });
+
+        // $regions['location_network_id']['cdn_provider_id'] = latency
+        return collect($regions)->map(function ($region) {
+            return collect($region)->sort();
+        });
+    }
+
+    /**
+     * 取得所有 Location Network
+     *
+     * @param LineRepository $line
+     * @return array|Collection
+     */
+    public function getLine(LineRepository $line)
+    {
+        $lines = $line->getLinesById();
+        $this->locationNetwork = collect($lines)->keyBy('id');
+        return $this->locationNetwork;
     }
 
     /**
