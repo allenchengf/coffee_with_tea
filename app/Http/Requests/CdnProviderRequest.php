@@ -37,7 +37,7 @@ class CdnProviderRequest extends FormRequest
                         }),
                     ],
                     'ttl'   => 'integer' . '|min:' . env('CDN_TTL') . '|max:604800',
-                    'url'   => 'string|url'
+                    'url'   => 'nullable|string|url'
                 ];
                 break;
             case ($routeName == "$prefix.update"):
@@ -50,17 +50,17 @@ class CdnProviderRequest extends FormRequest
                         }),
                     ],
                     'ttl'   => 'integer' . '|min:' . env('CDN_TTL') . '|max:604800',
-                    'url'   => 'string|url'
+                    'url'   => 'nullable|string|url'
                 ];
                 break;
             case ($routeName == "$prefix.status"):
                 return [
-                    'status'   => 'required|integer',
+                    'status'   => 'required|boolean',
                 ];
                 break;
             case ($routeName == "$prefix.scannable"):
                 return [
-                    'scannable'   => 'required|integer'
+                    'scannable'   => 'required|boolean'
                 ];
                 break;
             default :

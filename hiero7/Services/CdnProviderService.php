@@ -83,6 +83,23 @@ class CdnProviderService
         return $this->cdnProviderRepository->getDefault($domainId);
     }
 
+    /**
+     * 當 Status 欄位 = stop 或 Url 欄位 = null 且 Scannable 狀態為 true 的時候，修改 Scannable 的狀態為 false。 
+     *
+     * @param CdnProvider $cdnProvider
+     * @param String $editedBy
+     * @return void
+     */
+    public function checkWhetherStopScannable(CdnProvider $cdnProvider,String $editedBy)
+    {
+        if((!$cdnProvider->status || empty($cdnProvider->url)) && $cdnProvider->scannable){
+            $result = $this->cdnProviderRepository->updateScannable($cdnProvider,0,$editedBy);
+        }
+
+        return $result ?? true;
+    }
+
+
     public function changeDefaultCDN($cdnProvider)
     {
         $domainId = $cdnProvider->pluck('cdns')->flatten()->pluck('domain_id')->all();
