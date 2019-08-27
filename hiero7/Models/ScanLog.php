@@ -14,6 +14,7 @@ class ScanLog extends Model
         'scan_platform_id',
         'location_network_id',
         'latency',
+        'edited_by',
     ];
 
     public function cdnProvider()

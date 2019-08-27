@@ -52,15 +52,34 @@ class ScanProviderController extends Controller
      * @param ScanProviderRequest $request
      * @return ScanProviderController
      */
-    public function scannedData(ScanPlatform $scanPlatform, ScanProviderRequest $request)
+    public function creatScannedData(ScanPlatform $scanPlatform, ScanProviderRequest $request)
     {
         $cdnProvider = CdnProvider::find($request->get('cdn_provider_id'));
-        $cdnProviderUrl = $cdnProvider->url;
         $scanned = [];
 
-        if (isset($cdnProviderUrl)) {
-            $scanned = $this->scanProviderService->getScannedData($scanPlatform, $cdnProvider->url);
+        if(isset($cdnProvider->url)){
+            $scanned = $this->scanProviderService->creatScannedData($scanPlatform, $cdnProvider);
         }
         return $this->response("", null, compact('cdnProvider', 'scanned'));
+    }
+
+    /**
+     * @param ScanPlatform $scanPlatform
+     * @param ScanProviderRequest $request
+     * @return ScanProviderController
+     */
+    public function indexScannedData(ScanPlatform $scanPlatform, ScanProviderRequest $request)
+    {
+        $scanned = [];
+
+        $cdnProvider = CdnProvider::find($request->get('cdn_provider_id'));
+
+        $scanned = $this->scanProviderService->indexScannedData($scanPlatform, $cdnProvider);
+
+        // `rename` & `only` scan_platform specific key
+        $cdn_provider = &$cdnProvider;
+        $scan_platform = collect($scanPlatform)->only(['id', 'name']);
+        
+        return $this->response("", null, compact('cdn_provider', 'scan_platform', 'scanned'));
     }
 }
