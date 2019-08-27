@@ -75,7 +75,8 @@ class ScanProviderService
     public function getLastScanLog(ScanLog $scanLog): Collection
     {
         $regions = [];
-        $lastScanLogs = $scanLog::all();
+        
+        $lastScanLogs = $this->scanLogRepository->indexEarlierLogs();
 
         $lastScanLogs->map(function ($lastScanLog) use (&$regions) {
             if ($lastScanLog->latency && $lastScanLog->latency < 1000) {
