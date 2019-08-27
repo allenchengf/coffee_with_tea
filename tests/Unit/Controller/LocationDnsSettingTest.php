@@ -67,4 +67,38 @@ class LocationDnsSettingTest extends TestCase
         $this->assertArrayHasKey('domains',$data['data']);
         $this->assertArrayHasKey('location_network',$data['data']['domains'][0]);
     }
+
+    public function testIndexGroups()
+    {
+        $response = $this->call('GET', 'api/v1/routing-rules/groups');
+        $response->assertStatus(200);
+
+        $data = json_decode($response->getContent(), true);
+
+        // 換頁
+        $this->assertArrayHasKey('current_page',$data['data']);
+        $this->assertArrayHasKey('last_page',$data['data']);
+        $this->assertArrayHasKey('total',$data['data']);
+
+        // 資料
+        $this->assertArrayHasKey('domain_groups',$data['data']);
+        $this->assertArrayHasKey('location_network',$data['data']['domain_groups'][0]);
+    }
+
+    public function testIndexDomains()
+    {
+        $response = $this->call('GET', 'api/v1/routing-rules/domains');
+        $response->assertStatus(200);
+
+        $data = json_decode($response->getContent(), true);
+
+        // 換頁
+        $this->assertArrayHasKey('current_page',$data['data']);
+        $this->assertArrayHasKey('last_page',$data['data']);
+        $this->assertArrayHasKey('total',$data['data']);
+
+        // 資料
+        $this->assertArrayHasKey('domains',$data['data']);
+        $this->assertArrayHasKey('location_network',$data['data']['domains'][0]);
+    }
 }
