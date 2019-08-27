@@ -3,13 +3,13 @@
 namespace Hiero7\Services;
 
 use Hiero7\Models\Domain;
-use Hiero7\Models\ScanLog;
-use Hiero7\Repositories\LineRepository;
-use Illuminate\Support\Collection;
-use Ixudra\Curl\Facades\Curl;
 use Hiero7\Models\LocationNetwork;
+use Hiero7\Models\ScanLog;
+use Hiero7\Repositories\DomainRepository;
+use Hiero7\Repositories\LineRepository;
+use Hiero7\Repositories\ScanLogRepository;
 use Hiero7\Traits\JwtPayloadTrait;
-use Hiero7\Repositories\{DomainRepository, ScanLogRepository};
+use Illuminate\Support\Collection;use Ixudra\Curl\Facades\Curl;
 
 class ScanProviderService
 {
@@ -26,8 +26,7 @@ class ScanProviderService
     public function __construct(
         LocationDnsSettingService $locationDnsSettingService,
         ScanLogRepository $scanLogRepository
-    )
-    {
+    ) {
         $this->locationDnsSettionService = $locationDnsSettingService;
         $this->scanLogRepository = $scanLogRepository;
     }
@@ -40,12 +39,11 @@ class ScanProviderService
      */
     public function changeDomainRegionByScanData(Domain $domain): array
     {
-        $lastScanLogs = app()->call([$this, 'getLastScanLog']);
         app()->call([$this, 'getLine']);
 
         $result = [];
 
-        $lastScanLogs->map(function ($region, $regionKey) use (&$result, $domain) {
+        $this->getLastScanLog()->map(function ($region, $regionKey) use (&$result, $domain) {
             foreach ($region as $cdnProviderKey => $latency) {
                 $actionResult = $this->locationDnsSettionService->decideAction($cdnProviderKey, $domain, $this->locationNetwork[$regionKey]);
 
@@ -56,7 +54,7 @@ class ScanProviderService
                 } else {
                     $result[] = [
                         'status' => $actionResult,
-                        'location_network' => $this->locationNetwork[$regionKey]
+                        'location_network' => $this->locationNetwork[$regionKey],
                     ];
                     break;
                 }
@@ -69,17 +67,37 @@ class ScanProviderService
     /**
      *  Get 最後一次掃瞄的結果
      *
+     *  並且排出各個 CDN Provider 在各個線路下的優良順序
+     *
      * @param ScanLog $scanLog
      * @return Collection
+     *
+     * example:
+     * location_network_id->cdn_provider_id = latency
+     *
+     * {
+     *      "2": {
+     *          "3": "30",
+     *          "1": "100",
+     *          "2": "200"
+     *      },
+     *      "3": {
+     *          "2": "200",
+     *          "3": "300",
+     *          "1": "400"
+     *      }
+     *  }
      */
-    public function getLastScanLog(ScanLog $scanLog): Collection
+    public function getLastScanLog(): Collection
     {
         $regions = [];
-        
+
         $lastScanLogs = $this->scanLogRepository->indexEarlierLogs();
 
         $lastScanLogs->map(function ($lastScanLog) use (&$regions) {
-            if ($lastScanLog->latency && $lastScanLog->latency < 1000) {
+
+            // 1000 > latency > 0
+            if (1000 > $lastScanLog->latency && $lastScanLog->latency) {
                 $regions[$lastScanLog->location_network_id][$lastScanLog->cdn_provider_id] = $lastScanLog->latency;
             }
         });
@@ -121,7 +139,7 @@ class ScanProviderService
         $domains->map(function (Domain $domain) use ($locationNetwork, $toCdnProviderId, &$domainAction) {
             $domainAction[] = [
                 'domain' => $domain->only('id', 'user_group_id', 'name', 'cname', 'label'),
-                'action' => $this->locationDnsSettionService->decideAction($toCdnProviderId, $domain, $locationNetwork)
+                'action' => $this->locationDnsSettionService->decideAction($toCdnProviderId, $domain, $locationNetwork),
             ];
         });
 
@@ -153,7 +171,7 @@ class ScanProviderService
         $scanLog = $this->scanLogRepository->indexLatestLogs($cdnProvider->id, $scanPlatform->id);
 
         // 處理 Query Data Output 格式
-        $locationNetworkIdCollection = collect( explode(',', $scanLog->location_network_id) );
+        $locationNetworkIdCollection = collect(explode(',', $scanLog->location_network_id));
         $latencyArray = explode(',', $scanLog->latency);
         $createdAt = $scanLog->created_at->format('Y-m-d H:i:s');
 
@@ -161,21 +179,21 @@ class ScanProviderService
             $scanned = new \stdClass();
 
             // latency
-            $scanned->latency = (int)$latencyArray[$idx];
+            $scanned->latency = (int) $latencyArray[$idx];
 
             // created_at
             $scanned->created_at = $createdAt;
-            
+
             // ORM: 與 location_networks 表相關
             $locationNetworkModel = LocationNetwork::find($locationNetworkId);
             $locationNetworkModel->continent;
             $locationNetworkModel->country;
             $locationNetworkModel->network;
             $scanned->location_networks = $locationNetworkModel;
-            
+
             return $scanned;
         });
-        
+
         return $scanneds;
     }
 
@@ -201,7 +219,7 @@ class ScanProviderService
 
         if (count($locationNetwork) > 0) {
             $crawlerData = $this->curlToCrawler($scanPlatform->url, $data);
-            
+
             $scanneds = $this->mappingData($crawlerData);
             $this->create($scanneds, $cdnProvider->id, $scanPlatform->id, $created_at);
         }
@@ -233,7 +251,7 @@ class ScanProviderService
             return $item->network->scheme_id == env('SCHEME');
         });
 
-        $crawlerResults = collect( isset($crawlerData->results) ? $crawlerData->results : [] );
+        $crawlerResults = collect(isset($crawlerData->results) ? $crawlerData->results : []);
 
         $scanneds = $locationNetwork->map(function ($item, $key) use ($crawlerResults) {
             $scanned = new \stdClass();
@@ -260,7 +278,7 @@ class ScanProviderService
     private function create($scanneds, $cdnProviderId, $scanPlatformId, $created_at)
     {
         $edited_by = $this->getJWTUuid();
-            
+
         $scanneds->each(function ($scanned) use (&$scanPlatformId, &$cdnProviderId, &$edited_by, &$created_at) {
             $fillable = [
                 'cdn_provider_id' => $cdnProviderId,
@@ -274,5 +292,3 @@ class ScanProviderService
         });
     }
 }
-
-
