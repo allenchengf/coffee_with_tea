@@ -41,6 +41,9 @@ class InputError extends Enum
     const DOMAIN_CDNPROVIDER_DIFFERENT = 4029;
     const DOMAIN_ALREADY_EXIST_GROUP = 4030;
     const THE_SCAN_PLATFORM_NAME_EXIST = 4031;
+    const THIS_CDNPROVIDER_STATUS_IS_STOP = 4032;
+    const THIS_CDNPROVIDER_URL_IS_NULL = 4033;
+    const THIS_CDNPROVIDER_STATUS_AND_URL_ARE_UNAVAILABLE = 4034;
     /**
      * @var array
      */
@@ -76,6 +79,9 @@ class InputError extends Enum
         self::GROUP_EXIST => 'Group Already Exist',
         self::DOMAIN_CDNPROVIDER_DIFFERENT => 'Domain\'s Cdn Provider are different with Group\'s.',
         self::DOMAIN_ALREADY_EXIST_GROUP => 'Domain Already Exist At this Group.',
-        self::THE_SCAN_PLATFORM_NAME_EXIST => 'The Scan platform name exist'
+        self::THE_SCAN_PLATFORM_NAME_EXIST => 'The Scan platform name exist',
+        self::THIS_CDNPROVIDER_STATUS_IS_STOP => 'This Cdn Provider\'s status is stop.',
+        self::THIS_CDNPROVIDER_URL_IS_NULL => 'This Cdn Provider\'s url is null.',
+        self::THIS_CDNPROVIDER_STATUS_AND_URL_ARE_UNAVAILABLE => 'This Cdn Provider\'s status and url are unavailable.',
     ];
 }

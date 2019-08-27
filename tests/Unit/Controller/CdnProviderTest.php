@@ -31,6 +31,7 @@ class CdnProviderTest extends TestCase
         app()->call([$this, 'service']);
         $this->controller = new CdnProviderController($this->cdnProviderService);
         $this->cdnProvider = new CdnProvider();
+        $this->seed('CdnProviderSeeder');
     }
 
     public function service(CdnProviderService $cdnProviderService)
@@ -247,6 +248,97 @@ class CdnProviderTest extends TestCase
             ->andReturn(["errorCode"=>null,"data"=>["record"=>["id"=>1]]]);
 
         $this->assertEquals(200, $response->status());
+    }
+
+    /** @test */
+    public function activeAndStopScannableCDNProvider()
+    {
+        $loginUid = 1;
+        $user_group_id = 1;
+        $target_user_group_id = 1;
+        $request = new Request;
+
+        $request->merge([
+            'user_group_id' => $target_user_group_id,
+            'edited_by' => "de20afd0-d009-4fbf-a3b0-2c3257915d10",
+            'scannable' => 1,
+        ]);
+
+        $this->addUuidforPayload()
+            ->addUserGroupId($user_group_id)
+            ->setJwtTokenPayload($loginUid, $this->jwtPayload);
+
+        $response = $this->controller->changeScannable($request, $this->cdnProvider->find(1)->first());
+
+        $data = json_decode($response->getContent(), true);
+
+        $this->assertEquals(200, $response->status());
+        $this->assertEquals(true, $data['data']['scannable']);
+
+        $request->merge([
+            'user_group_id' => $target_user_group_id,
+            'edited_by' => "de20afd0-d009-4fbf-a3b0-2c3257915d10",
+            'scannable' => 0,
+        ]);
+
+        $response = $this->controller->changeScannable($request, $this->cdnProvider->find(1)->first());
+
+        $data = json_decode($response->getContent(), true);
+
+        $this->assertEquals(200, $response->status());
+        $this->assertEquals(false, $data['data']['scannable']);
+    }
+
+    /** @test */
+    public function errorNullUrlAtScannable()
+    {
+        $loginUid = 1;
+        $user_group_id = 1;
+        $target_user_group_id = 1;
+        $request = new Request;
+
+        $request->merge([
+            'user_group_id' => $target_user_group_id,
+            'edited_by' => "de20afd0-d009-4fbf-a3b0-2c3257915d10",
+            'scannable' => 1,
+        ]);
+
+        $this->addUuidforPayload()
+            ->addUserGroupId($user_group_id)
+            ->setJwtTokenPayload($loginUid, $this->jwtPayload);
+
+        $response = $this->controller->changeScannable($request, $this->cdnProvider->find(5));
+
+        $data = json_decode($response->getContent(), true);
+
+        $this->assertEquals(400, $response->status());
+        $this->assertEquals(4033, $data['errorCode']);
+    }
+
+        /** @test */
+    public function errorStopStatusAtScannable()
+    {
+        $loginUid = 1;
+        $user_group_id = 1;
+        $target_user_group_id = 1;
+        $request = new Request;
+
+        $request->merge([
+            'user_group_id' => $target_user_group_id,
+            'edited_by' => "de20afd0-d009-4fbf-a3b0-2c3257915d10",
+            'scannable' => 1,
+        ]);
+
+        $this->addUuidforPayload()
+            ->addUserGroupId($user_group_id)
+            ->setJwtTokenPayload($loginUid, $this->jwtPayload);
+
+        $response = $this->controller->changeScannable($request, $this->cdnProvider->find(6));
+
+        $data = json_decode($response->getContent(), true);
+
+        $this->assertEquals(400, $response->status());
+        $this->assertEquals(4032, $data['errorCode']);
     }
 
     /** @test */

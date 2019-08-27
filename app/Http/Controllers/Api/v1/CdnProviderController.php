@@ -56,7 +56,8 @@ class CdnProviderController extends Controller
     {
         $request->merge([
             'edited_by' => $this->getJWTPayload()['uuid'],
-            'status' => 'active'
+            'status' => 'active',
+            'scannable' => 0
         ]);
         $cdnProvider = $cdnProvider->create($request->all());
         $this->createEsLog($this->getJWTPayload()['sub'], "CDN", "create", "CDN Provider");
@@ -152,6 +153,29 @@ class CdnProviderController extends Controller
         DB::commit();
         $this->createEsLog($this->getJWTPayload()['sub'], "CDN", "change", "CDN Provider status");
         return $this->response();
+    }
+
+    public function changeScannable(Request $request, CdnProvider $cdnProvider)
+    {
+        $scannable = $request->get('scannable')? true: false;
+
+        if($scannable){
+            
+            if(!$cdnProvider->status && empty($cdnProvider->url)){
+                return $this->setStatusCode(400)->response('', InputError::THIS_CDNPROVIDER_STATUS_AND_URL_ARE_UNAVAILABLE, []);
+            }
+            
+            if(!$cdnProvider->status){
+                return $this->setStatusCode(400)->response('', InputError::THIS_CDNPROVIDER_STATUS_IS_STOP, []);
+            }
+            
+            if(empty($cdnProvider->url)){
+                return $this->setStatusCode(400)->response('', InputError::THIS_CDNPROVIDER_URL_IS_NULL, []);
+            }
+        }
+
+        $cdnProvider->update(['scannable' => $scannable, 'edited_by' => $request->get('edited_by')]);
+        return $this->response('', null, $cdnProvider);
     }
 
     public function checkDefault(Request $request, CdnProvider $cdnProvider)

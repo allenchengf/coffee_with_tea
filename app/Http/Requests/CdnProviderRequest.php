@@ -58,6 +58,11 @@ class CdnProviderRequest extends FormRequest
                     'status'   => 'required|integer',
                 ];
                 break;
+            case ($routeName == "$prefix.scannable"):
+                return [
+                    'scannable'   => 'required|integer'
+                ];
+                break;
             default :
                 return [];
                 break;
