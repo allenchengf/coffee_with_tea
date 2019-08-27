@@ -9,7 +9,8 @@ use Hiero7\Models\ScanPlatform;
 use Hiero7\Repositories\ScanLogRepository;
 use Hiero7\Services\LocationDnsSettingService;
 use Hiero7\Services\ScanProviderService;
-use Mockery as m;use Tests\TestCase;
+use Mockery as m;
+use Tests\TestCase;
 
 class ScanProviderTest extends TestCase
 {
