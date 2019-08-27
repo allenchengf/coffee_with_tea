@@ -40,4 +40,9 @@ class CdnProviderRepository
                     ->get()->pluck('default')->all();
         return $results;
     }
+
+    public function updateScannable(CdnProvider $cdnProvider, int $scannable, String $editedBy)
+    {
+        return $cdnProvider->update(['scannable' => $scannable, 'edited_by' => $editedBy]);
+    }
 }
