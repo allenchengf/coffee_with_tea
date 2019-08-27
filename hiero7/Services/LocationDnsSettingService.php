@@ -74,7 +74,7 @@ class LocationDnsSettingService
 
     /**
      * delete iRoute Setting function
-     * 
+     *
      * 會將 pod 上的設定刪掉
      *
      * @param LocationDnsSetting $locationDnsSetting
@@ -95,18 +95,18 @@ class LocationDnsSettingService
 
     /**
      * 判斷要執行 新增/修改/刪除 動作。
-     * 
+     *
      * 新增： 給的 cdn_provider 並 沒有 存在 locationDnsSetting Table 內。
      * 修改:  給的 cdn_provider 並 有 存在 locationDnsSetting Table 內。
      * 刪除:  給的 cdn_provider 是 default ，就會刪掉 locationDnsSetting 那筆設定。
-     * 
+     *
      * 如果提供的 cdn_provider 並未存在於該 domain 會回傳 'differentGroup' ， 離開 function。
      * 如果提供的 cdn_provider 是 Default，不會執行任何動作，離開。function。
      *
      * @param Int $cdnProviderId
      * @param Domain $domain
      * @param LocationNetwork $locationNetwork
-     * @return void
+     * @return true|differentGroup|Pod Error Message
      */
     public function decideAction(Int $cdnProviderId, Domain $domain, LocationNetwork $locationNetwork)
     {
@@ -159,7 +159,7 @@ class LocationDnsSettingService
      * update iRoute Setting function
      *
      * 會把設定打上去 pod
-     * 
+     *
      * @param array $data
      * @param Domain $domain
      * @param Cdn $cdn
@@ -188,7 +188,7 @@ class LocationDnsSettingService
      * create  iRoute Setting function
      *
      *  會把設定打上去 pod
-     *  
+     *
      * @param array $data
      * @param Domain $domain
      * @param Cdn $cdn

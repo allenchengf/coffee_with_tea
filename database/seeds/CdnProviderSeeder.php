@@ -16,37 +16,43 @@ class CdnProviderSeeder extends Seeder
             'status' => 'active',
             'user_group_id' => 1,
             'ttl' => rand(600,604800),
-            'url' => 'http://www.hiero7.com'
+            'url' => 'http://www.hiero7.com',
+            'scannable' => false
         ], [
             'name' => 'Cloudflare',
             'status' => 'active',
             'user_group_id' => 1,
             'ttl' => rand(600,604800),
-            'url' => 'http://www.cloudflare.com'
+            'url' => 'http://www.cloudflare.com',
+            'scannable' => false
         ], [
             'name' => 'CloudFront',
             'status' => 'active',
             'user_group_id' => 1,
             'ttl' => rand(600,604800),
-            'url' => 'http://www.cloudFront.com'
+            'url' => 'http://www.cloudFront.com',
+            'scannable' => false
         ],[
             'name' => 'Akamai',
             'status' => 'active',
             'user_group_id' => 2,
             'ttl' => rand(600,604800),
-            'url' => 'http://www.akamai.com'
+            'url' => 'http://www.akamai.com',
+            'scannable' => false
         ],[
             'name' => 'HostAdvice',
             'status' => 'active',
             'user_group_id' => 2,
             'ttl' => rand(600,604800),
-            'url' => 'http://www.hostadvice.com'
+            'url' => '',
+            'scannable' => false
         ],[
             'name' => 'AlibabaCloud',
-            'status' => 'active',
+            'status' => 'stop',
             'user_group_id' => 2,
             'ttl' => rand(600,604800),
-            'url' => 'http://www.alibabaCloud.com'
+            'url' => 'http://www.alibabaCloud.com',
+            'scannable' => false
         ]];
         DB::table('cdn_providers')->insert($data);
     }

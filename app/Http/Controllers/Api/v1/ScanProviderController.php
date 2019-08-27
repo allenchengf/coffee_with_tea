@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\v1;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\ScanProviderRequest;
 use Hiero7\Models\CdnProvider;
+use Hiero7\Models\Domain;
 use Hiero7\Models\LocationNetwork;
 use Hiero7\Models\ScanPlatform;
 use Hiero7\Services\ScanProviderService;
@@ -20,6 +21,14 @@ class ScanProviderController extends Controller
     {
         $this->scanProviderService = $scanProviderService;
     }
+
+    public function changeDomainRegionByScanData(Domain $domain)
+    {
+        $result = $this->scanProviderService->changeDomainRegionByScanData($domain);
+
+        return $this->response('', null, $result);
+    }
+
 
     /**
      * Select A Change To B Cdn Provider by IRoute

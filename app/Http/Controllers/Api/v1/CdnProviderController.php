@@ -2,17 +2,15 @@
 
 namespace App\Http\Controllers\Api\v1;
 
-use App\Events\CdnWasBatchEdited;
-use Hiero7\Enums\AuthError;
+use App\Http\Controllers\Controller;
+use App\Http\Requests\CdnProviderRequest as Request;
+use DB;
 use Hiero7\Enums\InputError;
 use Hiero7\Enums\InternalError;
 use Hiero7\Enums\PermissionError;
 use Hiero7\Models\Cdn;
 use Hiero7\Models\CdnProvider;
-use App\Http\Controllers\Controller;
 use Hiero7\Services\CdnProviderService;
-use App\Http\Requests\CdnProviderRequest as Request;
-use DB;
 use Hiero7\Traits\OperationLogTrait;
 
 /**
@@ -56,7 +54,8 @@ class CdnProviderController extends Controller
     {
         $request->merge([
             'edited_by' => $this->getJWTPayload()['uuid'],
-            'status' => 'active'
+            'status' => 'active',
+            'scannable' => 0,
         ]);
         $cdnProvider = $cdnProvider->create($request->all());
         $this->createEsLog($this->getJWTPayload()['sub'], "CDN", "create", "CDN Provider");
@@ -72,28 +71,28 @@ class CdnProviderController extends Controller
      */
     public function update(Request $request, CdnProvider $cdnProvider)
     {
-        $recordList =[];
+        $recordList = [];
         $request->merge([
             'edited_by' => $this->getJWTPayload()['uuid'],
         ]);
-        
+
         $user_group_id = $this->getUgid($request);
 
-        if($user_group_id != $cdnProvider->user_group_id){
-            return $this->setStatusCode(403)->response('', PermissionError::THIS_GROUP_ID_NOT_MATCH,'');
+        if ($user_group_id != $cdnProvider->user_group_id) {
+            return $this->setStatusCode(403)->response('', PermissionError::THIS_GROUP_ID_NOT_MATCH, '');
         }
 
         DB::beginTransaction();
-        $cdnProvider->update($request->only('name','ttl', 'edited_by', 'url'));
+        $cdnProvider->update($request->only('name', 'ttl', 'edited_by', 'url'));
         $cdn = Cdn::where('cdn_provider_id', $cdnProvider->id)->with('locationDnsSetting')->get();
         foreach ($cdn as $k => $v) {
-            $check = Cdn::where('provider_record_id',$v['provider_record_id'])->where('cdn_provider_id', $cdnProvider->id)->get();
-            if(count($check) > 0 && $v['default'] == 1){
+            $check = Cdn::where('provider_record_id', $v['provider_record_id'])->where('cdn_provider_id', $cdnProvider->id)->get();
+            if (count($check) > 0 && $v['default'] == 1) {
                 $recordList[] = $v['provider_record_id'];
             }
 
             if (isset($v['locationDnsSetting'])) {
-                foreach ($v['locationDnsSetting'] as $key => $value){
+                foreach ($v['locationDnsSetting'] as $key => $value) {
                     $recordList[] = $value['provider_record_id'];
                 }
             }
@@ -107,10 +106,10 @@ class CdnProviderController extends Controller
             }
         }
         DB::commit();
+        $this->cdnProviderService->checkWhetherStopScannable($cdnProvider, $request->get('edited_by'));
         $this->createEsLog($this->getJWTPayload()['sub'], "CDN", "update", "CDN Provider");
         return $this->response("Success", null, $cdnProvider);
     }
-
 
     /**
      * @param Request $request
@@ -120,19 +119,19 @@ class CdnProviderController extends Controller
     public function changeStatus(Request $request, CdnProvider $cdnProvider)
     {
         $request->merge(['edited_by' => $this->getJWTPayload()['uuid']]);
-        $recordList =[];
-        $status = $request->get('status')?'active':'stop';
+        $recordList = [];
+        $status = $request->get('status') ? 'active' : 'stop';
         DB::beginTransaction();
         $cdnProvider->update(['status' => $status, 'edited_by' => $request->get('edited_by')]);
         $cdn = Cdn::where('cdn_provider_id', $cdnProvider->id)->with('locationDnsSetting')->get();
         foreach ($cdn as $k => $v) {
-            $check = Cdn::where('provider_record_id',$v['provider_record_id'])->where('cdn_provider_id', $cdnProvider->id)->get();
-            if(count($check) > 0 && $v['default'] == 1){
+            $check = Cdn::where('provider_record_id', $v['provider_record_id'])->where('cdn_provider_id', $cdnProvider->id)->get();
+            if (count($check) > 0 && $v['default'] == 1) {
                 $recordList[] = $v['provider_record_id'];
             }
 
             if (isset($v['locationDnsSetting'])) {
-                foreach ($v['locationDnsSetting'] as $key => $value){
+                foreach ($v['locationDnsSetting'] as $key => $value) {
                     $recordList[] = $value['provider_record_id'];
                 }
             }
@@ -146,12 +145,36 @@ class CdnProviderController extends Controller
             }
         }
         if ($status == 'stop') {
-            $cdnProvider = CdnProvider::with('domains')->where('id', $cdnProvider->id)->get();
-            $this->cdnProviderService->changeDefaultCDN($cdnProvider);
+            $cdnProviderCollection = CdnProvider::with('domains')->where('id', $cdnProvider->id)->get();
+            $this->cdnProviderService->changeDefaultCDN($cdnProviderCollection);
         }
         DB::commit();
+        $this->cdnProviderService->checkWhetherStopScannable($cdnProvider, $request->get('edited_by'));
         $this->createEsLog($this->getJWTPayload()['sub'], "CDN", "change", "CDN Provider status");
         return $this->response();
+    }
+
+    public function changeScannable(Request $request, CdnProvider $cdnProvider)
+    {
+        $scannable = $request->get('scannable') ? true : false;
+
+        if ($scannable) {
+
+            if (!$cdnProvider->status && empty($cdnProvider->url)) {
+                return $this->setStatusCode(400)->response('', InputError::THIS_CDNPROVIDER_STATUS_AND_URL_ARE_UNAVAILABLE, []);
+            }
+
+            if (!$cdnProvider->status) {
+                return $this->setStatusCode(400)->response('', InputError::THIS_CDNPROVIDER_STATUS_IS_STOP, []);
+            }
+
+            if (empty($cdnProvider->url)) {
+                return $this->setStatusCode(400)->response('', InputError::THIS_CDNPROVIDER_URL_IS_NULL, []);
+            }
+        }
+
+        $cdnProvider->update(['scannable' => $scannable, 'edited_by' => $request->get('edited_by')]);
+        return $this->response('', null, $cdnProvider);
     }
 
     public function checkDefault(Request $request, CdnProvider $cdnProvider)
@@ -166,12 +189,12 @@ class CdnProviderController extends Controller
         return $this->response('', null, $defaultInfo);
     }
 
-    public function destroy(Request $request,CdnProvider $cdnProvider)
+    public function destroy(Request $request, CdnProvider $cdnProvider)
     {
         $user_group_id = $this->getUgid($request);
 
-        if($user_group_id != $cdnProvider->user_group_id){
-            return $this->setStatusCode(403)->response('', PermissionError::THIS_GROUP_ID_NOT_MATCH,'');
+        if ($user_group_id != $cdnProvider->user_group_id) {
+            return $this->setStatusCode(403)->response('', PermissionError::THIS_GROUP_ID_NOT_MATCH, '');
         }
 
         $error = $this->cdnProviderService->deleteCDNProvider($cdnProvider);
