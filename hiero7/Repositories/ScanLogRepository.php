@@ -12,13 +12,10 @@ class ScanLogRepository
     use JwtPayloadTrait;
 
     protected $scanLogModel;
-    protected $userGroupId;
 
     public function __construct(ScanLog $scanLog)
     {
         $this->scanLogModel = $scanLog;
-
-        $this->userGroupId = $this->getJWTUserGroupId();
     }
 
     public function indexAll()
@@ -37,7 +34,7 @@ class ScanLogRepository
         $scanLog = $this->scanLogModel
                         ->select(DB::raw('group_concat(latency) as latency, group_concat(location_network_id) as location_network_id, scan_logs.created_at'))
                         ->leftJoin('cdn_providers', 'cdn_providers.id', '=', 'scan_logs.cdn_provider_id')
-                        ->where('cdn_providers.user_group_id', $this->userGroupId)
+                        ->where('cdn_providers.user_group_id', $this->getJWTUserGroupId())
                         ->where('scan_logs.cdn_provider_id', $cdnProviderId)
                         ->groupBy('scan_logs.created_at')
                         ->orderBy('scan_logs.created_at', 'desc');
@@ -59,7 +56,7 @@ class ScanLogRepository
         $scanLog = $this->scanLogModel
                         ->select('scan_logs.*')
                         ->leftJoin('cdn_providers', 'cdn_providers.id', '=', 'scan_logs.cdn_provider_id')
-                        ->where('cdn_providers.user_group_id', $this->userGroupId)
+                        ->where('cdn_providers.user_group_id', $this->getJWTUserGroupId())
                         ->orderBy('scan_logs.created_at', 'desc');
 
         if(! is_null($cdnProviderId))
@@ -86,7 +83,7 @@ class ScanLogRepository
         $scanLogs = $this->scanLogModel
                     ->select('scan_logs.*')
                     ->leftJoin('cdn_providers', 'cdn_providers.id', '=', 'scan_logs.cdn_provider_id')
-                    ->where('cdn_providers.user_group_id', $this->userGroupId)
+                    ->where('cdn_providers.user_group_id', $this->getJWTUserGroupId())
                     ->whereBetween('scan_logs.created_at', [$from, $to]);
         
         if(! is_null($cdnProviderId))
