@@ -227,7 +227,7 @@ class ScanProviderService
      * @param $crawlerData
      * @return Collection
      */
-    private function mappingData($crawlerData)
+    public function mappingData($crawlerData)
     {
         $locationNetwork = LocationNetwork::whereNotNull('mapping_value')->get()->filter(function ($item) {
             return $item->network->scheme_id == env('SCHEME');
