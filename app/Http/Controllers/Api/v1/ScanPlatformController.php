@@ -58,7 +58,7 @@ class ScanPlatformController extends Controller
     /**
      * Show the form for editing the specified resource.
      *
-     * @param  ScanPlatform  $scanPlatform
+     * @param ScanPlatform $scanPlatform
      * @return \Illuminate\Http\Response
      */
     public function edit(Request $request, ScanPlatform $scanPlatform)
@@ -72,7 +72,7 @@ class ScanPlatformController extends Controller
     /**
      * Remove the specified resource from storage.
      *
-     * @param  ScanPlatform  $scanPlatform
+     * @param ScanPlatform $scanPlatform
      * @return \Illuminate\Http\Response
      */
     public function destroy(ScanPlatform $scanPlatform)

@@ -1,13 +1,15 @@
 <?php
 namespace Hiero7\Services;
 
-use Hiero7\Models\{Cdn,LocationDnsSetting};
-use Hiero7\Models\Domain;
+use Hiero7\Models\Cdn;use Hiero7\Models\Domain;
+use Hiero7\Models\LocationDnsSetting;
 use Hiero7\Models\LocationNetwork;
-use Hiero7\Repositories\{LineRepository,CdnRepository};
+use Hiero7\Repositories\CdnRepository;
+use Hiero7\Repositories\LineRepository;
 use Hiero7\Repositories\LocationDnsSettingRepository;
 use Hiero7\Services\DnsProviderService;
-use Hiero7\Traits\{DomainHelperTrait,JwtPayloadTrait};
+use Hiero7\Traits\DomainHelperTrait;
+use Hiero7\Traits\JwtPayloadTrait;
 
 class LocationDnsSettingService
 {
@@ -17,7 +19,7 @@ class LocationDnsSettingService
     protected $locationDnsSettingRepository;
 
     public function __construct(LocationDnsSettingRepository $locationDnsSettingRepository, DnsProviderService $dnsProviderService,
-        LineRepository $lineRepository,CdnRepository $cdnRepository) {
+        LineRepository $lineRepository, CdnRepository $cdnRepository) {
         $this->locationDnsSettingRepository = $locationDnsSettingRepository;
         $this->dnsProviderService = $dnsProviderService;
         $this->lineRepository = $lineRepository;
@@ -35,14 +37,14 @@ class LocationDnsSettingService
     {
         $cdnsModelMass = $domain->cdns;
 
-        if($cdnsModelMass->isEmpty()){
+        if ($cdnsModelMass->isEmpty()) {
             $defaultCdn = [];
-        }else{
+        } else {
             $cdnsModelMass->where('default', 1)->first()->cdnProvider;
             $defaultCdn = $cdnsModelMass->where('default', 1)->first();
         }
 
-        foreach($cdnsModelMass as $cdnsModel){
+        foreach ($cdnsModelMass as $cdnsModel) {
             $cdnsModel->cdnProvider;
         }
 
@@ -54,9 +56,9 @@ class LocationDnsSettingService
         $dnsSetting = $domain->locationDnsSettings->keyBy('location_networks_id');
 
         //如果沒有設定在 locationDnsSetting 就放預設 cdn。
-        foreach($lineCollection as $lineModel){
+        foreach ($lineCollection as $lineModel) {
 
-            if(!$dnsSetting->has($lineModel->id)){
+            if (!$dnsSetting->has($lineModel->id)) {
                 $lineModel->setAttribute('cdn', $defaultCdn);
                 continue;
             }
@@ -74,7 +76,7 @@ class LocationDnsSettingService
 
     /**
      * delete iRoute Setting function
-     * 
+     *
      * 會將 pod 上的設定刪掉
      *
      * @param LocationDnsSetting $locationDnsSetting
@@ -95,48 +97,47 @@ class LocationDnsSettingService
 
     /**
      * 判斷要執行 新增/修改/刪除 動作。
-     * 
-     * 新增： 給的 cdn_provider 並 沒有 存在 locationDnsSetting Table 內。
-     * 修改:  給的 cdn_provider 並 有 存在 locationDnsSetting Table 內。
-     * 刪除:  給的 cdn_provider 是 default ，就會刪掉 locationDnsSetting 那筆設定。
-     * 
+     *
+     * 新增: 給的 cdn_provider 並 沒有 存在 locationDnsSetting Table 內。
+     * 修改: 給的 cdn_provider 並 有 存在 locationDnsSetting Table 內。
+     * 刪除: 給的 cdn_provider 是 default ，就會刪掉 locationDnsSetting 那筆設定。
+     *
      * 如果提供的 cdn_provider 並未存在於該 domain 會回傳 'differentGroup' ， 離開 function。
      * 如果提供的 cdn_provider 是 Default，不會執行任何動作，離開。function。
      *
      * @param Int $cdnProviderId
      * @param Domain $domain
      * @param LocationNetwork $locationNetwork
-     * @return void
+     * @return true|'differentGroup'|'Pod Error Message'
      */
     public function decideAction(Int $cdnProviderId, Domain $domain, LocationNetwork $locationNetwork)
     {
         $cdnModel = $this->getTargetCdn($cdnProviderId, $domain);
 
-        if(is_null($cdnModel)){
+        if (is_null($cdnModel)) {
             return 'differentGroup';
         }
 
-        $data = [
-            'cdn_id' => $cdnModel->id,
-            'edited_by' => $this->getJWTPayload()['uuid']
-        ];
-
         $existLocationDnsSetting = $this->getExistSetting($domain, $locationNetwork);
 
-        if($cdnModel->default && $existLocationDnsSetting){
-            $result = $this->destroy($existLocationDnsSetting);
+        $isExistLocationDnsSetting = collect($existLocationDnsSetting)->isNotEmpty();
 
-        }elseif($cdnModel->default && !$existLocationDnsSetting){
-            return true;
+        // cdnModel 是 Default 且 存在 LocaitonDnsLocaiotn
+        if ($cdnModel->default) {
+            $result = $isExistLocationDnsSetting ? $this->destroy($existLocationDnsSetting) : true;
+        } else {
 
-        }else{
-            switch(collect($existLocationDnsSetting)->isEmpty()){
-                case true:
-                    $result = $this->createSetting($data, $domain, $cdnModel, $locationNetwork);
-                    break;
-                case false:
-                    $result = $this->updateSetting($data, $domain, $cdnModel, $existLocationDnsSetting);
-                    break;
+            $data = [
+                'cdn_id' => $cdnModel->id,
+                'edited_by' => $this->getJWTPayload()['uuid'],
+            ];
+
+            if ($isExistLocationDnsSetting) {
+                $result = ($existLocationDnsSetting->cdn_id != $cdnModel->id) ?
+                $this->updateSetting($data, $domain, $cdnModel, $existLocationDnsSetting) :
+                true;
+            } else {
+                $result = $this->createSetting($data, $domain, $cdnModel, $locationNetwork);
             }
         }
 
@@ -145,13 +146,14 @@ class LocationDnsSettingService
 
     private function getTargetCdn(Int $cdnProviderId, Domain $domain)
     {
-        return  $this->cdnRepository->indexByWhere(['cdn_provider_id' => $cdnProviderId, 'domain_id' => $domain->id])->first();
+        return $this->cdnRepository->indexByWhere(['cdn_provider_id' => $cdnProviderId, 'domain_id' => $domain->id])->first();
     }
 
-    private function getExistSetting(Domain $domain,LocationNetwork $locationNetwork)
+    private function getExistSetting(Domain $domain, LocationNetwork $locationNetwork)
     {
-        $cdnId = Cdn::where('domain_id',$domain->id)->pluck('id');
-        return LocationDnsSetting::where('location_networks_id',$locationNetwork->id)->whereIn('cdn_id',$cdnId)->first();
+        $cdnId = Cdn::where('domain_id', $domain->id)->pluck('id');
+
+        return LocationDnsSetting::where('location_networks_id', $locationNetwork->id)->whereIn('cdn_id', $cdnId)->first();
 
     }
 
@@ -159,14 +161,14 @@ class LocationDnsSettingService
      * update iRoute Setting function
      *
      * 會把設定打上去 pod
-     * 
+     *
      * @param array $data
      * @param Domain $domain
      * @param Cdn $cdn
      * @param LocationDnsSetting $locationDnsSetting
      * @return void
      */
-    public function updateSetting(array $data,Domain $domain,Cdn $cdn, LocationDnsSetting $locationDnsSetting)
+    public function updateSetting(array $data, Domain $domain, Cdn $cdn, LocationDnsSetting $locationDnsSetting)
     {
         $podResult = $this->dnsProviderService->editRecord([
             'sub_domain' => $domain->cname,
@@ -181,21 +183,21 @@ class LocationDnsSettingService
         }
 
         return $this->locationDnsSettingRepository
-                    ->updateLocationDnsSetting($locationDnsSetting, $data);
+            ->updateLocationDnsSetting($locationDnsSetting, $data);
     }
 
     /**
      * create  iRoute Setting function
      *
      *  會把設定打上去 pod
-     *  
+     *
      * @param array $data
      * @param Domain $domain
      * @param Cdn $cdn
      * @param LocationNetwork $locationNetwork
      * @return void
      */
-    public function createSetting(array $data, Domain $domain,Cdn $cdn, LocationNetwork $locationNetwork)
+    public function createSetting(array $data, Domain $domain, Cdn $cdn, LocationNetwork $locationNetwork)
     {
         $podResult = $this->dnsProviderService->createRecord([
             'sub_domain' => $domain->cname,
@@ -210,6 +212,6 @@ class LocationDnsSettingService
         }
 
         return $this->locationDnsSettingRepository
-                    ->createSetting($locationNetwork, $podResult['data']['record']['id'], $data);
+            ->createSetting($locationNetwork, $podResult['data']['record']['id'], $data);
     }
 }

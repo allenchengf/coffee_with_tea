@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\v1;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\ScanProviderRequest;
 use Hiero7\Models\CdnProvider;
+use Hiero7\Models\Domain;
 use Hiero7\Models\LocationNetwork;
 use Hiero7\Models\ScanPlatform;
 use Hiero7\Services\ScanProviderService;
@@ -20,6 +21,14 @@ class ScanProviderController extends Controller
     {
         $this->scanProviderService = $scanProviderService;
     }
+
+    public function changeDomainRegionByScanData(Domain $domain)
+    {
+        $result = $this->scanProviderService->changeDomainRegionByScanData($domain);
+
+        return $this->response('', null, $result);
+    }
+
 
     /**
      * Select A Change To B Cdn Provider by IRoute
@@ -43,15 +52,34 @@ class ScanProviderController extends Controller
      * @param ScanProviderRequest $request
      * @return ScanProviderController
      */
-    public function scannedData(ScanPlatform $scanPlatform,ScanProviderRequest $request)
+    public function creatScannedData(ScanPlatform $scanPlatform, ScanProviderRequest $request)
     {
         $cdnProvider = CdnProvider::find($request->get('cdn_provider_id'));
-        $cdnProviderUrl = $cdnProvider->url;
         $scanned = [];
 
-        if(isset($cdnProviderUrl)){
-            $scanned = $this->scanProviderService->getScannedData($scanPlatform, $cdnProvider->url);
+        if(isset($cdnProvider->url)){
+            $scanned = $this->scanProviderService->creatScannedData($scanPlatform, $cdnProvider);
         }
         return $this->response("", null, compact('cdnProvider', 'scanned'));
+    }
+
+    /**
+     * @param ScanPlatform $scanPlatform
+     * @param ScanProviderRequest $request
+     * @return ScanProviderController
+     */
+    public function indexScannedData(ScanPlatform $scanPlatform, ScanProviderRequest $request)
+    {
+        $scanned = [];
+
+        $cdnProvider = CdnProvider::find($request->get('cdn_provider_id'));
+
+        $scanned = $this->scanProviderService->indexScannedData($scanPlatform, $cdnProvider);
+
+        // `rename` & `only` scan_platform specific key
+        $cdn_provider = &$cdnProvider;
+        $scan_platform = collect($scanPlatform)->only(['id', 'name']);
+        
+        return $this->response("", null, compact('cdn_provider', 'scan_platform', 'scanned'));
     }
 }

@@ -14,6 +14,7 @@ class LineRepository
 {
 
     protected $locationNetwork;
+
     /**
      * LineRepository constructor.
      */
@@ -40,10 +41,10 @@ class LineRepository
     public function getLinesById()
     {
         $result = [];
-        $data = $this->locationNetwork->with('continent','country')->get();
+        $data = $this->locationNetwork->with('continent', 'country')->get();
 
-        foreach ($data as $k => $v){
-            if($v['network']['scheme_id'] == env('SCHEME')){
+        foreach ($data as $k => $v) {
+            if ($v['network']['scheme_id'] == env('SCHEME')) {
                 $result[] = $v;
             }
         }
@@ -53,8 +54,8 @@ class LineRepository
 
     public function deleteByScheme($schemeId)
     {
-        $this->locationNetwork::all()->each(function ($item) use ($schemeId){
-            if($item['network']['scheme_id'] == $schemeId){
+        $this->locationNetwork::all()->each(function ($item) use ($schemeId) {
+            if ($item['network']['scheme_id'] == $schemeId) {
                 $item->delete();
             }
         });
