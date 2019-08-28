@@ -59,13 +59,13 @@ class CdnProviderService
         $situation['have_multi_cdn'] = [];
         $situation['only_default'] = [];
 
-        $domainId = $cdnProvider->pluck('cdns')->flatten()->pluck('domain_id')->all();
+        $domainIds = $cdnProvider->pluck('cdns')->flatten()->pluck('domain_id')->all();
 
-        if (!empty($domainId)){
-            foreach ($domainId as $k => $v){
-                $domain = Domain::where('id',$v)->get()->pluck('name')->all();
-                $default = $this->getDefault($v);
-                $check = Cdn::where('domain_id',$v)->where('default', 1)->where('cdn_provider_id', $cdnProvider[0]->id)->get();
+        if (!empty($domainIds)){
+            foreach ($domainIds as $domainId){
+                $domain = Domain::where('id',$domainId)->get()->pluck('name')->all();
+                $default = $this->getDefault($domainId);
+                $check = Cdn::where('domain_id',$domainId)->where('default', 1)->where('cdn_provider_id', $cdnProvider[0]->id)->get();
                 if(count($check) > 0){
                     if (in_array(0,$default)){
                         array_push($situation['have_multi_cdn'],$domain[0]);
@@ -102,17 +102,17 @@ class CdnProviderService
 
     public function changeDefaultCDN($cdnProvider)
     {
-        $domainId = $cdnProvider->pluck('cdns')->flatten()->pluck('domain_id')->all();
-        if (!empty($domainId)){
-            foreach ($domainId as $k => $v){
-                $domain = Domain::where('id',$v)->first();
-                $default = $this->getDefault($v);
-                $check = Cdn::where('domain_id',$v)->where('default', 1)->where('cdn_provider_id', $cdnProvider[0]->id)->get();
+        $domainIds = $cdnProvider->pluck('cdns')->flatten()->pluck('domain_id')->all();
+        if (!empty($domainIds)){
+            foreach ($domainIds as $domainId){
+                $domain = Domain::where('id',$domainId)->first();
+                $default = $this->getDefault($domainId);
+                $check = Cdn::where('domain_id',$domainId)->where('default', 1)->where('cdn_provider_id', $cdnProvider[0]->id)->get();
 
                 if (in_array(0,$default) && count($check) > 0){
                     DB::beginTransaction();
-                    $oldDefault = Cdn::where('domain_id', $v)->where('default', 1)->first();
-                    $newDefault = Cdn::where('domain_id', $v)->where('default', 0)->first();
+                    $oldDefault = Cdn::where('domain_id', $domainId)->where('default', 1)->first();
+                    $newDefault = Cdn::where('domain_id', $domainId)->where('default', 0)->first();
 
                     $oldDefault->update(['default'=>0]);
                     $newDefault->update(['default'=>1, 'provider_record_id'=>$oldDefault->provider_record_id]);
@@ -147,12 +147,12 @@ class CdnProviderService
 
     public function deleteCdnByCdnProviderId($cdns)
     {
-        foreach ($cdns as $k => $v) {
-            $default = $this->getDefault($v->domain_id);
+        foreach ($cdns as $cdn) {
+            $default = $this->getDefault($cdn->domain_id);
             if (in_array(0,$default)){
-                $domain = Domain::where('id',$v['domain_id'])->first();
-                $oldDefault = Cdn::with('locationDnsSetting')->where('domain_id', $v['domain_id'])->where('default', 1)->first();
-                $newDefault = Cdn::where('domain_id', $v['domain_id'])->where('default', 0)->first();
+                $domain = Domain::where('id',$cdn['domain_id'])->first();
+                $oldDefault = Cdn::with('locationDnsSetting')->where('domain_id', $cdn['domain_id'])->where('default', 1)->first();
+                $newDefault = Cdn::where('domain_id', $cdn['domain_id'])->where('default', 0)->first();
                 $newDefault->update(['default'=>1, 'provider_record_id'=>$oldDefault->provider_record_id]);
                 $oldDefault->update(['default'=>0, 'provider_record_id'=>0]);
                 LocationDnsSetting::where('cdn_id', $oldDefault->id)->delete();
@@ -167,7 +167,7 @@ class CdnProviderService
                 }
                 $oldDefault->delete();
             }else{
-                $cdn = Cdn::with('locationDnsSetting')->where('domain_id', $v['domain_id'])->where('default', 1)->first();
+                $cdn = Cdn::with('locationDnsSetting')->where('domain_id', $cdn['domain_id'])->where('default', 1)->first();
                 LocationDnsSetting::where('cdn_id', $cdn->id)->delete();
                 if (!event(new CdnProviderWasDelete($cdn))) {
                     DB::rollback();
