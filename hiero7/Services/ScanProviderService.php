@@ -14,11 +14,14 @@ use Illuminate\Support\Collection;use Ixudra\Curl\Facades\Curl;
 class ScanProviderService
 {
     use JwtPayloadTrait;
+
     const CURL_TIMEOUT = 60;
 
     protected $locationDnsSettionService;
-    private $locationNetwork = [];
+
     protected $scanLogRepository;
+
+    private $locationNetworks = [];
 
     /**
      * NetworkService constructor.
@@ -28,33 +31,39 @@ class ScanProviderService
         ScanLogRepository $scanLogRepository
     ) {
         $this->locationDnsSettionService = $locationDnsSettingService;
+
         $this->scanLogRepository = $scanLogRepository;
     }
 
     /**
-     * 根據檢測結果切換 Domain Region
+     * 根據檢測結果切換 Domain 的 Region
      *
      * @param Domain $domain
      * @return array
      */
     public function changeDomainRegionByScanData(Domain $domain): array
     {
+        // 如果 domain 沒有設定 CDN Provider 直接離開
+        if ($domain->cdnProvider->isEmpty()) {
+            return [];
+        }
+
         app()->call([$this, 'getLine']);
 
         $result = [];
 
         $this->getLastScanLog()->map(function ($region, $regionKey) use (&$result, $domain) {
             foreach ($region as $cdnProviderKey => $latency) {
-                $actionResult = $this->locationDnsSettionService->decideAction($cdnProviderKey, $domain, $this->locationNetwork[$regionKey]);
+                $actionResult = $this->locationDnsSettionService->decideAction($cdnProviderKey, $domain, $this->locationNetworks[$regionKey]);
 
-                // 如果要切換的CDN Provider，在此 Domain 沒有設定，就換下一個一直切換到有為止
+                // 如果要切換的 CDN Provider，此 Domain 沒有設定 CDN Provider，
+                // 換到下一個，一直切換到有為止
                 if ($actionResult === 'differentGroup') {
-
                     continue;
                 } else {
                     $result[] = [
                         'status' => $actionResult,
-                        'location_network' => $this->locationNetwork[$regionKey],
+                        'location_network' => $this->locationNetworks[$regionKey],
                     ];
                     break;
                 }
@@ -92,18 +101,20 @@ class ScanProviderService
     {
         $regions = [];
 
+        //取得最後一次 Scan 的結果
         $lastScanLogs = $this->scanLogRepository->indexEarlierLogs();
 
         $lastScanLogs->map(function ($lastScanLog) use (&$regions) {
 
             // 1000 > latency > 0
             if (1000 > $lastScanLog->latency && $lastScanLog->latency) {
+                // $regions['location_network_id']['cdn_provider_id'] = latency
                 $regions[$lastScanLog->location_network_id][$lastScanLog->cdn_provider_id] = $lastScanLog->latency;
             }
         });
 
-        // $regions['location_network_id']['cdn_provider_id'] = latency
         return collect($regions)->map(function ($region) {
+            // 根據 Latency 排序由小排到最大
             return collect($region)->sort();
         });
     }
@@ -116,8 +127,7 @@ class ScanProviderService
      */
     public function getLine(LineRepository $line)
     {
-        $lines = $line->getLinesById();
-        $this->locationNetwork = collect($lines)->keyBy('id');
+        $this->locationNetworks = collect($line->getLinesById())->keyBy('id');
     }
 
     /**
