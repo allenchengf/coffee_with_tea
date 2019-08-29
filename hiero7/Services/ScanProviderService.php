@@ -3,26 +3,103 @@
 namespace Hiero7\Services;
 
 use Hiero7\Models\Domain;
+use Hiero7\Models\ScanLog;
+use Hiero7\Repositories\LineRepository;
 use Illuminate\Support\Collection;
 use Ixudra\Curl\Facades\Curl;
 use Hiero7\Models\LocationNetwork;
 use Hiero7\Traits\JwtPayloadTrait;
-use Hiero7\Repositories\DomainRepository;
+use Hiero7\Repositories\{DomainRepository, ScanLogRepository};
 
 class ScanProviderService
 {
     use JwtPayloadTrait;
     const CURL_TIMEOUT = 60;
 
-
     protected $locationDnsSettionService;
+    private $locationNetwork = [];
+    protected $scanLogRepository;
 
     /**
      * NetworkService constructor.
      */
-    public function __construct(LocationDnsSettingService $locationDnsSettingService)
+    public function __construct(
+        LocationDnsSettingService $locationDnsSettingService,
+        ScanLogRepository $scanLogRepository
+    )
     {
         $this->locationDnsSettionService = $locationDnsSettingService;
+        $this->scanLogRepository = $scanLogRepository;
+    }
+
+    /**
+     * 根據檢測結果切換 Domain Region
+     *
+     * @param Domain $domain
+     * @return array
+     */
+    public function changeDomainRegionByScanData(Domain $domain): array
+    {
+        $lastScanLogs = app()->call([$this, 'getLastScanLog']);
+        app()->call([$this, 'getLine']);
+
+        $result = [];
+
+        $lastScanLogs->map(function ($region, $regionKey) use (&$result, $domain) {
+            foreach ($region as $cdnProviderKey => $latency) {
+                $actionResult = $this->locationDnsSettionService->decideAction($cdnProviderKey, $domain, $this->locationNetwork[$regionKey]);
+
+                // 如果要切換的CDN Provider，在此 Domain 沒有設定，就換下一個一直切換到有為止
+                if ($actionResult === 'differentGroup') {
+
+                    continue;
+                } else {
+                    $result[] = [
+                        'status' => $actionResult,
+                        'location_network' => $this->locationNetwork[$regionKey]
+                    ];
+                    break;
+                }
+            }
+        });
+
+        return $result;
+    }
+
+    /**
+     *  Get 最後一次掃瞄的結果
+     *
+     * @param ScanLog $scanLog
+     * @return Collection
+     */
+    public function getLastScanLog(ScanLog $scanLog): Collection
+    {
+        $regions = [];
+        
+        $lastScanLogs = $this->scanLogRepository->indexEarlierLogs();
+
+        $lastScanLogs->map(function ($lastScanLog) use (&$regions) {
+            if ($lastScanLog->latency && $lastScanLog->latency < 1000) {
+                $regions[$lastScanLog->location_network_id][$lastScanLog->cdn_provider_id] = $lastScanLog->latency;
+            }
+        });
+
+        // $regions['location_network_id']['cdn_provider_id'] = latency
+        return collect($regions)->map(function ($region) {
+            return collect($region)->sort();
+        });
+    }
+
+    /**
+     * 取得所有 Location Network
+     *
+     * @param LineRepository $line
+     * @return void
+     */
+    public function getLine(LineRepository $line)
+    {
+        $lines = $line->getLinesById();
+        $this->locationNetwork = collect($lines)->keyBy('id');
     }
 
     /**
@@ -65,27 +142,71 @@ class ScanProviderService
 
     /**
      * @param $scanPlatform
-     * @param $cdnProviderUrl
+     * @param $cdnProvider
      * @return Collection
      */
-    public function getScannedData($scanPlatform, $cdnProviderUrl)
+    public function indexScannedData($scanPlatform, $cdnProvider)
+    {
+        $scanneds = [];
+
+        // DB Query
+        $scanLog = $this->scanLogRepository->indexLatestLogs($cdnProvider->id, $scanPlatform->id);
+
+        // 處理 Query Data Output 格式
+        $locationNetworkIdCollection = collect( explode(',', $scanLog->location_network_id) );
+        $latencyArray = explode(',', $scanLog->latency);
+        $createdAt = $scanLog->created_at->format('Y-m-d H:i:s');
+
+        $scanneds = $locationNetworkIdCollection->map(function ($locationNetworkId, $idx) use (&$latencyArray, &$createdAt) {
+            $scanned = new \stdClass();
+
+            // latency
+            $scanned->latency = (int)$latencyArray[$idx];
+
+            // created_at
+            $scanned->created_at = $createdAt;
+            
+            // ORM: 與 location_networks 表相關
+            $locationNetworkModel = LocationNetwork::find($locationNetworkId);
+            $locationNetworkModel->continent;
+            $locationNetworkModel->country;
+            $locationNetworkModel->network;
+            $scanned->location_networks = $locationNetworkModel;
+            
+            return $scanned;
+        });
+        
+        return $scanneds;
+    }
+
+    /**
+     * @param $scanPlatform
+     * @param $cdnProvider
+     * @return Collection
+     */
+    public function creatScannedData($scanPlatform, $cdnProvider)
     {
         $crawlerData = [];
+        $scanneds = [];
+        $created_at = date('Y-m-d H:i:s');
+
         $locationNetwork = LocationNetwork::whereNotNull('mapping_value')->get()->filter(function ($item) {
-            return $item->network->scheme_id ==env('SCHEME');
+            return $item->network->scheme_id == env('SCHEME');
         });
 
         $data = [
-            'url' => $cdnProviderUrl,
+            'url' => $cdnProvider->url,
             'wait' => env('SCAN_SECOND'),
         ];
 
-
         if (count($locationNetwork) > 0) {
             $crawlerData = $this->curlToCrawler($scanPlatform->url, $data);
+            
+            $scanneds = $this->mappingData($crawlerData);
+            $this->create($scanneds, $cdnProvider->id, $scanPlatform->id, $created_at);
         }
 
-        return $this->mappingData($crawlerData);
+        return $scanneds;
     }
 
     /**
@@ -106,19 +227,18 @@ class ScanProviderService
      * @param $crawlerData
      * @return Collection
      */
-    private function mappingData($crawlerData)
+    public function mappingData($crawlerData)
     {
         $locationNetwork = LocationNetwork::whereNotNull('mapping_value')->get()->filter(function ($item) {
-            return $item->network->scheme_id ==env('SCHEME');
+            return $item->network->scheme_id == env('SCHEME');
         });
 
-        $crawlerResults = isset($crawlerData->results) ? $crawlerData->results : [];
+        $crawlerResults = collect( isset($crawlerData->results) ? $crawlerData->results : [] );
 
-        $scanneds = collect($locationNetwork)->map(function ($item, $key) use ($crawlerResults) {
-
+        $scanneds = $locationNetwork->map(function ($item, $key) use ($crawlerResults) {
             $scanned = new \stdClass();
 
-            $scanned->latency = collect($crawlerResults)->whereIn('nameEn', $item->mapping_value)->pluck('latency')->first() ?? null;
+            $scanned->latency = $crawlerResults->whereIn('nameEn', $item->mapping_value)->pluck('latency')->first() ?? null;
 
             $item->continent;
             $item->country;
@@ -130,6 +250,28 @@ class ScanProviderService
         });
 
         return $scanneds;
+    }
+
+    /**
+     * @param $scanneds
+     * @param $cdnProviderId
+     * @param $scanPlatformId
+     */
+    private function create($scanneds, $cdnProviderId, $scanPlatformId, $created_at)
+    {
+        $edited_by = $this->getJWTUuid();
+            
+        $scanneds->each(function ($scanned) use (&$scanPlatformId, &$cdnProviderId, &$edited_by, &$created_at) {
+            $fillable = [
+                'cdn_provider_id' => $cdnProviderId,
+                'scan_platform_id' => $scanPlatformId,
+                'location_network_id' => $scanned->location_networks->id,
+                'latency' => $scanned->latency,
+                'edited_by' => $edited_by,
+                'created_at' => $created_at,
+            ];
+            $this->scanLogRepository->create($fillable);
+        });
     }
 }
 

@@ -2,6 +2,8 @@
 
 namespace App\Http\Requests;
 
+use Illuminate\Validation\Rule;
+
 class LineRequest extends FormRequest
 {
     /**
@@ -30,7 +32,11 @@ class LineRequest extends FormRequest
                     "continent_id" => "required|integer",
                     "country_id" => "required|integer",
                     "location" => "required|string",
-                    "network_id" => "required|integer",
+                    "network_id" => [
+                        "required",
+                        "integer",
+                        "unique:location_networks,network_id",
+                    ],
                     "isp" => "required|string",
                 ];
                 break;

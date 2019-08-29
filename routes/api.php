@@ -107,7 +107,12 @@ Route::group(['middleware' => ['api', 'check.config'], 'namespace' => 'Api\v1', 
         Route::patch('{scanPlatform}', 'ScanPlatformController@edit')->name('scanPlatform.edit');
         Route::delete('{scanPlatform}', 'ScanPlatformController@destroy')->name('scanPlatform.destroy');
 
-        Route::post('{scanPlatform}/scanned-data', 'ScanProviderController@scannedData');
+        Route::post('{scanPlatform}/scanned-data', 'ScanProviderController@creatScannedData')->name('scan.create');
+        Route::get('{scanPlatform}/scanned-data', 'ScanProviderController@indexScannedData')->name('scan.show');
         Route::put('/routing-rules/{locationNetworkId}', 'ScanProviderController@changeCDNProviderByIRoute')->name('scan.chage.routing-rule');
+
+        Route::middleware(['domain.permission'])->group(function () {
+            Route::put('domain/{domain}', 'ScanProviderController@changeDomainRegionByScanData');
+        });
     });
 });

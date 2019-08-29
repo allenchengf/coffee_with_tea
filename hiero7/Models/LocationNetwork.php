@@ -10,9 +10,9 @@ class LocationNetwork extends Model
 
     protected $primaryKey = 'id';
 
-    protected $fillable = ['continent_id', 'country_id', 'location', 'network_id','isp', 'edited_by', 'mapping_value'];
+    protected $fillable = ['continent_id', 'country_id', 'location', 'network_id', 'isp', 'edited_by', 'mapping_value'];
 
-    protected $hidden = ['edited_by','created_at', 'updated_at', 'deleted_at'];
+    protected $hidden = ['edited_by', 'created_at', 'updated_at', 'deleted_at'];
 
     public function network()
     {
@@ -31,6 +31,6 @@ class LocationNetwork extends Model
 
     public function locationDnsSetting()
     {
-        return $this->hasMany(LocationDnsSetting::class,'location_networks_id');
+        return $this->hasMany(LocationDnsSetting::class, 'location_networks_id');
     }
 }

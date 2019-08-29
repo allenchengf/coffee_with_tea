@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\v1\ScanProviderController;
 use App\Http\Requests\ScanProviderRequest as Request;
 use Hiero7\Models\LocationNetwork;
 use Hiero7\Models\ScanPlatform;
+use Hiero7\Repositories\ScanLogRepository;
 use Hiero7\Services\LocationDnsSettingService;
 use Hiero7\Services\ScanProviderService;
 use Mockery as m;
@@ -30,14 +31,21 @@ class ScanProviderTest extends TestCase
         $this->seed('LocationDnsSettingSeeder');
         $this->setLocationNetwork();
 
+        app()->call([$this, 'repository']);
+
         $this->spyLocationDnsSettingService = m::spy(LocationDnsSettingService::class);
-        $this->fakeScanProviderService = new FakeScanProviderService($this->spyLocationDnsSettingService);
+        $this->fakeScanProviderService = new FakeScanProviderService($this->spyLocationDnsSettingService, $this->scanLogRepository);
         $this->controller = new ScanProviderController($this->fakeScanProviderService);
     }
 
     protected function tearDown()
     {
         parent::tearDown();
+    }
+
+    public function repository(ScanLogRepository $scanLogRepository)
+    {
+        $this->scanLogRepository = $scanLogRepository;
     }
 
     /**
@@ -59,26 +67,6 @@ class ScanProviderTest extends TestCase
         $this->assertEquals(200, $response->status());
 
         $this->shouldUseDecideAction();
-    }
-
-    /**
-     * @test
-     */
-    public function scannedData()
-    {
-        $scanPlatform = ScanPlatform::find(1);
-
-        $request = $this->createRequestAndJwt([
-            'cdn_provider_id' => 1,
-        ]);
-
-        $this->setCrawData();
-
-        $response = $this->controller->scannedData($scanPlatform, $request);
-
-        $data = $this->checkStatusAndReturnData($response, 200);
-
-        $this->assertEquals(3, count($data['data']['scanned']));
     }
 
     private function shouldUseDecideAction()
@@ -149,13 +137,13 @@ class ScanProviderTest extends TestCase
                 ],
                 [
                     "nameEn" => "Jiangsu Suqian Unicom",
-                    "latency" => 331
+                    "latency" => 331,
                 ],
                 [
                     "nameEn" => "Jiangsu Suqian Telecom",
-                    "latency" => 123
-                ]
-            ]
+                    "latency" => 123,
+                ],
+            ],
         ]);
     }
 
