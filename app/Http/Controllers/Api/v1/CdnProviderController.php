@@ -12,6 +12,7 @@ use Hiero7\Models\Cdn;
 use Hiero7\Models\CdnProvider;
 use Hiero7\Services\CdnProviderService;
 use Hiero7\Traits\OperationLogTrait;
+use Illuminate\Database\Eloquent\Collection;
 
 /**
  * Class CdnProviderController
@@ -85,19 +86,9 @@ class CdnProviderController extends Controller
         DB::beginTransaction();
         $cdnProvider->update($request->only('name', 'ttl', 'edited_by', 'url'));
         $cdn = Cdn::where('cdn_provider_id', $cdnProvider->id)->with('locationDnsSetting')->get();
-        foreach ($cdn as $k => $v) {
-            $check = Cdn::where('provider_record_id', $v['provider_record_id'])->where('cdn_provider_id', $cdnProvider->id)->get();
-            if (count($check) > 0 && $v['default'] == 1) {
-                $recordList[] = $v['provider_record_id'];
-            }
+        
+        $recordList = array_filter($this->getRecordList($cdn));
 
-            if (isset($v['locationDnsSetting'])) {
-                foreach ($v['locationDnsSetting'] as $key => $value) {
-                    $recordList[] = $value['provider_record_id'];
-                }
-            }
-        }
-        $recordList = array_filter($recordList);
         if (!empty($recordList)) {
             $BatchEditedDnsProviderRecordResult = $this->cdnProviderService->updateCdnProviderTTL($cdnProvider, $recordList);
             if (array_key_exists('errors', $BatchEditedDnsProviderRecordResult[0])) {
@@ -124,19 +115,9 @@ class CdnProviderController extends Controller
         DB::beginTransaction();
         $cdnProvider->update(['status' => $status, 'edited_by' => $request->get('edited_by')]);
         $cdn = Cdn::where('cdn_provider_id', $cdnProvider->id)->with('locationDnsSetting')->get();
-        foreach ($cdn as $k => $v) {
-            $check = Cdn::where('provider_record_id', $v['provider_record_id'])->where('cdn_provider_id', $cdnProvider->id)->get();
-            if (count($check) > 0 && $v['default'] == 1) {
-                $recordList[] = $v['provider_record_id'];
-            }
 
-            if (isset($v['locationDnsSetting'])) {
-                foreach ($v['locationDnsSetting'] as $key => $value) {
-                    $recordList[] = $value['provider_record_id'];
-                }
-            }
-        }
-        $recordList = array_filter($recordList);
+        $recordList = array_filter($this->getRecordList($cdn));
+
         if (!empty($recordList)) {
             $BatchEditedDnsProviderRecordResult = $this->cdnProviderService->updateCdnProviderStatus($recordList, $status);
             if (array_key_exists('errors', $BatchEditedDnsProviderRecordResult[0])) {
@@ -154,6 +135,39 @@ class CdnProviderController extends Controller
         return $this->response();
     }
 
+    /**
+     * 整理出 有被更改 且 pod 上也需要更動的
+     *
+     * @param Collection $cdns
+     * @return array 要打 pod 的 record ID list
+     */
+    private function getRecordList(Collection $cdns)
+    {
+        $recordList = [];
+
+        foreach ($cdns as $cdnModel) {
+            if ($cdnModel['default'] == 1) {
+                $recordList[] = $cdnModel['provider_record_id'];
+            }
+
+            if (isset($cdnModel['locationDnsSetting'])) {
+                foreach ($cdnModel['locationDnsSetting'] as $locationDnsSetting) {
+                    $recordList[] = $locationDnsSetting['provider_record_id'];
+                }
+            }
+        }
+
+        return $recordList;
+    }
+
+    /**
+     * Scannable 的 開啟 或 關閉
+     *
+     * 若 status = stop 或 url = null 的時候都會直接回傳 error
+     * @param Request $request
+     * @param CdnProvider $cdnProvider
+     * @return void
+     */
     public function changeScannable(Request $request, CdnProvider $cdnProvider)
     {
         $scannable = $request->get('scannable') ? true : false;
@@ -177,15 +191,18 @@ class CdnProviderController extends Controller
         return $this->response('', null, $cdnProvider);
     }
 
-    public function checkDefault(Request $request, CdnProvider $cdnProvider)
+    public function checkDefault(CdnProvider $cdnProvider)
     {
-        $request->merge([
-            'edited_by' => $this->getJWTPayload()['uuid'],
-        ]);
+        $defaultInfo = [
+            'have_multi_cdn' => [],
+            'only_default' => [],
+        ];
 
-        $cdnProvider = CdnProvider::with('domains')->where('id', $cdnProvider->id)->get();
-        $defaultInfo = $this->cdnProviderService->cdnDefaultInfo($cdnProvider);
-        $this->createEsLog($this->getJWTPayload()['sub'], "CDN", "check", "CDN Provider");
+        if ($cdnProvider->status){
+            $defaultInfo = $this->cdnProviderService->cdnDefaultInfo($cdnProvider);
+            $this->createEsLog($this->getJWTPayload()['sub'], "CDN", "check", "CDN Provider");
+        }
+
         return $this->response('', null, $defaultInfo);
     }
 

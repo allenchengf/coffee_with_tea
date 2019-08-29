@@ -2,12 +2,15 @@
 
 namespace Tests\Unit\Services;
 
-use Hiero7\Models\{Domain, ScanLog, ScanPlatform, CdnProvider};
-use Hiero7\Repositories\ScanLogRepository;
-use Hiero7\Services\{LocationDnsSettingService, ScanProviderService};
+use Hiero7\Models\CdnProvider;
+use Hiero7\Models\Domain;
+use Hiero7\Models\ScanLog;
+use Hiero7\Models\ScanPlatform;use Hiero7\Repositories\ScanLogRepository;
+use Hiero7\Services\LocationDnsSettingService;
+use Hiero7\Services\ScanProviderService;
 use Illuminate\Foundation\Testing\DatabaseMigrations;
-use Tests\TestCase;
 use Mockery as m;
+use Tests\TestCase;
 
 class ScanProviderTest extends TestCase
 {
@@ -25,36 +28,44 @@ class ScanProviderTest extends TestCase
         $this->seed('CdnProviderSeeder');
         $this->seed('LocationNetworkTableSeeder');
 
+        app()->call([$this, 'repository']);
+
         $this->mockLocationDnsSettingService = m::mock(LocationDnsSettingService::class);
         $this->mockScanLogRepository = m::mock(ScanLogRepository::class);
-
         $this->service = new ScanProviderService($this->mockLocationDnsSettingService, $this->mockScanLogRepository);
         $this->domain = Domain::find(1);
         $this->scanPlatform = ScanPlatform::find(1);
         $this->cdnProvider = CdnProvider::find(1);
-        $this->cdnProvider->scannable=1; // 設定可被爬
+        $this->cdnProvider->scannable = 1; // 設定可被爬
         $this->setScanLogs();
+
+        $this->addUuidforPayload()
+            ->addUserGroupId(1)
+            ->setJwtTokenPayload(1, $this->jwtPayload);
     }
 
-    public function service()
+    public function repository(ScanLogRepository $scanLogRepository)
     {
+        $this->scanLogRepository = $scanLogRepository;
     }
-
 
     /**
      * @test
      */
     public function changeDomainRegionByScanData()
     {
-        $this->setDecideAction(['differentGroup', true, 'DNS Pod Error', 'differentGroup', true]);
+        $this->service = new ScanProviderService($this->mockLocationDnsSettingService, $this->scanLogRepository);
+
+        $this->setDecideAction(['differentGroup', true, 'DNS Pod Error', 'differentGroup', false]);
 
         $result = $this->service->changeDomainRegionByScanData($this->domain);
 
         $this->assertEquals($result[0]['status'], true);
-        $this->assertEquals($result[1]['status'], 'DNS Pod Error');
-        $this->assertEquals($result[2]['status'], true);
-    }
 
+        $this->assertEquals($result[1]['status'], 'DNS Pod Error');
+
+        $this->assertEquals($result[2]['status'], false);
+    }
 
     /**
      * @test
@@ -69,7 +80,6 @@ class ScanProviderTest extends TestCase
         $this->assertEquals($result[0]->location_networks->id, 3);
     }
 
-
     /**
      * @test
      */
@@ -78,7 +88,7 @@ class ScanProviderTest extends TestCase
         $crawlerData = $this->setCrawlerData();
 
         $result = $this->service->mappingData($crawlerData);
-        
+
         $this->assertEquals($result[0]->latency, 1000);
         $this->assertEquals($result[0]->location_networks->id, 1);
     }
@@ -96,7 +106,7 @@ class ScanProviderTest extends TestCase
     {
         $this->mockScanLogRepository
             ->shouldReceive('indexLatestLogs')
-            ->andReturn((object)["latency"=>"1000,169,1000","location_network_id"=>"3,2,1","created_at"=>\Carbon\Carbon::now()]);
+            ->andReturn((object) ["latency" => "1000,169,1000", "location_network_id" => "3,2,1", "created_at" => \Carbon\Carbon::now()]);
     }
 
     private function setScanLogs()
@@ -107,54 +117,72 @@ class ScanProviderTest extends TestCase
                 "location_network_id" => 1,
                 "cdn_provider_id" => 1,
                 "latency" => "400",
+                "created_at" => "2019-08-23 16:44:55",
+                "updated_at" => "2019-08-23 16:44:55",
             ],
             [
                 "scan_platform_id" => 1,
                 "location_network_id" => 2,
                 "cdn_provider_id" => 1,
                 "latency" => "100",
+                "created_at" => "2019-08-23 16:44:55",
+                "updated_at" => "2019-08-23 16:44:55",
             ],
             [
                 "scan_platform_id" => 1,
                 "location_network_id" => 3,
                 "cdn_provider_id" => 1,
                 "latency" => "100",
+                "created_at" => "2019-08-23 16:44:55",
+                "updated_at" => "2019-08-23 16:44:55",
             ],
             [
                 "scan_platform_id" => 1,
                 "location_network_id" => 1,
                 "cdn_provider_id" => 2,
                 "latency" => "200",
+                "created_at" => "2019-08-23 16:44:55",
+                "updated_at" => "2019-08-23 16:44:55",
             ],
             [
                 "scan_platform_id" => 1,
                 "location_network_id" => 2,
                 "cdn_provider_id" => 2,
                 "latency" => "200",
+                "created_at" => "2019-08-23 16:44:55",
+                "updated_at" => "2019-08-23 16:44:55",
             ],
             [
                 "scan_platform_id" => 1,
                 "location_network_id" => 3,
                 "cdn_provider_id" => 2,
                 "latency" => "200",
+                "created_at" => "2019-08-23 16:44:55",
+                "updated_at" => "2019-08-23 16:44:55",
             ],
             [
                 "scan_platform_id" => 1,
                 "location_network_id" => 1,
                 "cdn_provider_id" => 3,
                 "latency" => "300",
+                "created_at" => "2019-08-23 16:44:55",
+                "updated_at" => "2019-08-23 16:44:55",
             ],
             [
                 "scan_platform_id" => 1,
                 "location_network_id" => 1,
                 "cdn_provider_id" => 3,
                 "latency" => "300",
+                "created_at" => "2019-08-23 16:44:55",
+                "updated_at" => "2019-08-23 16:44:55",
             ],
             [
                 "scan_platform_id" => 1,
                 "location_network_id" => 1,
                 "cdn_provider_id" => 3,
                 "latency" => "300",
+                "created_at" => "2019-08-23 16:44:55",
+                "updated_at" => "2019-08-23 16:44:55",
             ],
         ];
 
@@ -1302,6 +1330,6 @@ class ScanProviderTest extends TestCase
                 "河南新乡电信"
             ]
         }', true);
-        return (object)$data;
+        return (object) $data;
     }
 }

@@ -19,16 +19,16 @@ class ScanLog extends Model
 
     public function cdnProvider()
     {
-        return $this->hasOne(CdnProvider::class);
+        return $this->belongsTo(CdnProvider::class);
     }
 
     public function scanPlatform()
     {
-        return $this->hasOne(ScanPlatform::class);
+        return $this->belongsTo(ScanPlatform::class);
     }
 
     public function locationNetwork()
     {
-        return $this->hasOne(LocationNetwork::class);
+        return $this->belongsTo(LocationNetwork::class);
     }
 }
