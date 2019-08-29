@@ -350,7 +350,7 @@ class CdnProviderTest extends TestCase
         $loginUid = 1;
         $user_group_id = 1;
         $target_user_group_id = 1;
-        $request = new Request;
+
         $this->seed();
         $this->seed('DomainTableSeeder');
         $this->seed('CdnTableSeeder');
@@ -362,7 +362,7 @@ class CdnProviderTest extends TestCase
 
         $cdnProvider = $this->cdnProvider->find(1);
 
-        $response = $this->controller->checkDefault($request, $cdnProvider);
+        $response = $this->controller->checkDefault($cdnProvider);
         
         $data = json_decode($response->getContent(), true);
         
