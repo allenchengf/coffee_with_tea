@@ -3,13 +3,15 @@
 namespace Hiero7\Services;
 
 use Hiero7\Models\Domain;
+use Hiero7\Models\DomainGroup;
 use Hiero7\Models\LocationNetwork;
 use Hiero7\Models\ScanLog;
 use Hiero7\Repositories\DomainRepository;
 use Hiero7\Repositories\LineRepository;
 use Hiero7\Repositories\ScanLogRepository;
 use Hiero7\Traits\JwtPayloadTrait;
-use Illuminate\Support\Collection;use Ixudra\Curl\Facades\Curl;
+use Illuminate\Support\Collection;
+use Ixudra\Curl\Facades\Curl;
 
 class ScanProviderService
 {
@@ -20,6 +22,8 @@ class ScanProviderService
     protected $locationDnsSettionService;
 
     protected $scanLogRepository;
+
+    protected $lastScanLog = [];
 
     private $locationNetworks = [];
 
@@ -33,6 +37,26 @@ class ScanProviderService
         $this->locationDnsSettionService = $locationDnsSettingService;
 
         $this->scanLogRepository = $scanLogRepository;
+
+        $this->lastScanLog = collect([]);
+    }
+
+    public function changeDomainGroupRegionByScanData(DomainGroup $domainGroup)
+    {
+        app()->call([$this, 'getLine']);
+
+        $this->getLastScanLog();
+
+        return $domainGroup->domains->map(function ($domain) {
+            $result = $this->autoChangeRegionByScanData($domain);
+
+            unset($domain->cdnProvider);
+
+            return [
+                "domain" => $domain,
+                "result" => $result,
+            ];
+        });
     }
 
     /**
@@ -43,16 +67,23 @@ class ScanProviderService
      */
     public function changeDomainRegionByScanData(Domain $domain): array
     {
+        app()->call([$this, 'getLine']);
+
+        $this->getLastScanLog();
+
+        return $this->autoChangeRegionByScanData($domain);
+    }
+
+    private function autoChangeRegionByScanData(Domain $domain)
+    {
         // 如果 domain 沒有設定 CDN Provider 直接離開
         if ($domain->cdnProvider->isEmpty()) {
             return [];
         }
 
-        app()->call([$this, 'getLine']);
-
         $result = [];
 
-        $this->getLastScanLog()->map(function ($region, $regionKey) use (&$result, $domain) {
+        $this->LastScanLog->map(function ($region, $regionKey) use (&$result, $domain) {
             foreach ($region as $cdnProviderKey => $latency) {
                 $actionResult = $this->locationDnsSettionService->decideAction($cdnProviderKey, $domain, $this->locationNetworks[$regionKey]);
 
@@ -79,7 +110,7 @@ class ScanProviderService
      *  並且排出各個 CDN Provider 在各個線路下的優良順序
      *
      * @param ScanLog $scanLog
-     * @return Collection
+     * @return void
      *
      * example:
      * location_network_id->cdn_provider_id = latency
@@ -97,7 +128,7 @@ class ScanProviderService
      *      }
      *  }
      */
-    public function getLastScanLog(): Collection
+    public function getLastScanLog()
     {
         $regions = [];
 
@@ -113,7 +144,7 @@ class ScanProviderService
             }
         });
 
-        return collect($regions)->map(function ($region) {
+        $this->LastScanLog = collect($regions)->map(function ($region) {
             // 根據 Latency 排序由小排到最大
             return collect($region)->sort();
         });

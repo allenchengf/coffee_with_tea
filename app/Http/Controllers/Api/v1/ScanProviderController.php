@@ -4,9 +4,12 @@ namespace App\Http\Controllers\Api\v1;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\ScanProviderRequest;
-use Hiero7\Models\{CdnProvider, Domain, LocationNetwork, ScanPlatform};
+use Hiero7\Models\CdnProvider;
+use Hiero7\Models\Domain;
+use Hiero7\Models\DomainGroup;
+use Hiero7\Models\LocationNetwork;
+use Hiero7\Models\ScanPlatform;
 use Hiero7\Services\ScanProviderService;
-use Hiero7\Enums\InputError;
 use Hiero7\Traits\JwtPayloadTrait;
 
 class ScanProviderController extends Controller
@@ -23,13 +26,19 @@ class ScanProviderController extends Controller
         $this->scanProviderService = $scanProviderService;
     }
 
-    public function changeDomainRegionByScanData(Domain $domain)
+    public function changeDomainRegion(Domain $domain)
     {
         $result = $this->scanProviderService->changeDomainRegionByScanData($domain);
 
         return $this->response('', null, $result);
     }
 
+    public function changeDomainGroupRegion(DomainGroup $domainGroup)
+    {
+        $result = $this->scanProviderService->changeDomainGroupRegionByScanData($domainGroup);
+
+        return $this->response('', null, $result);
+    }
 
     /**
      * Select A Change To B Cdn Provider by IRoute
@@ -59,7 +68,7 @@ class ScanProviderController extends Controller
 
         $cdnProvider = $this->initCdnProviderForScannedData($request);
 
-        if(isset($cdnProvider->url)){
+        if (isset($cdnProvider->url)) {
             $scanned = $this->scanProviderService->creatScannedData($scanPlatform, $cdnProvider);
         }
         return $this->response("", null, compact('cdnProvider', 'scanned'));
@@ -81,15 +90,15 @@ class ScanProviderController extends Controller
         // `rename` & `only` scan_platform specific key
         $cdn_provider = &$cdnProvider;
         $scan_platform = collect($scanPlatform)->only(['id', 'name']);
-        
+
         return $this->response("", null, compact('cdn_provider', 'scan_platform', 'scanned'));
     }
 
     private function initCdnProviderForScannedData($request)
     {
         return CdnProvider::where('id', $request->get('cdn_provider_id'))
-                            ->where('user_group_id', $this->getJWTUserGroupId())
-                            ->where('scannable', '>', 0)
-                            ->first();
+            ->where('user_group_id', $this->getJWTUserGroupId())
+            ->where('scannable', '>', 0)
+            ->first();
     }
 }
