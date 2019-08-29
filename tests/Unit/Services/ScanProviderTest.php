@@ -4,8 +4,10 @@ namespace Tests\Unit\Services;
 
 use Hiero7\Models\CdnProvider;
 use Hiero7\Models\Domain;
-use Hiero7\Models\ScanLog;
-use Hiero7\Models\ScanPlatform;use Hiero7\Repositories\ScanLogRepository;
+use Hiero7\Models\DomainGroup;
+use Hiero7\Models\DomainGroupMapping;use Hiero7\Models\ScanLog;
+use Hiero7\Models\ScanPlatform;
+use Hiero7\Repositories\ScanLogRepository;
 use Hiero7\Services\LocationDnsSettingService;
 use Hiero7\Services\ScanProviderService;
 use Illuminate\Foundation\Testing\DatabaseMigrations;
@@ -70,6 +72,33 @@ class ScanProviderTest extends TestCase
     /**
      * @test
      */
+    public function changeDomainGroupRegionByScanData()
+    {
+        $this->service = new ScanProviderService($this->mockLocationDnsSettingService, $this->scanLogRepository);
+
+        $this->setDecideAction([
+            'differentGroup', true, 'DNS Pod Error', 'differentGroup', false,
+            'differentGroup', 'DNS Pod Error', true, 'DNS Pod Error 123',
+        ]);
+
+        $this->setDomainGroup();
+
+        $domainGroup = DomainGroup::find(1);
+
+        $result = $this->service->changeDomainGroupRegionByScanData($domainGroup);
+
+        $this->assertEquals($result[0]['result'][0]['status'], true);
+        $this->assertEquals($result[0]['result'][1]['status'], 'DNS Pod Error');
+        $this->assertEquals($result[0]['result'][2]['status'], false);
+
+        $this->assertEquals($result[1]['result'][0]['status'], 'DNS Pod Error');
+        $this->assertEquals($result[1]['result'][1]['status'], true);
+        $this->assertEquals($result[1]['result'][2]['status'], 'DNS Pod Error 123');
+    }
+
+    /**
+     * @test
+     */
     public function indexScannedData()
     {
         $this->setIndexLatestLogs();
@@ -100,6 +129,33 @@ class ScanProviderTest extends TestCase
         $this->mockLocationDnsSettingService
             ->shouldReceive('decideAction')
             ->andReturn(...$actionList);
+    }
+
+    private function setDomainGroup()
+    {
+
+        $domainGroup = [
+            'id' => 1,
+            'user_group_id' => 1,
+            'name' => str_random(6),
+        ];
+
+        DomainGroup::insert($domainGroup);
+
+        $domainGroupMappings = [
+            [
+                'domain_id' => 1,
+                'domain_group_id' => 1,
+            ], [
+                'domain_id' => 4,
+                'domain_group_id' => 1,
+            ],
+        ];
+
+        foreach ($domainGroupMappings as $domainGroupMapping) {
+            DomainGroupMapping::insert($domainGroupMapping);
+        }
+
     }
 
     private function setIndexLatestLogs()

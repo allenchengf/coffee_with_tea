@@ -112,7 +112,8 @@ Route::group(['middleware' => ['api', 'check.config'], 'namespace' => 'Api\v1', 
         Route::put('/routing-rules/{locationNetworkId}', 'ScanProviderController@changeCDNProviderByIRoute')->name('scan.chage.routing-rule');
 
         Route::middleware(['domain.permission'])->group(function () {
-            Route::put('domain/{domain}', 'ScanProviderController@changeDomainRegionByScanData');
+            Route::put('domain/{domain}', 'ScanProviderController@changeDomainRegion');
+            Route::put('domain-group/{domainGroup}', 'ScanProviderController@changeDomainGroupRegion');
         });
     });
 });
