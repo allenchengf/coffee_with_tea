@@ -4,14 +4,15 @@ namespace App\Http\Controllers\Api\v1;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\ScanProviderRequest;
-use Hiero7\Models\CdnProvider;
-use Hiero7\Models\Domain;
-use Hiero7\Models\LocationNetwork;
-use Hiero7\Models\ScanPlatform;
+use Hiero7\Models\{CdnProvider, Domain, LocationNetwork, ScanPlatform};
 use Hiero7\Services\ScanProviderService;
+use Hiero7\Enums\InputError;
+use Hiero7\Traits\JwtPayloadTrait;
 
 class ScanProviderController extends Controller
 {
+    use JwtPayloadTrait;
+
     protected $scanProviderService;
 
     /**
@@ -54,8 +55,9 @@ class ScanProviderController extends Controller
      */
     public function creatScannedData(ScanPlatform $scanPlatform, ScanProviderRequest $request)
     {
-        $cdnProvider = CdnProvider::find($request->get('cdn_provider_id'));
         $scanned = [];
+
+        $cdnProvider = $this->initCdnProviderForScannedData($request);
 
         if(isset($cdnProvider->url)){
             $scanned = $this->scanProviderService->creatScannedData($scanPlatform, $cdnProvider);
@@ -72,7 +74,7 @@ class ScanProviderController extends Controller
     {
         $scanned = [];
 
-        $cdnProvider = CdnProvider::find($request->get('cdn_provider_id'));
+        $cdnProvider = $this->initCdnProviderForScannedData($request);
 
         $scanned = $this->scanProviderService->indexScannedData($scanPlatform, $cdnProvider);
 
@@ -81,5 +83,13 @@ class ScanProviderController extends Controller
         $scan_platform = collect($scanPlatform)->only(['id', 'name']);
         
         return $this->response("", null, compact('cdn_provider', 'scan_platform', 'scanned'));
+    }
+
+    private function initCdnProviderForScannedData($request)
+    {
+        return CdnProvider::where('id', $request->get('cdn_provider_id'))
+                            ->where('user_group_id', $this->getJWTUserGroupId())
+                            ->where('scannable', '>', 0)
+                            ->first();
     }
 }
