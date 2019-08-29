@@ -69,26 +69,6 @@ class ScanProviderTest extends TestCase
         $this->shouldUseDecideAction();
     }
 
-    /**
-     * @test
-     */
-    public function scannedData()
-    {
-        $scanPlatform = ScanPlatform::find(1);
-
-        $request = $this->createRequestAndJwt([
-            'cdn_provider_id' => 1,
-        ]);
-
-        $this->setCrawData();
-
-        $response = $this->controller->scannedData($scanPlatform, $request);
-
-        $data = $this->checkStatusAndReturnData($response, 200);
-
-        $this->assertEquals(3, count($data['data']['scanned']));
-    }
-
     private function shouldUseDecideAction()
     {
         $this->spyLocationDnsSettingService
