@@ -151,17 +151,20 @@ class ScanProviderService
 
         // DB Query
         $scanLog = $this->scanLogRepository->indexLatestLogs($cdnProvider->id, $scanPlatform->id);
+        if(! $scanLog){
+            return [];
+        }
 
         // 處理 Query Data Output 格式
         $locationNetworkIdCollection = collect( explode(',', $scanLog->location_network_id) );
         $latencyArray = explode(',', $scanLog->latency);
         $createdAt = $scanLog->created_at->format('Y-m-d H:i:s');
-
+        
         $scanneds = $locationNetworkIdCollection->map(function ($locationNetworkId, $idx) use (&$latencyArray, &$createdAt) {
             $scanned = new \stdClass();
 
             // latency
-            $scanned->latency = (int)$latencyArray[$idx];
+            $scanned->latency = is_numeric($latencyArray[$idx]) ? (int)$latencyArray[$idx] : null;
 
             // created_at
             $scanned->created_at = $createdAt;

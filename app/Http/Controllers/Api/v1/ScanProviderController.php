@@ -6,7 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\ScanProviderRequest;
 use Hiero7\Models\{CdnProvider, Domain, LocationNetwork, ScanPlatform};
 use Hiero7\Services\ScanProviderService;
-use Hiero7\Enums\InputError;
+use Hiero7\Enums\{InputError, InternalError};
 use Hiero7\Traits\JwtPayloadTrait;
 
 class ScanProviderController extends Controller
@@ -59,9 +59,17 @@ class ScanProviderController extends Controller
 
         $cdnProvider = $this->initCdnProviderForScannedData($request);
 
-        if(isset($cdnProvider->url)){
-            $scanned = $this->scanProviderService->creatScannedData($scanPlatform, $cdnProvider);
+        // cdn_provider: url未設定 / scannable 關閉狀態
+        if(! $cdnProvider || ! isset($cdnProvider->url) || $cdnProvider->scannable == 0) {
+            return $this->setStatusCode(400)->response('', InputError::CHECK_CDN_PROVIDER_SETTING, []);
         }
+
+        $scanned = $this->scanProviderService->creatScannedData($scanPlatform, $cdnProvider);
+        // cdn_provider: url未設定 / scannable 關閉狀態
+        if(empty($scanned)) {
+            return $this->setStatusCode(400)->response('', InternalError::CHECK_DATA_AND_SCHEME_SETTING, []);
+        }
+
         return $this->response("", null, compact('cdnProvider', 'scanned'));
     }
 
@@ -89,7 +97,6 @@ class ScanProviderController extends Controller
     {
         return CdnProvider::where('id', $request->get('cdn_provider_id'))
                             ->where('user_group_id', $this->getJWTUserGroupId())
-                            ->where('scannable', '>', 0)
                             ->first();
     }
 }

@@ -44,6 +44,8 @@ class InputError extends Enum
     const THIS_CDNPROVIDER_STATUS_IS_STOP = 4032;
     const THIS_CDNPROVIDER_URL_IS_NULL = 4033;
     const THIS_CDNPROVIDER_STATUS_AND_URL_ARE_UNAVAILABLE = 4034;
+    const CHECK_CDN_PROVIDER_SETTING = 4035;
+    
     /**
      * @var array
      */
@@ -83,5 +85,6 @@ class InputError extends Enum
         self::THIS_CDNPROVIDER_STATUS_IS_STOP => 'This Cdn Provider\'s status is stop.',
         self::THIS_CDNPROVIDER_URL_IS_NULL => 'This Cdn Provider\'s url is null.',
         self::THIS_CDNPROVIDER_STATUS_AND_URL_ARE_UNAVAILABLE => 'This Cdn Provider\'s status and url are unavailable.',
+        self::CHECK_CDN_PROVIDER_SETTING => 'Check This Cdn Provider\'s setting.',
     ];
 }
