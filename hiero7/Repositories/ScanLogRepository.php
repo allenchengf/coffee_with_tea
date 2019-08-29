@@ -32,7 +32,7 @@ class ScanLogRepository
     public function indexLatestLogs($cdnProviderId, $scanPlatformId=null)
     {
         $scanLog = $this->scanLogModel
-                        ->select(DB::raw('group_concat(latency) as latency, group_concat(location_network_id) as location_network_id, scan_logs.created_at'))
+                        ->select(DB::raw('group_concat(COALESCE(latency, "null")) as latency, group_concat(location_network_id) as location_network_id, scan_logs.created_at'))
                         ->leftJoin('cdn_providers', 'cdn_providers.id', '=', 'scan_logs.cdn_provider_id')
                         ->where('cdn_providers.user_group_id', $this->getJWTUserGroupId())
                         ->where('scan_logs.cdn_provider_id', $cdnProviderId)
