@@ -90,4 +90,9 @@ class CdnRepository
 
         return $update->update($inputs);
     }
+
+    public function getCdnsByDomainId(int $domainId)
+    {
+        return $this->cdn->where('domain_id',$domainId)->get();
+    }
 }
