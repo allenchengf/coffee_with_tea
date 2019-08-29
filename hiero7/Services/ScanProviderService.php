@@ -6,6 +6,7 @@ use Hiero7\Models\Domain;
 use Hiero7\Models\DomainGroup;
 use Hiero7\Models\LocationNetwork;
 use Hiero7\Models\ScanLog;
+use Hiero7\Repositories\CdnProviderRepository;
 use Hiero7\Repositories\DomainRepository;
 use Hiero7\Repositories\LineRepository;
 use Hiero7\Repositories\ScanLogRepository;
@@ -23,10 +24,11 @@ class ScanProviderService
 
     protected $scanLogRepository;
 
-    protected $lastScanLog = [];
+    private $lastScanLog = [];
 
     private $locationNetworks = [];
 
+    private $cdnProvider;
     /**
      * NetworkService constructor.
      */
@@ -95,6 +97,7 @@ class ScanProviderService
                     $result[] = [
                         'status' => $actionResult,
                         'location_network' => $this->locationNetworks[$regionKey],
+                        'cdn_provider' => $this->cdnProvider[$cdnProviderKey],
                     ];
                     break;
                 }
@@ -132,13 +135,15 @@ class ScanProviderService
     {
         $regions = [];
 
+        app()->call([$this, 'getCdnProvider']);
+
         //取得最後一次 Scan 的結果
         $lastScanLogs = $this->scanLogRepository->indexEarlierLogs();
 
         $lastScanLogs->map(function ($lastScanLog) use (&$regions) {
 
             // 1000 > latency > 0
-            if (1000 > $lastScanLog->latency && $lastScanLog->latency) {
+            if (isset($this->cdnProvider[$lastScanLog->cdn_provider_id]) && 1000 > $lastScanLog->latency && $lastScanLog->latency) {
                 // $regions['location_network_id']['cdn_provider_id'] = latency
                 $regions[$lastScanLog->location_network_id][$lastScanLog->cdn_provider_id] = $lastScanLog->latency;
             }
@@ -159,6 +164,11 @@ class ScanProviderService
     public function getLine(LineRepository $line)
     {
         $this->locationNetworks = collect($line->getLinesById())->keyBy('id');
+    }
+
+    public function getCdnProvider(CdnProviderRepository $cdnProviderRepository)
+    {
+        $this->cdnProvider = $cdnProviderRepository->getStatusIsActive()->keyBy('id');
     }
 
     /**
