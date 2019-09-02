@@ -60,9 +60,9 @@ class CdnRequestTest extends TestCase
      */
     public function createCdnFailsWithNoAttribute()
     {
-        $this->json('POST', $this->uri)->assertJsonFragment([
-            'cname' => ["The cname field is required."],
-        ])->assertStatus(422);
+        $this->json('POST', $this->uri)->assertJsonFragment(
+            ["The cname field is required."]
+        )->assertStatus(422);
 
     }
 
@@ -79,7 +79,7 @@ class CdnRequestTest extends TestCase
         ];
 
         $this->post($this->uri,
-            $requestParams)->assertStatus(422)->assertJsonFragment(['cname' => ["Domain Verification Error."]]);
+            $requestParams)->assertStatus(422)->assertJsonFragment(["Domain Verification Error."]);
     }
 
     /**
@@ -100,7 +100,7 @@ class CdnRequestTest extends TestCase
 
         $this->post($this->getUri(), $requestParams)
             ->assertStatus(422)
-            ->assertJsonFragment(['cdn_provider_id' => ["The Domain And Cdn Provider User_group_id Not Mapping."]]);
+            ->assertJsonFragment(["The Domain And Cdn Provider User_group_id Not Mapping."]);
     }
 
     /**
@@ -118,7 +118,7 @@ class CdnRequestTest extends TestCase
         ];
 
         $this->patch($this->getUri() . "/$cdn->id/cname",
-            $requestParams)->assertStatus(422)->assertJsonFragment(['cname' => ["Domain Verification Error."]]);
+            $requestParams)->assertStatus(422)->assertJsonFragment(["Domain Verification Error."]);
     }
 
     /**
@@ -163,7 +163,7 @@ class CdnRequestTest extends TestCase
         $this->addUuidforPayload()->setJwtTokenPayload(4, $this->jwtPayload);
 
         $this->post($this->getUri(),
-            $requestParams)->assertStatus(422)->assertJsonFragment(['cname' => ["The cname has already been taken."]]);
+            $requestParams)->assertStatus(422)->assertJsonFragment(["The cname has already been taken."]);
     }
 
     /**
