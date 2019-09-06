@@ -1,4 +1,4 @@
-#### .env
+## .env
 
 ```yaml
 
@@ -6,12 +6,11 @@ DB_DATABASE=coffee_with_tea
 
 JWT_SECRET=s07mAuXcJUWZq3LZAiXrqjec6EEg2ZR5N97or1WytTONkjJwhfowVrK8eQzI1S5o
 
-KONG_OPERATION_LOG=http://10.88.55.124/operation_log
-USER_MODULE=http://10.88.55.122:35320/api/v1
-DNS_PROVIDER_API=http://10.88.55.122:35341/api/v1
+OPERATION_LOG_URL=leodock_backend gateway IP:39452/api/v1
+USER_MODULE=leodock_backend gateway IP:35320/api/v1
+DNS_PROVIDER_API=leodock_backend gateway IP:35341/api/v1
 
-DNS_PROVIDER_API=http://10.88.55.122:35341/api/v1
-DNS_POD_DOMAIN=shiftcdn.com
+DNS_POD_DOMAIN=DNS Pod 購買的域名
 DNS_POD_LOGIN_TOKEN=ID,Token
 DNS_POD_DOMAIN_ID=
 
@@ -19,12 +18,18 @@ DOMAIN_REGULAR='regex:/^(?!:\/\/)([a-zA-Z0-9-_]+\.)*[a-zA-Z0-9][a-zA-Z0-9-_]+\.[
 CDN_TTL=600
 SCHEME=1 #dnspod free
 
-OPERATION_LOG_URL=http://10.88.55.122:39452/api/v1
 PLATFORM_KEY=eu7nxsfttc
 
 CONFIG_WAIT_TIME=2 (分鐘)
 SCAN_SECOND=30 (爬蟲執行的時間 秒)
 ```
+
+#### Note
+
+leodock_backend gateway IP :
+
+請去 leodock .env 找尋 network 底下的 gateway
+
 
 #### Database
 
