@@ -19,6 +19,7 @@ class Kernel extends HttpKernel
         \App\Http\Middleware\TrimStrings::class,
         \Illuminate\Foundation\Http\Middleware\ConvertEmptyStringsToNull::class,
         \App\Http\Middleware\TrustProxies::class,
+        \Barryvdh\Cors\HandleCors::class,
     ];
 
     /**
@@ -38,8 +39,9 @@ class Kernel extends HttpKernel
         ],
 
         'api' => [
-            'throttle:60,1',
+            'throttle:10000,1',
             'bindings',
+            \App\Http\Middleware\TokenCheck::class,
         ],
     ];
 
@@ -60,5 +62,10 @@ class Kernel extends HttpKernel
         'signed' => \Illuminate\Routing\Middleware\ValidateSignature::class,
         'throttle' => \Illuminate\Routing\Middleware\ThrottleRequests::class,
         'verified' => \Illuminate\Auth\Middleware\EnsureEmailIsVerified::class,
+        'internal.group' => \App\Http\Middleware\InternalGroup::class,
+        'auth.user.module' => \App\Http\Middleware\AuthUserModule::class,
+        'domain.permission' => \App\Http\Middleware\DomainPermission::class,
+        'admin.check' => \App\Http\Middleware\AdminCheck::class,
+        'check.config' => \App\Http\Middleware\CheckForImportConfig::class,
     ];
 }
