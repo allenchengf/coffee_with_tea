@@ -51,16 +51,16 @@ class LocationNetworkTableSeeder extends Seeder
 
         $enterprise = [
             [
-                'location' => 'All',
-                'isp' => 'All',
-                'network_id' => 15, // 國內
-                'mapping_value' => '',
-            ], [
                 'continent_id' => 2,
                 'country_id' => 2,
                 'location' => 'All',
                 'isp' => 'All',
-                'network_id' => 16, // 國外
+                'network_id' => 15, // 國外
+                'mapping_value' => '',
+            ], [
+                'location' => 'All',
+                'isp' => 'All',
+                'network_id' => 16, // 國內
                 'mapping_value' => '',
             ], [
                 'location' => 'All',
