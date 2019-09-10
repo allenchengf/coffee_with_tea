@@ -191,15 +191,18 @@ class CdnProviderController extends Controller
         return $this->response('', null, $cdnProvider);
     }
 
-    public function checkDefault(Request $request, CdnProvider $cdnProvider)
+    public function checkDefault(CdnProvider $cdnProvider)
     {
-        $request->merge([
-            'edited_by' => $this->getJWTPayload()['uuid'],
-        ]);
+        $defaultInfo = [
+            'have_multi_cdn' => [],
+            'only_default' => [],
+        ];
 
-        $cdnProvider = CdnProvider::with('domains')->where('id', $cdnProvider->id)->get();
-        $defaultInfo = $this->cdnProviderService->cdnDefaultInfo($cdnProvider);
-        $this->createEsLog($this->getJWTPayload()['sub'], "CDN", "check", "CDN Provider");
+        if ($cdnProvider->status){
+            $defaultInfo = $this->cdnProviderService->cdnDefaultInfo($cdnProvider);
+            $this->createEsLog($this->getJWTPayload()['sub'], "CDN", "check", "CDN Provider");
+        }
+
         return $this->response('', null, $defaultInfo);
     }
 

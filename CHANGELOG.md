@@ -4,6 +4,34 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.2] - 2019-09-09
+### Fixed
+- 將 LocationNetworkTableSeeder Data 設定補齊
+
+## [0.3.1] - 2019-09-06
+### Fixed
+- 將 Get get continent list API 移除 internal.group Middleware
+- 將 Get country list API 移除 internal.group Middleware
+
+## [0.3.0] - 2019-08-30
+### Added
+- Add Scannable Column at CDN Provider Table
+- Create Scan Log Table
+- 儲存每次爬蟲的結果
+- 輸出最後一次爬蟲的結果 API
+- 一鍵切換 By Domain API
+- 一鍵切換 By Domain Group API
+- Get Domain 分頁 API
+- Get iRouteCDN By Domain 分頁 API
+- Get iRouteCDN By Domain Group 分頁 API
+
+### Fixed
+- 優化切換線路 Method
+- 優化切換線路 Test 情境
+- 重構 Check Default CDN
+- Validation 輸出格式調整
+- 修復 Delete Region Bug
+
 ## [0.2.0] - 2019-08-16
 ### Added
 - CRUD Scan Platform Table 

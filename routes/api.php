@@ -53,11 +53,11 @@ Route::group(['middleware' => ['api', 'check.config'], 'namespace' => 'Api\v1', 
             Route::put('{scheme}', 'SchemeController@edit')->name('schemes.edit');
             Route::delete('{scheme}', 'SchemeController@destroy')->name('schemes.destroy');
         });
-
-        Route::get('continents', 'ContinentController@index')->name('continents.index');
-        Route::get('countries', 'CountryController@index')->name('countries.index');
         Route::get('schemes/{scheme_id}/networks', 'NetworkController@index')->name('networks.index');
     });
+
+    Route::get('continents', 'ContinentController@index')->name('continents.index');
+    Route::get('countries', 'CountryController@index')->name('countries.index');
 
     Route::group(['middleware' => ['auth.user.module'], 'prefix' => 'cdn_providers'], function () {
         Route::get('', 'CdnProviderController@index')->name('cdn_providers.index');
@@ -107,12 +107,13 @@ Route::group(['middleware' => ['api', 'check.config'], 'namespace' => 'Api\v1', 
         Route::patch('{scanPlatform}', 'ScanPlatformController@edit')->name('scanPlatform.edit');
         Route::delete('{scanPlatform}', 'ScanPlatformController@destroy')->name('scanPlatform.destroy');
 
-        Route::post('{scanPlatform}/scanned-data', 'ScanProviderController@creatScannedData');
-        Route::get('{scanPlatform}/scanned-data', 'ScanProviderController@indexScannedData');
+        Route::post('{scanPlatform}/scanned-data', 'ScanProviderController@creatScannedData')->name('scan.create');
+        Route::get('{scanPlatform}/scanned-data', 'ScanProviderController@indexScannedData')->name('scan.show');
         Route::put('/routing-rules/{locationNetworkId}', 'ScanProviderController@changeCDNProviderByIRoute')->name('scan.chage.routing-rule');
 
         Route::middleware(['domain.permission'])->group(function () {
-            Route::put('domain/{domain}', 'ScanProviderController@changeDomainRegionByScanData');
+            Route::put('domain/{domain}', 'ScanProviderController@changeDomainRegion');
+            Route::put('domain-group/{domainGroup}', 'ScanProviderController@changeDomainGroupRegion');
         });
     });
 });
