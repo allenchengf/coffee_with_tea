@@ -120,12 +120,11 @@ class DomainGroupService
             return 'cdnError';
         }
 
-        if (!$this->changeIrouteSetting($domainGroup, $request->domain_id, $request->edited_by)) {
+        if (!empty($this->changeIrouteSetting($domainGroup, $request->domain_id))) {
             return 'iRouteError';
         }
 
-        $result = $this->domainGroupRepository->createDomainToGroup($request, $domainGroup->id);
-        return $result;
+        return $this->domainGroupRepository->createDomainToGroup($request, $domainGroup->id);
     }
 
     /**
@@ -229,10 +228,11 @@ class DomainGroupService
      * @param string $editedBy
      * @return void
      */
-    public function changeIrouteSetting(DomainGroup $domainGroup, int $domainId, string $editedBy)
+    public function changeIrouteSetting(DomainGroup $domainGroup, int $domainId)
     {
-
-        $originCdnSetting = $domainGroup->domains()->first()->cdns()->get();
+        //取 Group 內的第一個 domain 下的 cdn
+        $originCdnSetting = $domainGroup->domains->get(0)->cdns;
+        // 取該 cdn 下的所有 iroute
         list($originIrouteSetting,$nonSettingCdn) = $this->getLocationSetting($originCdnSetting);
 
         if (empty($originIrouteSetting)) {
@@ -240,10 +240,18 @@ class DomainGroupService
         }
 
         $targetDomain = Domain::find($domainId);
-        $result = '';
+        $result = [];
 
+        // 拿 Group 內的 domain 設定
         foreach ($originIrouteSetting as $iRouteSetting) {
-            $result = $this->locationDnsSettingService->decideAction($iRouteSetting->cdn_provider_id, $targetDomain, $iRouteSetting->location);
+            $response = $this->locationDnsSettingService->decideAction($iRouteSetting->cdn_provider_id, $targetDomain, $iRouteSetting->location);
+            
+            // 處理回傳的結果，如果是 'differentGroup' 和 false 就會 再傳出去。 
+            if (is_string($response)){
+                $result[] = $response;
+            }else{
+                $response ? true : $result[] = $response;
+            }
         }
 
         foreach($nonSettingCdn as $cdnProviderId ){
@@ -258,7 +266,6 @@ class DomainGroupService
                 $this->locationDnsSettingService->destroy($locationDnsSetting);
             }
         }
-
 
         return $result;
     }
@@ -346,18 +353,22 @@ class DomainGroupService
      */
     private function getLocationSetting(Collection $cdnSetting)
     {
-        $targetIrouteSetting = [];
         $nonSettingCdn = [];
 
         foreach ($cdnSetting as $cdns) {
-            $originLocationDnsSetting = $cdns->locationDnsSetting;
+            // $originLocationDnsSetting = $cdns->locationDnsSetting;
+            $originLocationDnsSetting = collect($cdns->locationDnsSetting);
+            //檢查該 cdn 是否有存在 locationDnsSetting table
             if ($originLocationDnsSetting->isEmpty()) {
                 $nonSettingCdnProviderId = $cdns->cdn_provider_id;
                 array_push($nonSettingCdn, $nonSettingCdnProviderId);
                 continue;
             }
-            $originLocationDnsSetting[0]->cdn_provider_id = $cdns->cdn_provider_id;
-            array_push($targetIrouteSetting, $originLocationDnsSetting[0]);
+
+            //如果有存在 locationDnsSetting table，就要一個一個看。
+            $targetIrouteSetting = $originLocationDnsSetting->each(function ($item, $key) use ($cdns){
+                $item->cdn_provider_id = $cdns->cdn_provider_id;
+            });
         }
 
         return [$targetIrouteSetting, $nonSettingCdn];
