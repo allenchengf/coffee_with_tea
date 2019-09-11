@@ -108,7 +108,7 @@ class LocationDnsSettingService
      * @param Int $cdnProviderId
      * @param Domain $domain
      * @param LocationNetwork $locationNetwork
-     * @return true|'differentGroup'|'Pod Error Message'
+     * @return boolean|'differentGroup'
      */
     public function decideAction(Int $cdnProviderId, Domain $domain, LocationNetwork $locationNetwork)
     {
