@@ -411,7 +411,7 @@ class LocationNetworkTableSeeder extends Seeder
             ], [
                 'location' => 'Guangdong',
                 'isp' => $isp['cm'],
-                'network_id' => 101, // 广东移动
+                'network_id' => 102, // 广东移动
                 'mapping_value' => 'Guangdong Mobile',
             ], [
                 'location' => 'Zhejiang',
