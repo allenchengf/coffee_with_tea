@@ -111,6 +111,9 @@ Route::group(['middleware' => ['api', 'check.config'], 'namespace' => 'Api\v1', 
         Route::get('{scanPlatform}/scanned-data', 'ScanProviderController@indexScannedData')->name('scan.show');
         Route::put('/routing-rules/{locationNetworkId}', 'ScanProviderController@changeCDNProviderByIRoute')->name('scan.chage.routing-rule');
 
+
+        Route::put('change-all', 'ScanProviderController@changeRegion');
+
         Route::middleware(['domain.permission'])->group(function () {
             Route::put('domain/{domain}', 'ScanProviderController@changeDomainRegion');
             Route::put('domain-group/{domainGroup}', 'ScanProviderController@changeDomainGroupRegion');
