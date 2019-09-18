@@ -5,7 +5,7 @@ namespace Tests\Unit\Controller;
 use App\Http\Controllers\Api\v1\ScanProviderController;
 use App\Http\Requests\ScanProviderRequest as Request;
 use Hiero7\Models\LocationNetwork;
-use Hiero7\Models\ScanPlatform;
+use Hiero7\Repositories\DomainRepository;
 use Hiero7\Repositories\ScanLogRepository;
 use Hiero7\Services\LocationDnsSettingService;
 use Hiero7\Services\ScanProviderService;
@@ -17,7 +17,7 @@ class ScanProviderTest extends TestCase
     /**
      * @var ScanProviderController
      */
-    private $controller;
+    private $controller, $domainRepository, $scanLogRepository;
     private $spyLocationDnsSettingService;
 
     protected function setUp()
@@ -43,9 +43,10 @@ class ScanProviderTest extends TestCase
         parent::tearDown();
     }
 
-    public function repository(ScanLogRepository $scanLogRepository)
+    public function repository(ScanLogRepository $scanLogRepository, DomainRepository $domainRepository)
     {
         $this->scanLogRepository = $scanLogRepository;
+        $this->domainRepository = $domainRepository;
     }
 
     /**

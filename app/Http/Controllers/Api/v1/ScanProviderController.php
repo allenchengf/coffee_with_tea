@@ -4,9 +4,7 @@ namespace App\Http\Controllers\Api\v1;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\ScanProviderRequest;
-
 use Hiero7\Enums\InputError;
-
 use Hiero7\Enums\InternalError;
 use Hiero7\Models\CdnProvider;
 use Hiero7\Models\Domain;
@@ -14,7 +12,8 @@ use Hiero7\Models\DomainGroup;
 use Hiero7\Models\LocationNetwork;
 use Hiero7\Models\ScanPlatform;
 use Hiero7\Repositories\DomainRepository;
-use Hiero7\Services\ScanProviderService;use Hiero7\Traits\JwtPayloadTrait;
+use Hiero7\Services\ScanProviderService;
+use Hiero7\Traits\JwtPayloadTrait;
 
 class ScanProviderController extends Controller
 {

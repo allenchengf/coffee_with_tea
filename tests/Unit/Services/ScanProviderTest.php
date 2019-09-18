@@ -7,6 +7,7 @@ use Hiero7\Models\Domain;
 use Hiero7\Models\DomainGroup;
 use Hiero7\Models\DomainGroupMapping;use Hiero7\Models\ScanLog;
 use Hiero7\Models\ScanPlatform;
+use Hiero7\Repositories\DomainRepository;
 use Hiero7\Repositories\ScanLogRepository;
 use Hiero7\Services\LocationDnsSettingService;
 use Hiero7\Services\ScanProviderService;
@@ -46,9 +47,10 @@ class ScanProviderTest extends TestCase
             ->setJwtTokenPayload(1, $this->jwtPayload);
     }
 
-    public function repository(ScanLogRepository $scanLogRepository)
+    public function repository(ScanLogRepository $scanLogRepository, DomainRepository $domainRepository)
     {
         $this->scanLogRepository = $scanLogRepository;
+        $this->domainRepository = $domainRepository;
     }
 
     /**
@@ -120,6 +122,23 @@ class ScanProviderTest extends TestCase
 
         $this->assertEquals($result[0]->latency, 1000);
         $this->assertEquals($result[0]->location_networks->id, 1);
+    }
+
+    /**
+     * @test
+     * @return void
+     */
+    public function changeAllRegionByScanData()
+    {
+        $this->service = new ScanProviderService($this->mockLocationDnsSettingService, $this->scanLogRepository);
+
+        $this->setDecideAction();
+
+        $result = $this->service->changeAllRegionByScanData($this->domainRepository->getDomainByUserGroup());
+
+        $expectedCount = $this->domainRepository->getDomainByUserGroup()->count();
+
+        $this->assertCount($expectedCount, $result);
     }
 
     private function setDecideAction(array $actionList = [])
