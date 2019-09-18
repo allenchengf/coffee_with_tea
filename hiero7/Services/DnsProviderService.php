@@ -194,6 +194,14 @@ class DnsProviderService
 
     }
 
+    /**
+     * 檢查 DNS Pod Response
+     *
+     * @param array $response
+     * @return boolean 
+     * false = 失敗
+     * true  = 成功有資訊回傳
+     */
     public function checkAPIOutput($response = []): bool
     {
         if (!$response || array_key_exists('errors', $response) || !is_null($response['errorCode'])) {

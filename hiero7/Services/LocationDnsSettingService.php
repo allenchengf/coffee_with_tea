@@ -207,7 +207,7 @@ class LocationDnsSettingService
             'status' => $cdn->cdnProvider->status,
         ]);
 
-        if ($podResult['errorCode']) {
+        if (!$this->dnsProviderService->checkAPIOutput($podResult)) {
             return false;
         }
 
