@@ -109,8 +109,6 @@ Route::group(['middleware' => ['api', 'check.config'], 'namespace' => 'Api\v1', 
 
         Route::post('{scanPlatform}/scanned-data', 'ScanProviderController@creatScannedData')->name('scan.create');
         Route::get('{scanPlatform}/scanned-data', 'ScanProviderController@indexScannedData')->name('scan.show');
-        Route::put('/routing-rules/{locationNetworkId}', 'ScanProviderController@changeCDNProviderByIRoute')->name('scan.chage.routing-rule');
-
 
         Route::put('change-all', 'ScanProviderController@changeRegion');
 

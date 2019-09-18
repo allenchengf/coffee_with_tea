@@ -191,44 +191,6 @@ class ScanProviderService
     }
 
     /**
-     *  Select A Change To B Cdn Provider by IRoute
-     *
-     * @param LocationNetwork $locationNetwork
-     * @param int $fromCdnProviderId
-     * @param int $toCdnProviderId
-     * @return array
-     */
-    public function changeCDNProviderByIRoute(LocationNetwork $locationNetwork, int $fromCdnProviderId, int $toCdnProviderId): array
-    {
-        $domainAction = [];
-
-        $domains = app()->call([$this, 'getDomainsByCDNProviderIdList'], [
-            'cdnProviderIdList' => [$fromCdnProviderId, $toCdnProviderId],
-        ]);
-
-        $domains->map(function (Domain $domain) use ($locationNetwork, $toCdnProviderId, &$domainAction) {
-            $domainAction[] = [
-                'domain' => $domain->only('id', 'user_group_id', 'name', 'cname', 'label'),
-                'action' => $this->locationDnsSettionService->decideAction($toCdnProviderId, $domain, $locationNetwork),
-            ];
-        });
-
-        return $domainAction;
-    }
-
-    /**
-     * Get Domains By CDN Provider Id List
-     *
-     * @param DomainRepository $domainRepository
-     * @param array $cdnProviderIdList
-     * @return Collection
-     */
-    public function getDomainsByCDNProviderIdList(DomainRepository $domainRepository, array $cdnProviderIdList = []): Collection
-    {
-        return $domainRepository->getDomainsByCDNProviderList($cdnProviderIdList);
-    }
-
-    /**
      * @param $scanPlatform
      * @param $cdnProvider
      * @return Collection

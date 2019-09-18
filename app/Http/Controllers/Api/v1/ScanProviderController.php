@@ -73,23 +73,6 @@ class ScanProviderController extends Controller
     }
 
     /**
-     * Select A Change To B Cdn Provider by IRoute
-     *
-     * @param ScanProviderRequest $request
-     * @param LocationNetwork $locationNetworkId
-     * @return ScanProviderController
-     */
-    public function changeCDNProviderByIRoute(ScanProviderRequest $request, LocationNetwork $locationNetworkId)
-    {
-        $oldCdnProviderId = $request->get('old_cdn_provider_id');
-        $newCdnProviderId = $request->get('new_cdn_provider_id');
-
-        $domains = $this->scanProviderService->changeCDNProviderByIRoute($locationNetworkId, $oldCdnProviderId, $newCdnProviderId);
-
-        return $this->response('', null, $domains);
-    }
-
-    /**
      * @param ScanPlatform $scanPlatform
      * @param ScanProviderRequest $request
      * @return ScanProviderController

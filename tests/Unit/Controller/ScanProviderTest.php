@@ -48,28 +48,6 @@ class ScanProviderTest extends TestCase
         $this->scanLogRepository = $scanLogRepository;
         $this->domainRepository = $domainRepository;
     }
-
-    /**
-     * @test
-     */
-    public function selectAchangeToBCdnProvider()
-    {
-        $selectCdnProvider = [
-            'old_cdn_provider_id' => 1,
-            'new_cdn_provider_id' => 2,
-        ];
-
-        $request = $this->createRequestAndJwt($selectCdnProvider);
-
-        $locationNetwork = LocationNetwork::find(1);
-
-        $response = $this->controller->changeCDNProviderByIRoute($request, $locationNetwork);
-
-        $this->assertEquals(200, $response->status());
-
-        $this->shouldUseDecideAction();
-    }
-
     private function shouldUseDecideAction()
     {
         $this->spyLocationDnsSettingService
