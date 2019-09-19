@@ -111,10 +111,10 @@ class ScanProviderController extends Controller
         $scanned = $this->scanProviderService->indexScannedData($scanPlatform, $cdnProvider);
 
         // `rename` & `only` scan_platform specific key
-        $cdn_provider = &$cdnProvider;
-        $scan_platform = collect($scanPlatform)->only(['id', 'name']);
+        // $cdn_provider = &$cdnProvider;
+        $scanPlatform = collect($scanPlatform)->only(['id', 'name']);
 
-        return $this->response("", null, compact('cdn_provider', 'scan_platform', 'scanned'));
+        return $this->response("", null, compact('cdnProvider', 'scanPlatform', 'scanned'));
     }
 
     private function initCdnProviderForScannedData($request)
