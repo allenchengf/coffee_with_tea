@@ -8,13 +8,16 @@ abstract class ScanMappingAbstract
 {
     public $ispMappingKey = [
         'China Telecom' => 'ct',
+        'china telecom' => 'ct',
         'China Unicom' => 'cu',
+        'china unicom' => 'cu',
         'China Mobile' => 'cm',
+        'china mobile' => 'cm',
         'All' => 'all',
         'all' => 'all',
     ];
 
-    protected $regionList, $listData, $crawlerData;
+    protected $regionList, $listData, $crawlerData, $allDataList = [];
 
     abstract public function __construct(array $crawlerData = [], Collection $regionList);
 
@@ -28,41 +31,79 @@ abstract class ScanMappingAbstract
      * [ispEn][provinceEn] = latency
      * [chinz]] = latency
      *
-     * @param array $list
+     * @param array $crawlerResult 爬蟲的 result Data
      * @return Collection
      */
-    protected function filterData(array $list = []): Collection
+    protected function filterData(array $crawlerResult = []): Collection
     {
-        $mappingList = $china = [];
+        $mappingList = [];
 
-        collect($list)->map(function ($item) use (&$mappingList, &$china) {
+        collect($crawlerResult)->map(function ($item) use (&$mappingList) {
 
             if ($this->checkCrawlerFormat($item)) {
                 return false;
             }
 
             $mappingList[strtolower($item['ispEn'])][strtolower($item['provinceEn'])][] = $item['latency'];
-            $china[] = $item['latency'];
+            $this->allDataList[] = $item['latency'];
         });
 
         $mappingList = $this->calcRegionAvg($mappingList);
-
-        if ($mappingList) {
-            $mappingList['china'] = round(collect($china)->avg(), 2);
-        }
 
         return $mappingList;
     }
 
     /**
-     * 計算 ISP latency Average
+     * get 全部監測點的 latency Average
      *
      * @param array $ispList
-     * @return integer
+     * @return integer|null
      */
-    protected function calcISPAvg($ispList = []): int
+    protected function getAllListAvg()
     {
-        return collect($ispList)->avg();
+        return collect($this->allDataList)->avg();
+    }
+
+    /**
+     * get ISP latency Average
+     *
+     * @param array $ispList
+     * @return integer|null
+     */
+    protected function getISPAvg(string $ispName)
+    {
+        $shortISPName = $this->getShortISPName($ispName);
+
+        return isset($this->listData[$shortISPName]) ? collect($this->listData[$shortISPName])->avg() : null;
+    }
+
+    /**
+     * get Region 的 ISP Latency
+     *
+     * @param string $regionName
+     * @param string $ispName
+     * @return integer|null
+     */
+    protected function getRegionIsp(string $regionName, string $ispName)
+    {
+        $shortISPName = $this->getShortISPName($ispName);
+
+        if (!isset($this->listData[$shortISPName])) {
+            return null;
+        }
+
+        return $this->listData[$shortISPName][strtolower($regionName)] ?? null;
+    }
+
+    /**
+     * get ISP 縮寫
+     *
+     * @param string $ispName
+     * @return string|null
+     */
+    protected function getShortISPName(string $ispName)
+    {
+        return $this->ispMappingKey[strtolower($ispName)] ?? null;
     }
 
     /**
