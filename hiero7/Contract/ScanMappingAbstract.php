@@ -6,11 +6,21 @@ use Illuminate\Support\Collection;
 
 abstract class ScanMappingAbstract
 {
-    public $isp = [
+    public $ispMappingKey = [
         'China Telecom' => 'ct',
         'China Unicom' => 'cu',
         'China Mobile' => 'cm',
+        'All' => 'all',
+        'all' => 'all',
     ];
+
+    protected $regionList, $listData, $crawlerData;
+
+    abstract public function __construct(array $crawlerData = [], Collection $regionList);
+
+    abstract public function mappingData();
+
+    abstract protected function setListData();
 
     /**
      * 將爬蟲的資料處理成特定格式
@@ -43,7 +53,7 @@ abstract class ScanMappingAbstract
 
         return $mappingList;
     }
-    
+
     /**
      * 計算 ISP latency Average
      *
@@ -61,7 +71,7 @@ abstract class ScanMappingAbstract
      * @param array $item
      * @return boolean
      */
-    private function checkCrawlerFormat(array $item = []) :bool
+    private function checkCrawlerFormat(array $item = []): bool
     {
         return (!isset($item['latency']) ||
             $item['latency'] <= 0 ||
