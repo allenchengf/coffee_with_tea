@@ -17,6 +17,9 @@ abstract class ScanMappingAbstract
         'all' => 'all',
     ];
 
+    //小數點保留幾位
+    protected $pointReservation = 2;
+
     protected $regionList, $listData, $crawlerData, $allDataList = [];
 
     abstract public function __construct(array $crawlerData = [], Collection $regionList);
@@ -61,7 +64,7 @@ abstract class ScanMappingAbstract
      */
     protected function getAllListAvg()
     {
-        return collect($this->allDataList)->avg();
+        return round(collect($this->allDataList)->avg(), $this->pointReservation);
     }
 
     /**
@@ -74,7 +77,9 @@ abstract class ScanMappingAbstract
     {
         $shortISPName = $this->getShortISPName($ispName);
 
-        return isset($this->listData[$shortISPName]) ? collect($this->listData[$shortISPName])->avg() : null;
+        return isset($this->listData[$shortISPName]) ?
+        round(collect($this->listData[$shortISPName])->avg(), $this->pointReservation) :
+        null;
     }
 
     /**
@@ -131,7 +136,7 @@ abstract class ScanMappingAbstract
     {
         return collect($mappingList)->map(function ($isps) {
             return collect($isps)->map(function ($item) {
-                return collect($item)->avg();
+                return round(collect($item)->avg(), $this->pointReservation);
             });
         });
     }
