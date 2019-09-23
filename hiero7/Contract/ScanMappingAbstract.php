@@ -23,7 +23,7 @@ abstract class ScanMappingAbstract
     abstract protected function setListData();
 
     /**
-     * 將爬蟲的資料處理成特定格式
+     * 將爬蟲的資料處理成特定格式， latency 要介於 0 < 這裡才會用 < 1000
      *
      * [ispEn][provinceEn] = latency
      * [chinz]] = latency

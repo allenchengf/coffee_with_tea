@@ -13,6 +13,7 @@ use Hiero7\Repositories\ScanLogRepository;
 use Hiero7\Traits\JwtPayloadTrait;
 use Illuminate\Support\Collection;
 use Ixudra\Curl\Facades\Curl;
+use Hiero7\Services\ChinaZMappingService;
 
 class ScanProviderService
 {
@@ -36,7 +37,7 @@ class ScanProviderService
         LocationDnsSettingService $locationDnsSettingService,
         ScanLogRepository $scanLogRepository
     ) {
-        $this->locationDnsSettionService = $locationDnsSettingService;
+        $this->locationDnsSettingService = $locationDnsSettingService;
 
         $this->scanLogRepository = $scanLogRepository;
 
@@ -106,7 +107,7 @@ class ScanProviderService
 
         $this->LastScanLog->map(function ($region, $regionKey) use (&$result, $domain) {
             foreach ($region as $cdnProviderKey => $latency) {
-                $actionResult = $this->locationDnsSettionService->decideAction($cdnProviderKey, $domain, $this->locationNetworks[$regionKey]);
+                $actionResult = $this->locationDnsSettingService->decideAction($cdnProviderKey, $domain, $this->locationNetworks[$regionKey]);
 
                 // 如果要切換的 CDN Provider，此 Domain 沒有設定 CDN Provider，
                 // 換到下一個，一直切換到有為止
@@ -243,7 +244,7 @@ class ScanProviderService
         $scanneds = [];
         $created_at = date('Y-m-d H:i:s');
 
-        $locationNetwork = LocationNetwork::whereNotNull('mapping_value')->get()->filter(function ($item) {
+        $locationNetwork = LocationNetwork::all()->filter(function ($item) {
             return $item->network->scheme_id == env('SCHEME');
         });
 
@@ -254,8 +255,17 @@ class ScanProviderService
 
         if (count($locationNetwork) > 0) {
             $crawlerData = $this->curlToCrawler($scanPlatform->url, $data);
+            // $scanneds = $this->mappingData($crawlerData);
+            $result = json_decode(json_encode($crawlerData), true);
+            
+            if ($scanPlatform->name == 'chinaz') {
+                $chinaZ = new ChinaZMappingService($result, $locationNetwork);
+                $scanneds = $chinaZ->mappingData();
+            }else{
+                
+            }
 
-            $scanneds = $this->mappingData($crawlerData);
+
             $this->create($scanneds, $cdnProvider->id, $scanPlatform->id, $created_at);
         }
 
