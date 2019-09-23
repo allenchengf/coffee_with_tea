@@ -14,6 +14,7 @@ use Hiero7\Traits\JwtPayloadTrait;
 use Illuminate\Support\Collection;
 use Ixudra\Curl\Facades\Curl;
 use Hiero7\Services\ChinaZMappingService;
+use Hiero7\Services\I7CEMappingService;
 
 class ScanProviderService
 {
@@ -255,18 +256,15 @@ class ScanProviderService
 
         if (count($locationNetwork) > 0) {
             $crawlerData = $this->curlToCrawler($scanPlatform->url, $data);
-            // $scanneds = $this->mappingData($crawlerData);
             $result = json_decode(json_encode($crawlerData), true);
-            
+
             if ($scanPlatform->name == 'chinaz') {
-                $chinaZ = new ChinaZMappingService($result, $locationNetwork);
-                $scanneds = $chinaZ->mappingData();
+                $scanneds = new ChinaZMappingService($result, $locationNetwork);
             }else{
-                
+                $scanneds = new I7CEMappingService($result, $locationNetwork);
             }
 
-
-            $this->create($scanneds, $cdnProvider->id, $scanPlatform->id, $created_at);
+            $this->create($scanneds->mappingData(), $cdnProvider->id, $scanPlatform->id, $created_at);
         }
 
         return $scanneds;
