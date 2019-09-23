@@ -26,8 +26,6 @@ abstract class ScanMappingAbstract
 
     abstract public function mappingData();
 
-    abstract protected function setListData();
-
     /**
      * 將爬蟲的資料處理成特定格式
      *
@@ -51,9 +49,9 @@ abstract class ScanMappingAbstract
             $this->allDataList[] = $item['latency'];
         });
 
-        $mappingList = $this->calcRegionAvg($mappingList);
+        $this->listData = $this->calcRegionAvg($mappingList);
 
-        return $mappingList;
+        return $this->listData;
     }
 
     /**
