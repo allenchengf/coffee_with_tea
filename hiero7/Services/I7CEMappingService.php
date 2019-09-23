@@ -28,8 +28,8 @@ class I7CEMappingService extends ScanMappingAbstract
         $scanneds = $this->regionList->map(function ($region, $key) {
             $scannedObj = new \stdClass();
             $scannedObj->latency = null;
-
-            if ($region->country->name == 'china') {
+            
+            if ($this->nameIsChina($region->country->name)) {
                 if ($this->nameIsAll($region->location)) {
                     $scannedObj->latency = $this->nameIsAll($region->isp) ?
                     $this->getAllListAvg() :
@@ -50,5 +50,10 @@ class I7CEMappingService extends ScanMappingAbstract
     private function nameIsAll(string $name): bool
     {
         return strtolower($name) === 'all';
+    }
+
+    private function nameIsChina(string $name): bool
+    {
+        return strtolower($name) == 'china';
     }
 }
