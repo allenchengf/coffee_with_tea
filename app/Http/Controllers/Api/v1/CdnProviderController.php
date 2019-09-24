@@ -210,16 +210,16 @@ class CdnProviderController extends Controller
 
     public function destroy(CdnProvider $cdnProvider)
     {
-        $ugid = $this->getJWTPayload()['sub'];
+        $payload = $this->getJWTPayload();
 
         $errorCode = null;
 
-        if ($ugid != $cdnProvider->user_group_id) {
+        if ($payload['user_group_id'] != $cdnProvider->user_group_id) {
             return $this->setStatusCode(403)->response('', PermissionError::THIS_GROUP_ID_NOT_MATCH, '');
         } else if ($cdnProvider->cdns->isEmpty()) {
             $cdnProvider->delete();
-            
-            $this->createEsLog($ugid, "CDN", "delete", "CDN Provider");
+
+            $this->createEsLog($payload['sub'], "CDN", "delete", "CDN Provider");
         } else {
             $errorCode = InputError::CANT_DELETE_THIS_CDN_PROVIDER;
         }
