@@ -41,7 +41,7 @@ abstract class ScanMappingAbstract
 
         collect($crawlerResult)->map(function ($item) use (&$mappingList) {
 
-            if ($this->checkCrawlerFormat($item)) {
+            if (!$this->checkCrawlerFormat($item)) {
                 return false;
             }
 
@@ -113,13 +113,22 @@ abstract class ScanMappingAbstract
 
     /**
      * 檢查爬蟲的格式，是否符合成為計算資料
-     *
+     * 
+     * 檢查 1 : array key 沒有 latency
+     * 檢查 2 : latency <= 0
+     * 檢查 3 : latency >= 1000
+     * 檢查 4 : array key 沒有 ispEn
+     * 檢查 5 : array key 沒有 provinceEn
+     * 
+     * false 表示上面條件其中一個符合
+     * true  表示格式沒問題，可以使用
+     * 
      * @param array $item
-     * @return boolean
+     * @return boolean 
      */
     private function checkCrawlerFormat(array $item = []): bool
     {
-        return (!isset($item['latency']) ||
+        return !(!isset($item['latency']) ||
             $item['latency'] <= 0 ||
             $item['latency'] >= 1000 ||
             empty($item['ispEn']) ||
