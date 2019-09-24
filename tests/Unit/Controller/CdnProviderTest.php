@@ -8,16 +8,16 @@
 
 namespace Tests\Unit\Controller;
 
-use Tests\TestCase;
+use App\Http\Controllers\Api\v1\CdnProviderController;
+use App\Http\Requests\CdnProviderRequest as Request;
 use Hiero7\Models\Cdn;
 use Hiero7\Models\CdnProvider;
 use Hiero7\Models\Domain;
+use Hiero7\Repositories\CdnProviderRepository;
 use Hiero7\Services\CdnProviderService;
 use Hiero7\Services\DnsProviderService;
-use Hiero7\Repositories\CdnProviderRepository;
-use App\Http\Requests\CdnProviderRequest as Request;
 use Illuminate\Foundation\Testing\DatabaseMigrations;
-use App\Http\Controllers\Api\v1\CdnProviderController;
+use Tests\TestCase;
 
 class CdnProviderTest extends TestCase
 {
@@ -80,7 +80,7 @@ class CdnProviderTest extends TestCase
             'status' => 'active',
             'name' => 'Cloudflare',
             'ttl' => 600,
-            'url' => 'http://www.hiero7.com'
+            'url' => 'http://www.hiero7.com',
         ]);
 
         $this->addUuidforPayload()
@@ -104,7 +104,7 @@ class CdnProviderTest extends TestCase
             'edited_by' => "de20afd0-d009-4fbf-a3b0-2c3257915d10",
             'name' => 'Cloudflare',
             'ttl' => 600,
-            'url' => 'http://www.hiero7.com'
+            'url' => 'http://www.hiero7.com',
         ]);
 
         $this->addUuidforPayload()
@@ -118,18 +118,18 @@ class CdnProviderTest extends TestCase
         $this->dnsprovider->shouldReceive('batchEditRecord')
             ->withAnyArgs()
             ->andReturn([
-                "errorCode"=>null,"data"=>[
-                "job_id"=>["id"=>1],
-                "detail"=>[
-                    "domain_id"=>1
-                ]
-                    ]
-                ]);
+                "errorCode" => null, "data" => [
+                    "job_id" => ["id" => 1],
+                    "detail" => [
+                        "domain_id" => 1,
+                    ],
+                ],
+            ]);
 
         $editData = [
             'name' => 'Update',
             'ttl' => '666',
-            'url' => 'http://www.google.com'
+            'url' => 'http://www.google.com',
         ];
         $request = new Request;
         $request->merge($editData);
@@ -137,7 +137,7 @@ class CdnProviderTest extends TestCase
 
         $this->dnsprovider->shouldReceive('createRecord')
             ->withAnyArgs()
-            ->andReturn(["errorCode"=>null,"data"=>["record"=>["id"=>1]]]);
+            ->andReturn(["errorCode" => null, "data" => ["record" => ["id" => 1]]]);
 
         $data = json_decode($response->getContent(), true);
         $this->assertEquals(200, $response->status());
@@ -158,7 +158,7 @@ class CdnProviderTest extends TestCase
             'edited_by' => "de20afd0-d009-4fbf-a3b0-2c3257915d10",
             'name' => 'Cloudflare',
             'ttl' => 600,
-            'url' => 'http://www.hiero7.com'
+            'url' => 'http://www.hiero7.com',
         ]);
 
         $this->addUuidforPayload()
@@ -172,16 +172,16 @@ class CdnProviderTest extends TestCase
         $this->dnsprovider->shouldReceive('batchEditRecord')
             ->withAnyArgs()
             ->andReturn([
-                "errorCode"=>null,"data"=>[
-                    "job_id"=>["id"=>1],
-                    "detail"=>[
-                        "domain_id"=>1
-                    ]
-                ]
+                "errorCode" => null, "data" => [
+                    "job_id" => ["id" => 1],
+                    "detail" => [
+                        "domain_id" => 1,
+                    ],
+                ],
             ]);
 
         $editData = [
-            'status' => 'stop'
+            'status' => 'stop',
         ];
         $request = new Request;
         $request->merge($editData);
@@ -189,7 +189,7 @@ class CdnProviderTest extends TestCase
 
         $this->dnsprovider->shouldReceive('batchEditRecord')
             ->withAnyArgs()
-            ->andReturn(["errorCode"=>null,"data"=>["record"=>["id"=>1]]]);
+            ->andReturn(["errorCode" => null, "data" => ["record" => ["id" => 1]]]);
 
         $this->assertEquals(200, $response->status());
     }
@@ -207,7 +207,7 @@ class CdnProviderTest extends TestCase
             'edited_by' => "de20afd0-d009-4fbf-a3b0-2c3257915d10",
             'name' => 'Cloudflare',
             'ttl' => 600,
-            'url' => 'http://www.hiero7.com'
+            'url' => 'http://www.hiero7.com',
         ]);
 
         $this->addUuidforPayload()
@@ -221,12 +221,12 @@ class CdnProviderTest extends TestCase
         $this->dnsprovider->shouldReceive('batchEditRecord')
             ->withAnyArgs()
             ->andReturn([
-                "errorCode"=>null,"data"=>[
-                    "job_id"=>["id"=>1],
-                    "detail"=>[
-                        "domain_id"=>1
-                    ]
-                ]
+                "errorCode" => null, "data" => [
+                    "job_id" => ["id" => 1],
+                    "detail" => [
+                        "domain_id" => 1,
+                    ],
+                ],
             ]);
 
         $this->dnsprovider->shouldReceive('editRecord')->withAnyArgs()
@@ -239,7 +239,7 @@ class CdnProviderTest extends TestCase
                     "weight" => null,
                 ]]]);
         $editData = [
-            'status' => 'active'
+            'status' => 'active',
         ];
 
         $request = new Request;
@@ -248,7 +248,7 @@ class CdnProviderTest extends TestCase
 
         $this->dnsprovider->shouldReceive('batchEditRecord')
             ->withAnyArgs()
-            ->andReturn(["errorCode"=>null,"data"=>["record"=>["id"=>1]]]);
+            ->andReturn(["errorCode" => null, "data" => ["record" => ["id" => 1]]]);
 
         $this->assertEquals(200, $response->status());
     }
@@ -318,7 +318,7 @@ class CdnProviderTest extends TestCase
         $this->assertEquals(4033, $data['errorCode']);
     }
 
-        /** @test */
+    /** @test */
     public function errorStopStatusAtScannable()
     {
         $loginUid = 1;
@@ -363,14 +363,14 @@ class CdnProviderTest extends TestCase
         $cdnProvider = $this->cdnProvider->find(1);
 
         $response = $this->controller->checkDefault($cdnProvider);
-        
+
         $data = json_decode($response->getContent(), true);
-        
+
         $this->assertEquals(200, $response->status());
-        
-        $this->assertEquals("hiero7.test1.com",$data['data']['have_multi_cdn'][0]);
-        $this->assertEquals("hiero7.test2.com",$data['data']['have_multi_cdn'][1]);
-        $this->assertEquals("only.default.com",$data['data']['only_default'][0]);
+
+        $this->assertEquals("hiero7.test1.com", $data['data']['have_multi_cdn'][0]);
+        $this->assertEquals("hiero7.test2.com", $data['data']['have_multi_cdn'][1]);
+        $this->assertEquals("only.default.com", $data['data']['only_default'][0]);
     }
 
     /** @test */
@@ -387,34 +387,58 @@ class CdnProviderTest extends TestCase
 
         $cdnProvider = $this->cdnProvider->find(1);
 
-        $this->dnsprovider->shouldReceive('editRecord')->withAnyArgs()
-            ->andReturn(["message" => "Success", "errorCode" => null, "data" => [
-                "record" => [
-                    "id" => "426278576",
-                    "name" => "hiero7.test1.com",
-                    "value" => "cCnPjg.com.",
-                    "status" => "enable",
-                    "weight" => null,
-                ]]]);
-
-        $this->dnsprovider->shouldReceive('deleteRecord')
-            ->withAnyArgs()
-            ->andReturn([
-                "errorCode"=>null,"data"=>[
-                    "job_id"=>["id"=>1],
-                    "detail"=>[
-                        "domain_id"=>1
-                    ]
-                ]
-            ]);
-        $response = $this->controller->destroy($request, $cdnProvider);
+        $response = $this->controller->destroy($cdnProvider);
         $this->assertEquals(200, $response->status());
     }
 
+    /** @test */
+    public function delete_cdn_provider_errorCodeIs3010()
+    {
+        $loginUid = 1;
+        $user_group_id = 1;
+
+        $this->addUuidforPayload()
+            ->addUserGroupId($user_group_id)
+            ->setJwtTokenPayload($loginUid, $this->jwtPayload);
+
+        $cdnProvider = $this->cdnProvider->find(4);
+
+        $response = $this->controller->destroy($cdnProvider);
+
+        $this->assertEquals(403, $response->status());
+
+        $data = json_decode($response->content(), true);
+
+        $this->assertEquals(3010, $data['errorCode']);
+    }
+
+    /** @test */
+    public function delete_cdn_provider_errorCodeIs4036()
+    {
+        $loginUid = 1;
+        $user_group_id = 1;
+        $this->seed();
+        $this->seed('DomainTableSeeder');
+        $this->seed('CdnTableSeeder');
+
+        $this->addUuidforPayload()
+            ->addUserGroupId($user_group_id)
+            ->setJwtTokenPayload($loginUid, $this->jwtPayload);
+
+        $cdnProvider = $this->cdnProvider->find(1);
+
+        $response = $this->controller->destroy($cdnProvider);
+
+        $this->assertEquals(400, $response->status());
+
+        $data = json_decode($response->content(), true);
+
+        $this->assertEquals(4036, $data['errorCode']);
+    }
 
     private function createOnlyDefaultCdn()
     {
-        
+
         $domain = [
             'id' => 99,
             'user_group_id' => 1,
