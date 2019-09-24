@@ -88,13 +88,13 @@ class ScanProviderController extends Controller
             return $this->setStatusCode(400)->response('', InputError::CHECK_CDN_PROVIDER_SETTING, []);
         }
 
-        $scanned = $this->scanProviderService->creatScannedData($scanPlatform, $cdnProvider);
         // cdn_provider: url未設定 / scannable 關閉狀態
+        list($scanned, $scanned_at) = $this->scanProviderService->creatScannedData($scanPlatform, $cdnProvider);
         if (empty($scanned)) {
             return $this->setStatusCode(400)->response('', InternalError::CHECK_DATA_AND_SCHEME_SETTING, []);
         }
 
-        return $this->response("", null, compact('cdnProvider', 'scanned'));
+        return $this->response("", null, compact('cdnProvider', 'scanned_at', 'scanned'));
     }
 
     /**
@@ -105,16 +105,18 @@ class ScanProviderController extends Controller
     public function indexScannedData(ScanPlatform $scanPlatform, ScanProviderRequest $request)
     {
         $scanned = [];
+        $scanned_at = null;
 
         $cdnProvider = $this->initCdnProviderForScannedData($request);
 
         $scanned = $this->scanProviderService->indexScannedData($scanPlatform, $cdnProvider);
+        if ($scanned && ! $scanned->isEmpty()) {
+            $scanned_at = $scanned->first()->created_at;
+        }
 
-        // `rename` & `only` scan_platform specific key
-        // $cdn_provider = &$cdnProvider;
         $scanPlatform = collect($scanPlatform)->only(['id', 'name']);
 
-        return $this->response("", null, compact('cdnProvider', 'scanPlatform', 'scanned'));
+        return $this->response("", null, compact('cdnProvider', 'scanPlatform', 'scanned_at', 'scanned'));
     }
 
     private function initCdnProviderForScannedData($request)
