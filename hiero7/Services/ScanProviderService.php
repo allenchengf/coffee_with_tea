@@ -7,9 +7,10 @@ use Hiero7\Models\DomainGroup;
 use Hiero7\Models\LocationNetwork;
 use Hiero7\Models\ScanLog;
 use Hiero7\Repositories\CdnProviderRepository;
-use Hiero7\Repositories\DomainRepository;
 use Hiero7\Repositories\LineRepository;
 use Hiero7\Repositories\ScanLogRepository;
+use Hiero7\Services\ChinaZMappingService;
+use Hiero7\Services\I7CEMappingService;
 use Hiero7\Traits\JwtPayloadTrait;
 use Illuminate\Support\Collection;
 use Ixudra\Curl\Facades\Curl;
@@ -36,7 +37,7 @@ class ScanProviderService
         LocationDnsSettingService $locationDnsSettingService,
         ScanLogRepository $scanLogRepository
     ) {
-        $this->locationDnsSettionService = $locationDnsSettingService;
+        $this->locationDnsSettingService = $locationDnsSettingService;
 
         $this->scanLogRepository = $scanLogRepository;
 
@@ -106,7 +107,7 @@ class ScanProviderService
 
         $this->LastScanLog->map(function ($region, $regionKey) use (&$result, $domain) {
             foreach ($region as $cdnProviderKey => $latency) {
-                $actionResult = $this->locationDnsSettionService->decideAction($cdnProviderKey, $domain, $this->locationNetworks[$regionKey]);
+                $actionResult = $this->locationDnsSettingService->decideAction($cdnProviderKey, $domain, $this->locationNetworks[$regionKey]);
 
                 // 如果要切換的 CDN Provider，此 Domain 沒有設定 CDN Provider，
                 // 換到下一個，一直切換到有為止
@@ -185,6 +186,17 @@ class ScanProviderService
         $this->locationNetworks = collect($line->getLinesById())->keyBy('id');
     }
 
+    /**
+     * 取得所有 Location Region
+     *
+     * @param LineRepository $line
+     * @return collection
+     */
+    public function getLineRegion(LineRepository $line)
+    {
+        return $line->getRegion();
+    }
+
     public function getCdnProvider(CdnProviderRepository $cdnProviderRepository)
     {
         $this->cdnProvider = $cdnProviderRepository->getStatusIsActive()->keyBy('id');
@@ -239,25 +251,28 @@ class ScanProviderService
      */
     public function creatScannedData($scanPlatform, $cdnProvider)
     {
-        $crawlerData = [];
         $scanneds = [];
+
         $created_at = date('Y-m-d H:i:s');
 
-        $locationNetwork = LocationNetwork::whereNotNull('mapping_value')->get()->filter(function ($item) {
-            return $item->network->scheme_id == env('SCHEME');
-        });
+        $locationNetwork = app()->call([$this, 'getLineRegion']);
 
         $data = [
-            'url' => $cdnProvider->url,
+            'url' => $cdnProvider->url, // 被檢測的 URL
             'wait' => env('SCAN_SECOND'),
         ];
 
-        if (count($locationNetwork) > 0) {
-            $crawlerData = $this->curlToCrawler($scanPlatform->url, $data);
+        $crawlerData = $this->curlToCrawler($scanPlatform->url, $data) ?? [];
 
-            $scanneds = $this->mappingData($crawlerData);
-            $this->create($scanneds, $cdnProvider->id, $scanPlatform->id, $created_at);
+        if ($scanPlatform->name == 'chinaz') {
+            $mappingService = new ChinaZMappingService($crawlerData, $locationNetwork);
+        } else {
+            $mappingService = new I7CEMappingService($crawlerData, $locationNetwork);
         }
+
+        $scanneds = $mappingService->mappingData();
+
+        $this->create($scanneds, $cdnProvider->id, $scanPlatform->id, $created_at);
 
         return [$scanneds, $created_at];
     }
@@ -272,7 +287,7 @@ class ScanProviderService
         return Curl::to($url)
             ->withData($data)
             ->withTimeout(self::CURL_TIMEOUT)
-            ->asJson()
+            ->asJson(true)
             ->post();
     }
 

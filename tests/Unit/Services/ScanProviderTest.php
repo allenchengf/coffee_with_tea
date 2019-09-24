@@ -113,19 +113,6 @@ class ScanProviderTest extends TestCase
 
     /**
      * @test
-     */
-    public function mappingData()
-    {
-        $crawlerData = $this->setCrawlerData();
-
-        $result = $this->service->mappingData($crawlerData);
-
-        $this->assertEquals($result[0]->latency, 1000);
-        $this->assertEquals($result[0]->location_networks->id, 1);
-    }
-
-    /**
-     * @test
      * @return void
      */
     public function changeAllRegionByScanData()
