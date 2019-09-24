@@ -62,7 +62,9 @@ abstract class ScanMappingAbstract
      */
     protected function getAllListAvg()
     {
-        return round(collect($this->allDataList)->avg(), $this->pointReservation);
+        $allAvg = collect($this->allDataList)->avg();
+
+        return ($allAvg > 0) ? round($allAvg, $this->pointReservation) : null;
     }
 
     /**
