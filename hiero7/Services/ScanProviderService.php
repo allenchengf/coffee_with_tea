@@ -274,7 +274,7 @@ class ScanProviderService
 
         $this->create($scanneds, $cdnProvider->id, $scanPlatform->id, $created_at);
 
-        return $scanneds;
+        return [$scanneds, $created_at];
     }
 
     /**
