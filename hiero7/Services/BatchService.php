@@ -57,6 +57,7 @@ class BatchService{
             // 批次新增 cdn 迴圈
             foreach ($domain["cdns"] as $cdn) {
                 $cdn["name"] = trim($cdn["name"]);
+                $cdn["cname"] = strtolower($cdn["cname"]);
 
                 // 此次 $cdn['name'] 換 cdn_providers.id、ttl欄位
                 $myCdnProviders->each(function ($v) use (&$cdn) {
@@ -90,10 +91,11 @@ class BatchService{
     {
         $domain_id = null;
         $errorMessage = null;
+        $domain["name"] = strtolower($domain["name"]);
 
         try {
             // domain.cname 為 domain.name 去 . 後再補尾綴 `.user_group_id`
-            $domain['cname'] = $this->formatDomainCname($domain["name"]).'.'.$user["user_group_id"];
+            $domain['cname'] = $this->formatDomainCname($domain["name"], $user["user_group_id"]);
             // 新增 domain
             $domainObj = $this->domainRepository->store($domain, $user);
             if(is_null($domainObj))
