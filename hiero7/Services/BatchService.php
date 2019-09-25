@@ -95,7 +95,7 @@ class BatchService{
 
         try {
             // domain.cname 為 domain.name 去 . 後再補尾綴 `.user_group_id`
-            $domain['cname'] = strtolower($this->formatDomainCname($domain["name"]).'.'.$user["user_group_id"]);
+            $domain['cname'] = $this->formatDomainCname($domain["name"], $user["user_group_id"]);
             // 新增 domain
             $domainObj = $this->domainRepository->store($domain, $user);
             if(is_null($domainObj))
