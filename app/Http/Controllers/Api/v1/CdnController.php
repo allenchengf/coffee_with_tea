@@ -112,6 +112,8 @@ class CdnController extends Controller
     {
         DB::beginTransaction();
 
+        $this->cdnService->modifyCNAME($request);
+
         $cdn->update($request->only('cname', 'edited_by'));
 
         if (!$this->cdnService->changeDnsProviderCname($domain, $cdn)) {
