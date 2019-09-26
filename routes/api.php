@@ -108,7 +108,8 @@ Route::group(['middleware' => ['api', 'check.config'], 'namespace' => 'Api\v1', 
         Route::delete('{scanPlatform}', 'ScanPlatformController@destroy')->name('scanPlatform.destroy');
 
         Route::post('{scanPlatform}/scanned-data', 'ScanProviderController@creatScannedData')->name('scan.create');
-        Route::get('{scanPlatform}/scanned-data', 'ScanProviderController@indexScannedData')->name('scan.show');
+        Route::get('{scanPlatform}/scanned-data', 'ScanProviderController@indexScannedDataByPlatform')->name('scan.show');
+        Route::get('scanned-data', 'ScanProviderController@indexScannedData')->name('scan.index');
 
         Route::put('change-all', 'ScanProviderController@changeRegion');
 
