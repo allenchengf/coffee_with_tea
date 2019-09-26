@@ -28,8 +28,8 @@ class ChinaZMappingServiceTest extends TestCase
             "source"=> "chinaz",
             "method"=> "ping",
             "isps"=> [
-                "ct"=> 179.2,
-                "cu"=> 188.6,
+                "ct"=> 396.0,
+                "cu"=> 266.0,
                 "cm"=> null,
                 "domestic"=> null,
                 "overseas"=> null

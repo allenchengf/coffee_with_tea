@@ -10,16 +10,16 @@ class ChinaZMappingService extends ScanMappingAbstract
     {
         $this->crawlerData = $crawlerData;
         $this->regionList = $regionList;
+        $this->filterData($this->crawlerData['results'] ?? []);
     }
     
     public function mappingData()
     { 
-        $crawlerISPTime = $this->filterData($this->crawlerData['results'] ?? []); // Leo 的結果整理
+        $crawlerISPAvg = collect($this->crawlerData['isps'] ?? []);
 
-        $scanneds = $this->regionList->map(function ($item, $key) use ($crawlerISPTime) {
+        $scanneds = $this->regionList->map(function ($item, $key) use ($crawlerISPAvg) {
 
-            $item->isp = $this->ispMappingKey[$item->isp];
-
+            $item->isp = $this->ispMappingKey[$item->isp] ?? null;
             $item->location == 'All' ? $item->location = 'all' : $item->location;
 
             $scanned = new \stdClass();
@@ -35,20 +35,33 @@ class ChinaZMappingService extends ScanMappingAbstract
                 $scanned->latency = $this->getAllListAvg();     // All isp 和 location
                 return $scanned;
             }
-            
-            if ($crawlerISPTime->has($item->isp)){
-    
-                if($item->isp != 'all' && $item->location == 'all'){
-                    $scanned->latency = $crawlerISPTime->get($item->isp)->avg(); //取特定的 isp 所有平均
-                }else if($item->isp != 'all' && $item->location != 'all'){
-                    $scanned->latency = $crawlerISPTime->get($item->isp)->pluck($item->location); //取特定的 isp 和 特定 location
-                }
-            
+
+            if($item->isp != 'all' && $item->location == 'all'){
+                $scanned->latency = $crawlerISPAvg->isEmpty() ? null : $crawlerISPAvg->get($item->isp); //取特定的 isp 所有平均
+            }else if($item->isp != 'all' && $item->location != 'all'){
+                $scanned->latency = $this->getRegionIsp($item->location,$item->isp);//取特定的 isp 和 特定 location
             }
+
             
             return $scanned;
         });
 
         return $scanneds;
+    }
+
+    /**
+     * 跟 Abstract 一樣只是拿掉 mapping
+     *
+     * @param string $regionName
+     * @param string $ispName
+     * @return void
+     */
+    protected function getRegionIsp(string $regionName, string $ispName)
+    {
+        if (!isset($this->listData[$ispName])) {
+            return null;
+        }
+
+        return $this->listData[$ispName][strtolower($regionName)] ?? null;
     }
 }
