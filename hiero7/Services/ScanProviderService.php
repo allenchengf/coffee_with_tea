@@ -292,35 +292,6 @@ class ScanProviderService
     }
 
     /**
-     * @param $crawlerData
-     * @return Collection
-     */
-    public function mappingData($crawlerData)
-    {
-        $locationNetwork = LocationNetwork::whereNotNull('mapping_value')->get()->filter(function ($item) {
-            return $item->network->scheme_id == env('SCHEME');
-        });
-
-        $crawlerResults = collect(isset($crawlerData->results) ? $crawlerData->results : []);
-
-        $scanneds = $locationNetwork->map(function ($item, $key) use ($crawlerResults) {
-            $scanned = new \stdClass();
-
-            $scanned->latency = $crawlerResults->whereIn('nameEn', $item->mapping_value)->pluck('latency')->first() ?? null;
-
-            $item->continent;
-            $item->country;
-            $item->network;
-
-            $scanned->location_networks = $item;
-
-            return $scanned;
-        });
-
-        return $scanneds;
-    }
-
-    /**
      * @param $scanneds
      * @param $cdnProviderId
      * @param $scanPlatformId
