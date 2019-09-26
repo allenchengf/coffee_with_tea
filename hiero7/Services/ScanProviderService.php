@@ -158,8 +158,7 @@ class ScanProviderService
         app()->call([$this, 'getCdnProvider']);
 
         //取得最後一次 Scan 的結果
-        $lastCreatedAt = $this->scanLogRepository->showLatestLog()['created_at'];
-        $lastScanLogs = $this->scanLogRepository->indexEarlierLogs($lastCreatedAt);
+        $lastScanLogs = $this->scanLogRepository->indexEarlierLogs();
 
         $lastScanLogs->map(function ($lastScanLog) use (&$regions) {
 
