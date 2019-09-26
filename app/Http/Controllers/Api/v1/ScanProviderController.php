@@ -43,7 +43,7 @@ class ScanProviderController extends Controller
     }
 
     /**
-     * ugid 權限所有 cdn_providers 的 scan_logs
+     * ugid 權限所有 cdn_providers 之 scan_logs，與 regions 的 mapping
      *
      */
     public function indexScannedData()
