@@ -22,6 +22,7 @@ PLATFORM_KEY=eu7nxsfttc
 
 CONFIG_WAIT_TIME=2 (分鐘)
 SCAN_SECOND=30 (爬蟲執行的時間 秒)
+SCAN_LOG_INTERVAL=30 (取得最後一筆 log，往前推算的秒數，時間區間內之 logs)
 ```
 
 #### Note
