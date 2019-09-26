@@ -12,7 +12,7 @@ class ChinaZMappingService extends ScanMappingAbstract
         $this->regionList = $regionList;
     }
     
-    public function mappingData()
+    public function mappingData(): collection
     { 
         $crawlerISPTime = $this->filterData($this->crawlerData['results'] ?? []); // Leo 的結果整理
 
