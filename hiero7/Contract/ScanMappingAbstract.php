@@ -24,7 +24,29 @@ abstract class ScanMappingAbstract
 
     abstract public function __construct(array $crawlerData = [], Collection $regionList);
 
-    abstract public function mappingData();
+    /**
+     * 需要實作的 Function mappingData
+     *
+     * 輸出 Scan Platform Scan 的 Mapping Data
+     *
+     * 會根據 $this->regionList Mapping Latency
+     *
+     * 輸出 example
+     *
+     * [
+     *     [
+     *         "latency" => 333.33,
+     *         "location_networks" => LocationNetwork Object
+     *     ],
+     *     [
+     *         "latency" => 999.33,
+     *         "location_networks" => LocationNetwork Object
+     *     ]
+     * ]
+     *
+     * @return collection
+     */
+    abstract public function mappingData(): collection;
 
     /**
      * 將爬蟲的資料處理成特定格式， latency 要介於 0 < 這裡才會用 < 1000
@@ -113,18 +135,18 @@ abstract class ScanMappingAbstract
 
     /**
      * 檢查爬蟲的格式，是否符合成為計算資料
-     * 
+     *
      * 檢查 1 : array key 沒有 latency
      * 檢查 2 : latency <= 0
      * 檢查 3 : latency >= 1000
      * 檢查 4 : array key 沒有 ispEn
      * 檢查 5 : array key 沒有 provinceEn
-     * 
+     *
      * false 表示上面條件其中一個符合
      * true  表示格式沒問題，可以使用
-     * 
+     *
      * @param array $item
-     * @return boolean 
+     * @return boolean
      */
     private function checkCrawlerFormat(array $item = []): bool
     {

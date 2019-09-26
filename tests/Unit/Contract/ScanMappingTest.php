@@ -94,7 +94,7 @@ class FakeAbstract extends ScanMappingAbstract
         return $this;
     }
 
-    public function mappingData()
+    public function mappingData(): collection
     {
         return $this;
     }

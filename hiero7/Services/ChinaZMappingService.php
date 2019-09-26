@@ -13,7 +13,7 @@ class ChinaZMappingService extends ScanMappingAbstract
         $this->filterData($this->crawlerData['results'] ?? []);
     }
     
-    public function mappingData()
+    public function mappingData(): collection
     { 
         $crawlerISPAvg = collect($this->crawlerData['isps'] ?? []);
 
