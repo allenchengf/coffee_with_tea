@@ -43,6 +43,11 @@ class DomainRepository
         }
     }
 
+    public function getDomainByUserGroup()
+    {
+        return $this->domain->with('domainGroup')->where('user_group_id', $this->getJWTUserGroupId())->get();
+    }
+
     public function getDomainIdIfExist(string $domain, int $user_group_id)
     {
         return $this->domain->where('name', $domain)->where('user_group_id', $user_group_id)->first();

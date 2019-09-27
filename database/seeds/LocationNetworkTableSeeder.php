@@ -23,14 +23,14 @@ class LocationNetworkTableSeeder extends Seeder
                 'location' => 'All',
                 'isp' => 'All',
                 'network_id' => 1, // 國內
-                'mapping_value' => '',
+                'mapping_value' => NULL,
             ], [
                 'continent_id' => 2,
                 'country_id' => 2,
                 'location' => 'All',
                 'isp' => 'All',
                 'network_id' => 2, // 國外
-                'mapping_value' => '',
+                'mapping_value' => NULL,
             ], [
                 'location' => 'All',
                 'isp' => $isp['ct'],
@@ -56,12 +56,12 @@ class LocationNetworkTableSeeder extends Seeder
                 'location' => 'All',
                 'isp' => 'All',
                 'network_id' => 15, // 國外
-                'mapping_value' => '',
+                'mapping_value' => NULL,
             ], [
                 'location' => 'All',
                 'isp' => 'All',
                 'network_id' => 16, // 國內
-                'mapping_value' => '',
+                'mapping_value' => NULL,
             ], [
                 'location' => 'All',
                 'isp' => $isp['ct'],
@@ -91,7 +91,7 @@ class LocationNetworkTableSeeder extends Seeder
                 'location' => 'Beijing',
                 'isp' => $isp['ct'],
                 'network_id' => 33, // 北京电信
-                'mapping_value' => 'Anhui Telecom',
+                'mapping_value' => 'Beijing Telecom',
             ], [
                 'location' => 'Beijing',
                 'isp' => $isp['cu'],
