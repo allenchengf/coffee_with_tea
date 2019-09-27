@@ -2,14 +2,14 @@
 
 namespace App\Http\Controllers\Api\v1;
 
+use App\Events\CdnWasDelete;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\DomainRequest as Request;
+use Hiero7\Enums\PermissionError;
 use Hiero7\Models\Domain;
 use Hiero7\Services\DomainService;
-use Hiero7\Enums\PermissionError;
-use App\Events\CdnWasDelete;
-use Hiero7\Traits\{OperationLogTrait, PaginationTrait};
-
+use Hiero7\Traits\OperationLogTrait;
+use Hiero7\Traits\PaginationTrait;
 
 class DomainController extends Controller
 {
@@ -21,6 +21,7 @@ class DomainController extends Controller
     public function __construct(DomainService $domainService)
     {
         $this->domainService = $domainService;
+
         $this->status = (env('APP_ENV') !== 'testing') ?? false;
     }
 
@@ -32,9 +33,13 @@ class DomainController extends Controller
     public function getDomainById(Domain $domain)
     {
         $domain->cdns;
+
         $domain->domainGroup;
+
         $domain->toArray;
+
         $dnsPodDomain = env('DNS_POD_DOMAIN');
+
         return $this->response('', null, compact('domain', 'dnsPodDomain'));
     }
 
@@ -42,7 +47,7 @@ class DomainController extends Controller
      * Get Domain function
      *
      * $request->user_group_id，預設為 login user_group_id (可選)
-     * $request->domain_group_id，預設為 all (可選) 
+     * $request->domain_group_id，預設為 all (可選)
      *
      * 如果 login user_group_id == 1 && $request->user_group_id == null，則會得到 All Domain
      * 如果 domain_group_id == 0 會得到沒有 Group 的 Domain
@@ -57,17 +62,17 @@ class DomainController extends Controller
         $domain->with('cdns', 'domainGroup')->get() :
         $domain->with('cdns', 'domainGroup')->where(compact('user_group_id'))->get();
 
-        if($request->has('domain_group_id') && $request->domain_group_id >= 0){
+        if ($request->has('domain_group_id') && $request->domain_group_id >= 0) {
             //取孤兒domain
-            if($request->domain_group_id == 0){
+            if ($request->domain_group_id == 0) {
                 $domains = $domains->filter(function ($item) {
 
                     return $item->domainGroup->isEmpty();
                 });
             }
-            
-            if($request->domain_group_id > 0){
-                $domains = $domains->filter(function ($item) use ($request){
+
+            if ($request->domain_group_id > 0) {
+                $domains = $domains->filter(function ($item) use ($request) {
                     $domainGroupId = $item->domainGroup()->pluck('domain_group_id');
                     return $domainGroupId->isEmpty() ? 0 : $domainGroupId[0] == $request->domain_group_id;
                 });
@@ -82,12 +87,12 @@ class DomainController extends Controller
         $last_page = $current_page = $per_page = $total = null;
         list($perPage, $columns, $pageName, $currentPage) = $this->getPaginationInfo($request->per_page, $request->current_page);
 
-        if (! is_null($perPage)) { // 換頁
+        if (!is_null($perPage)) { // 換頁
             $current_page = $currentPage;
             $total = $domains->count();
             $last_page = ceil($total / $perPage);
             $per_page = $perPage;
-            
+
             $domains = $domains->forPage($currentPage, $perPage)->all();
         } else { // 全部列表
             //
@@ -99,6 +104,9 @@ class DomainController extends Controller
     public function create(Request $request, Domain $domain)
     {
         $ugid = $this->getUgid($request);
+
+        $this->modifyName($request);
+
         $request->merge([
             'user_group_id' => $ugid,
             'cname' => $this->domainService->cnameFormat($request, $ugid),
@@ -107,6 +115,7 @@ class DomainController extends Controller
         if (!$errorCode = $this->domainService->checkUniqueCname($request->cname)) {
             $domain = $domain->create($request->all());
         }
+
         $this->createEsLog($this->getJWTPayload()['sub'], "Domain", "create", "domain");
         return $this->setStatusCode($errorCode ? 400 : 200)->response(
             '',
@@ -118,27 +127,39 @@ class DomainController extends Controller
 
     public function editDomain(Request $request, Domain $domain)
     {
+        $this->modifyName($request);
+
         $domain->update($request->only('name', 'label', 'edited_by'));
+
         $domain->cdns;
+
         $this->createEsLog($this->getJWTPayload()['sub'], "Domain", "update", "domain");
+
         return $this->response('', null, $domain);
     }
 
     public function destroy(Domain $domain)
     {
         //有 DomainGroup 並且 不能是 Group 內唯一的 Domain
-        if(!$domain->domainGroup->isEmpty() && $domain->domainGroup->first()->domains->count() == 1){
-            return $this->setStatusCode(400)->response('',PermissionError::CANT_DELETE_LAST_DOMAIN,[]);
+        if (!$domain->domainGroup->isEmpty() && $domain->domainGroup->first()->domains->count() == 1) {
+            return $this->setStatusCode(400)->response('', PermissionError::CANT_DELETE_LAST_DOMAIN, []);
         }
 
         //有 cdn 設定才要刪掉
-        if(!$domain->cdns->isEmpty()){
-            foreach($domain->cdns as $cdnModel){              
-                event(new CdnWasDelete($cdnModel,1));
+        if (!$domain->cdns->isEmpty()) {
+            foreach ($domain->cdns as $cdnModel) {
+                event(new CdnWasDelete($cdnModel, 1));
             }
         }
         $domain->delete();
         $this->createEsLog($this->getJWTPayload()['sub'], "Domain", "delete", "domain");
-        return $this->response('','',[]);
+        return $this->response('', '', []);
+    }
+
+    private function modifyName(Request $request)
+    {
+        $request->merge([
+            'name' => strtolower($request->get('name')),
+        ]);
     }
 }

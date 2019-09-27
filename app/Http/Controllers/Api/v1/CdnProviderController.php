@@ -86,7 +86,7 @@ class CdnProviderController extends Controller
         DB::beginTransaction();
         $cdnProvider->update($request->only('name', 'ttl', 'edited_by', 'url'));
         $cdn = Cdn::where('cdn_provider_id', $cdnProvider->id)->with('locationDnsSetting')->get();
-        
+
         $recordList = array_filter($this->getRecordList($cdn));
 
         if (!empty($recordList)) {
@@ -198,30 +198,32 @@ class CdnProviderController extends Controller
             'only_default' => [],
         ];
 
-        if ($cdnProvider->status){
+        if ($cdnProvider->status) {
             $defaultInfo = $this->cdnProviderService->cdnDefaultInfo($cdnProvider);
             $this->createEsLog($this->getJWTPayload()['sub'], "CDN", "check", "CDN Provider");
         }
 
+        $defaultInfo['be_used'] = $cdnProvider->domains->keyBy('name')->keys();
+
         return $this->response('', null, $defaultInfo);
     }
 
-    public function destroy(Request $request, CdnProvider $cdnProvider)
+    public function destroy(CdnProvider $cdnProvider)
     {
-        $user_group_id = $this->getUgid($request);
+        $payload = $this->getJWTPayload();
 
-        if ($user_group_id != $cdnProvider->user_group_id) {
+        $errorCode = null;
+
+        if ($payload['user_group_id'] != $cdnProvider->user_group_id) {
             return $this->setStatusCode(403)->response('', PermissionError::THIS_GROUP_ID_NOT_MATCH, '');
+        } else if ($cdnProvider->cdns->isEmpty()) {
+            $cdnProvider->delete();
+
+            $this->createEsLog($payload['sub'], "CDN", "delete", "CDN Provider");
+        } else {
+            $errorCode = InputError::CANT_DELETE_THIS_CDN_PROVIDER;
         }
 
-        $error = $this->cdnProviderService->deleteCDNProvider($cdnProvider);
-        if ($error) {
-            return $this->setStatusCode(409)->response(
-                'please contact the admin',
-                InternalError::INTERNAL_ERROR
-            );
-        }
-        $this->createEsLog($this->getJWTPayload()['sub'], "CDN", "delete", "CDN Provider");
-        return $this->response();
+        return $this->setStatusCode($errorCode ? 400 : 200)->response('', $errorCode);
     }
 }

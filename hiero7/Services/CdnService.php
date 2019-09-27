@@ -33,11 +33,20 @@ class CdnService
     {
         $this->setEditedByOfRequest($request, $uuid);
 
+        $this->modifyCNAME($request);
+
         return $request->only([
             'cdn_provider_id',
             'cname',
             'edited_by',
             'default',
+        ]);
+    }
+
+    public function modifyCNAME(Request $request): void
+    {
+        $request->merge([
+            'cname' => strtolower($request->get('cname')),
         ]);
     }
 

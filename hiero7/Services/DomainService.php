@@ -36,7 +36,7 @@ class DomainService
     {
         $cname = $request->get('cname') ?? $request->get('name');
 
-        return $this->formatDomainCname($cname) . '.' . $ugid;
+        return $this->formatDomainCname($cname, $ugid);
     }
 
     public function checkUniqueCname(string $cname)

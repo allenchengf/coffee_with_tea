@@ -60,4 +60,11 @@ class LineRepository
             }
         });
     }
+
+    public function getRegion()
+    {
+        return $this->locationNetwork->with('continent', 'country')->get()->filter(function ($item) {
+            return $item->network->scheme_id == env('SCHEME');
+        });
+    }
 }
