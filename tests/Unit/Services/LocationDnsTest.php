@@ -63,6 +63,10 @@ class LocationDnsTest extends TestCase
 
         $this->dnsprovider->shouldReceive('deleteRecord')->withAnyArgs()
             ->andReturn(["message" => "Success", "errorCode" => null, "data" => []]);
+
+        $this->dnsprovider->shouldReceive('checkAPIOutput')->withAnyArgs()
+            ->andReturn(true);
+
     }
 
     public function tearDown()

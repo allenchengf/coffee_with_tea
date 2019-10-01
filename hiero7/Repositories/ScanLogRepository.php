@@ -76,8 +76,10 @@ class ScanLogRepository
      */
     public function indexEarlierLogs($cdnProviderId=null, $scanPlatformId=null)
     {
+        $interval = env('SCAN_LOG_INTERVAL');
+
         $to = $this->showLatestLog($cdnProviderId, $scanPlatformId)->created_at;
-        $timestamp = strtotime($to)-10; // 最近一筆 Log.created_at 時間，往前推十秒。
+        $timestamp = strtotime($to) - $interval; // 最近一筆 Log.created_at 時間，往前推 $interval 秒。
         $from = date('Y-m-d H:i:s', $timestamp);
 
         $scanLogs = $this->scanLogModel

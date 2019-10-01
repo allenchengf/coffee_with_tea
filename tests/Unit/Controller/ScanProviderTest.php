@@ -5,7 +5,7 @@ namespace Tests\Unit\Controller;
 use App\Http\Controllers\Api\v1\ScanProviderController;
 use App\Http\Requests\ScanProviderRequest as Request;
 use Hiero7\Models\LocationNetwork;
-use Hiero7\Models\ScanPlatform;
+use Hiero7\Repositories\DomainRepository;
 use Hiero7\Repositories\ScanLogRepository;
 use Hiero7\Services\LocationDnsSettingService;
 use Hiero7\Services\ScanProviderService;
@@ -17,7 +17,7 @@ class ScanProviderTest extends TestCase
     /**
      * @var ScanProviderController
      */
-    private $controller;
+    private $controller, $domainRepository, $scanLogRepository;
     private $spyLocationDnsSettingService;
 
     protected function setUp()
@@ -43,32 +43,11 @@ class ScanProviderTest extends TestCase
         parent::tearDown();
     }
 
-    public function repository(ScanLogRepository $scanLogRepository)
+    public function repository(ScanLogRepository $scanLogRepository, DomainRepository $domainRepository)
     {
         $this->scanLogRepository = $scanLogRepository;
+        $this->domainRepository = $domainRepository;
     }
-
-    /**
-     * @test
-     */
-    public function selectAchangeToBCdnProvider()
-    {
-        $selectCdnProvider = [
-            'old_cdn_provider_id' => 1,
-            'new_cdn_provider_id' => 2,
-        ];
-
-        $request = $this->createRequestAndJwt($selectCdnProvider);
-
-        $locationNetwork = LocationNetwork::find(1);
-
-        $response = $this->controller->changeCDNProviderByIRoute($request, $locationNetwork);
-
-        $this->assertEquals(200, $response->status());
-
-        $this->shouldUseDecideAction();
-    }
-
     private function shouldUseDecideAction()
     {
         $this->spyLocationDnsSettingService
