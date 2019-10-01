@@ -270,7 +270,8 @@ class ScanProviderService
             $mappingService = new I7CEMappingService($crawlerData, $locationNetwork);
         }
 
-        $scanneds = $mappingService->mappingData();
+        //使用 values 修改排序
+        $scanneds = $mappingService->mappingData()->values();
 
         $this->create($scanneds, $cdnProvider->id, $scanPlatform->id, $created_at);
 
