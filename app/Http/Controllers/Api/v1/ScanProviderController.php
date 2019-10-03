@@ -105,7 +105,7 @@ class ScanProviderController extends Controller
                     'created_at' => null,
                     'location_networks' => $region
                 ];
-            });
+            })->values();
         });
 
         return $this->response("", null, compact('scanPlatform', 'scanneds'));
