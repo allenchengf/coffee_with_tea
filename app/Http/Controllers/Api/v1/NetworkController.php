@@ -51,6 +51,13 @@ class NetworkController extends Controller
     public function getList()
     {
         $data = $this->networkService->getAll();
+        
+        $data->map(function ($network){
+            if($network->locationNetwork){
+                $network->locationNetwork->continent;
+                $network->locationNetwork->country;
+            }
+        });
 
         return $this->response("Success", null, $data);
     }
