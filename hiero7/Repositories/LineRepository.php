@@ -25,7 +25,7 @@ class LineRepository
 
     public function getAll()
     {
-        return $this->locationNetwork::with('network')->get();
+        return $this->locationNetwork->with('network')->get();
     }
 
     public function create(array $data)
@@ -52,10 +52,10 @@ class LineRepository
         return $result;
     }
 
-    public function deleteByScheme($schemeId)
+    public function deleteByScheme(int $schemeId)
     {
-        $this->locationNetwork::all()->each(function ($item) use ($schemeId) {
-            if ($item['network']['scheme_id'] == $schemeId) {
+        $this->locationNetwork->all()->each(function ($item) use ($schemeId) {
+            if ($item->network['scheme_id'] == $schemeId) {
                 $item->delete();
             }
         });
