@@ -44,6 +44,7 @@ Route::group(['middleware' => ['api', 'check.config'], 'namespace' => 'Api\v1', 
             Route::get('', 'LineController@index')->name('lines.index');
             Route::post('', 'LineController@create')->name('lines.create');
             Route::put('{line}', 'LineController@edit')->name('lines.edit');
+            Route::patch('{line}/status', 'LineController@changeStatus')->name('lines.status');
             Route::delete('{line}', 'LineController@destroy')->name('lines.destroy');
         });
 
