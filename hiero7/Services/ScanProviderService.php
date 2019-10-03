@@ -249,11 +249,9 @@ class ScanProviderService
      * @param $cdnProvider
      * @return Collection
      */
-    public function creatScannedData($scanPlatform, $cdnProvider)
+    public function creatScannedData($scanPlatform, $cdnProvider, $created_at)
     {
         $scanneds = [];
-
-        $created_at = date('Y-m-d H:i:s');
 
         $locationNetwork = app()->call([$this, 'getLineRegion']);
 
@@ -275,7 +273,7 @@ class ScanProviderService
 
         $this->create($scanneds, $cdnProvider->id, $scanPlatform->id, $created_at);
 
-        return [$scanneds, $created_at];
+        return $scanneds;
     }
 
     /**
@@ -302,6 +300,9 @@ class ScanProviderService
         $edited_by = $this->getJWTUuid();
 
         $scanneds->each(function ($scanned) use (&$scanPlatformId, &$cdnProviderId, &$edited_by, &$created_at) {
+            if (is_null($scanned->latency)) {
+                return true;
+            }
             $fillable = [
                 'cdn_provider_id' => $cdnProviderId,
                 'scan_platform_id' => $scanPlatformId,
