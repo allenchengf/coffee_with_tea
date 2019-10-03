@@ -16,6 +16,7 @@ class UpdateNetworkTable extends Migration
     {
         Schema::table('networks', function (Blueprint $table) {
             $table->unsignedInteger('scheme_id')->nullable()->change();
+            $table->dropColumn('deleted_at');
             $driver_name = DB::getDriverName();
 
             if ($driver_name == 'mysql') {
@@ -34,6 +35,8 @@ class UpdateNetworkTable extends Migration
     {
         Schema::table('networks', function (Blueprint $table) {
             $table->unsignedInteger('scheme_id')->change();
+            $table->softDeletes();
+
             $driver_name = DB::getDriverName();
 
             if ($driver_name == 'mysql') {

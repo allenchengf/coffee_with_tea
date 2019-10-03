@@ -55,8 +55,8 @@ class SchemeController extends Controller
 
     public function destroy(Scheme $scheme)
     {
-        $this->lineService->deleteByScheme($scheme->id);
         $scheme->delete();
+
         return $this->response();
     }
 }
