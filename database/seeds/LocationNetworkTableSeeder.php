@@ -51,33 +51,6 @@ class LocationNetworkTableSeeder extends Seeder
 
         $enterprise = [
             [
-                'continent_id' => 2,
-                'country_id' => 2,
-                'location' => 'All',
-                'isp' => 'All',
-                'network_id' => 15, // 國外
-                'mapping_value' => NULL,
-            ], [
-                'location' => 'All',
-                'isp' => 'All',
-                'network_id' => 16, // 國內
-                'mapping_value' => NULL,
-            ], [
-                'location' => 'All',
-                'isp' => $isp['ct'],
-                'network_id' => 17, // 电信
-                'mapping_value' => 'ct',
-            ], [
-                'location' => 'All',
-                'isp' => $isp['cu'],
-                'network_id' => 18, // 联通
-                'mapping_value' => 'cu',
-            ], [
-                'location' => 'All',
-                'isp' => $isp['cm'],
-                'network_id' => 20, // 移动
-                'mapping_value' => 'cm',
-            ], [
                 'location' => 'Anhui',
                 'isp' => $isp['ct'],
                 'network_id' => 31, // 安徽电信
