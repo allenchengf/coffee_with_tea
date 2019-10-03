@@ -53,9 +53,13 @@ Route::group(['middleware' => ['api', 'check.config'], 'namespace' => 'Api\v1', 
             Route::put('{scheme}', 'SchemeController@edit')->name('schemes.edit');
             Route::delete('{scheme}', 'SchemeController@destroy')->name('schemes.destroy');
         });
+        
+        Route::resource('networks', 'NetworkController', ['only' => ['store']]);
+
         Route::get('schemes/{scheme_id}/networks', 'NetworkController@index')->name('networks.index');
     });
 
+    Route::get('networks', 'NetworkController@getList')->name('networks.getList');
     Route::get('continents', 'ContinentController@index')->name('continents.index');
     Route::get('countries', 'CountryController@index')->name('countries.index');
 

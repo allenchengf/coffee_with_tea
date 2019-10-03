@@ -103,6 +103,9 @@ class SchemeTest extends TestCase
         $scheme = $this->scheme->find(1);
 
         $response = $this->controller->destroy($scheme);
+
         $this->assertEquals(200, $response->status());
+
+        $this->assertNull($this->scheme->find(1));
     }
 }

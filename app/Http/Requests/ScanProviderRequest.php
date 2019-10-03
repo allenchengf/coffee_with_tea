@@ -46,6 +46,9 @@ class ScanProviderRequest extends FormRequest
                             return $query->where('user_group_id', $userGroupId)->where('scannable', '>', 0);
                         }),
                     ],
+                    "scanned_at" => [
+                        'required',
+                    ],
                 ];
             case ($routeName == "$prefix.show"):
                 return [
