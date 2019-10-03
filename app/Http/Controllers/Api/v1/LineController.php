@@ -79,6 +79,8 @@ class LineController extends Controller
 
         $line->delete();
 
+        $line->network->delete();
+
         return $this->response();
     }
 
