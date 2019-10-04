@@ -11,6 +11,8 @@ abstract class TestCase extends BaseTestCase
 {
     use CreatesApplication;
     protected $jwtPayload = [];
+    protected $response;
+    protected $responseArrayData = [];
 
     /**
      * 設定 JWT Token Payload
@@ -69,5 +71,13 @@ abstract class TestCase extends BaseTestCase
         $method->setAccessible(true);
 
         return $method;
+    }
+
+    protected function checkoutResponse(int $code = 200)
+    {
+        if ($this->response) {
+            $this->assertEquals($code, $this->response->status());
+            $this->responseArrayData = json_decode($this->response->getContent(), true);
+        }
     }
 }
