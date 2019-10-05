@@ -105,7 +105,7 @@ class ScanProviderController extends Controller
                     'created_at' => null,
                     'location_networks' => $region
                 ];
-            });
+            })->values();
         });
 
         return $this->response("", null, compact('scanPlatform', 'scanneds'));
@@ -164,6 +164,7 @@ class ScanProviderController extends Controller
     public function creatScannedData(ScanPlatform $scanPlatform, ScanProviderRequest $request)
     {
         $scanned = [];
+        $scannedAt = date('Y-m-d H:i:s', $request->scanned_at);
 
         $cdnProvider = $this->initCdnProviderForScannedData($request);
 
@@ -173,7 +174,7 @@ class ScanProviderController extends Controller
         }
 
         // cdn_provider: url未設定 / scannable 關閉狀態
-        list($scanned, $scannedAt) = $this->scanProviderService->creatScannedData($scanPlatform, $cdnProvider);
+        $scanned = $this->scanProviderService->creatScannedData($scanPlatform, $cdnProvider, $scannedAt);
         if (empty($scanned)) {
             return $this->setStatusCode(400)->response('', InternalError::CHECK_DATA_AND_SCHEME_SETTING, []);
         }

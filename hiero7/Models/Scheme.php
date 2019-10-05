@@ -2,14 +2,12 @@
 
 namespace Hiero7\Models;
 
-use Askedio\SoftCascade\Traits\SoftCascadeTrait;
-use Iatstuti\Database\Support\CascadeSoftDeletes;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Scheme extends Model
 {
-    use SoftDeletes,SoftCascadeTrait;
+    use SoftDeletes;
 
     protected $table = 'schemes';
 

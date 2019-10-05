@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Api\v1;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\NetworkRequest as Request;
+use Hiero7\Models\Network;
 use Hiero7\Services\ContinentService;
 use Hiero7\Services\CountryService;
 use Hiero7\Services\NetworkService;
@@ -44,5 +46,26 @@ class NetworkController extends Controller
         }
 
         return $this->response("Success", null, $result);
+    }
+
+    public function getList()
+    {
+        $data = $this->networkService->getAll();
+
+        $data->map(function ($network) {
+            if ($network->locationNetwork) {
+                $network->locationNetwork->continent;
+                $network->locationNetwork->country;
+            }
+        });
+
+        return $this->response("", null, $data);
+    }
+
+    public function store(Request $request, Network $network)
+    {
+        $network = $network->create($request->only('scheme_id', 'name'));
+
+        return $this->response("", null, $network);
     }
 }

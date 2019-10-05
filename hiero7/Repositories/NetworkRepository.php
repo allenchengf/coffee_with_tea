@@ -24,23 +24,23 @@ class NetworkRepository
 
     public function getAll()
     {
-        return $this->network::with('locationNetwork')->get();
+        return $this->network->with('locationNetwork')->get();
     }
 
     public function getNetworksById()
     {
-        return $this->network::with('locationNetwork')->where('scheme_id', env('SCHEME'))->get();
+        return $this->network->with('locationNetwork')->where('scheme_id', env('SCHEME'))->get();
     }
 
     public function getLineList()
     {
-        $networkLine = $this->getNetworksById();
+        $networks = $this->getNetworksById();
 
         $line = [];
 
-        foreach ($networkLine as $key => $value) {
-            if ($value->locationNetwork != null) {
-                $line[$value->name] = $value->locationNetwork->id;
+        foreach ($networks as $network) {
+            if ($network->locationNetwork != null) {
+                $line[$network->name] = $network->locationNetwork->id;
             }
         }
 
