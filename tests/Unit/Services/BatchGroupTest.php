@@ -64,9 +64,11 @@ class BatchGroupTest extends TestCase
                             ['name' =>'12345.com']
                         ];
         $result = $this->batchGroupService->store($this->domain,$this->domainGroup, $this->user);
-        $this->assertArrayHasKey('12345.com', $result);
-        $this->assertEquals('Domain already exist at this Group.',$result['hiero7.test1.com']);
-        $this->assertEquals('The domain is undefined.',$result['rd.test1.com']);
-        $this->assertCount(4, $result);
+
+        $this->assertArrayHasKey('success', $result);
+        $this->assertArrayHasKey('failure', $result);
+        $this->assertEquals('Domain already exist at this Group.',$result['failure'][0]['message']);
+        $this->assertEquals('The domain is undefined.',$result['failure'][2]['message']);
+        $this->assertCount(4, $result['failure']);
     }
 }
