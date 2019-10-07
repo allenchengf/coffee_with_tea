@@ -25,7 +25,7 @@ class BatchGroupService{
 
             if ($errorMessage) {
                 $failure[] = ['name' => $domain["name"],
-                                'errorCode' => 120,
+                                'errorCode' => 40000,
                                 'message' => $errorMessage]; // checkDomain 沒有過就不下去執行
                 continue;
             }
@@ -34,7 +34,7 @@ class BatchGroupService{
 
             if(!$changeCdnResult){
                 $failure[] = ['name' => $domain["name"],
-                            'errorCode' => 121,
+                            'errorCode' => 5001,
                             'message' => 'Internal change CDN service error',
                             // 'message' => 'Internal service error'
                             ];
@@ -43,9 +43,9 @@ class BatchGroupService{
 
             $changeIrouteResult = $this->domainGroupService->changeIrouteSetting($domainGroup, $domainId);
 
-            if(!empty($changeIrouteResult)){
+            if(!$changeIrouteResult){
                 $failure[]  = ['name' => $domain["name"],
-                            'errorCode' => 122,
+                            'errorCode' => 5001,
                             'message' => 'Internal change iRoute service error', 
                             // 'message' => 'Internal service error'
                             ];
