@@ -28,7 +28,8 @@ class BatchController extends Controller
 
     }
 
-    public function store(BatchRequest $request){
+    public function store(BatchRequest $request)
+    {
         $errors = $this->batchService->store($request->domains, $request->get('user'));
 
         DB::connection()->enableQueryLog();
@@ -37,7 +38,6 @@ class BatchController extends Controller
 
     public function storeDomainToGroup(BatchRequest $request,DomainGroup $domainGroup)
     {
-        
         $errors = $this->batchGroupService->store($request->domains, $domainGroup, $request->get('user'));
 
         DB::connection()->enableQueryLog();

@@ -220,7 +220,7 @@ class DomainGroupService
     }
 
     /**
-     * 修改 要被加入 domainGroup 的 domain 的 iRoute 設定。
+     * 修改 要被加入 domainGroup 的 domain 的 iRoute 設定。成功沒有回傳，失敗會回傳 'differentGroup' 或 false。
      * 
      *
      * @param DomainGroup $domainGroup
@@ -248,9 +248,9 @@ class DomainGroupService
             
             // 處理回傳的結果，如果是 'differentGroup' 和 false 就會 再傳出去。 
             if (is_string($response)){
-                $result[] = $response;
+                $result[$iRouteSetting] = $response;
             }else{
-                $response ? true : $result[] = $response;
+                $response ? true : $result[$iRouteSetting] = $response;
             }
         }
 
