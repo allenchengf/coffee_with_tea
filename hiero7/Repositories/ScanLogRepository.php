@@ -35,6 +35,7 @@ class ScanLogRepository
                         ->select(DB::raw('group_concat(COALESCE(latency, "null")) as latency, group_concat(location_network_id) as location_network_id, scan_logs.created_at'))
                         ->leftJoin('cdn_providers', 'cdn_providers.id', '=', 'scan_logs.cdn_provider_id')
                         ->where('cdn_providers.user_group_id', $this->getJWTUserGroupId())
+                        ->where('cdn_providers.scannable', true)
                         ->where('scan_logs.cdn_provider_id', $cdnProviderId)
                         ->groupBy('scan_logs.created_at')
                         ->orderBy('scan_logs.created_at', 'desc');
@@ -78,7 +79,14 @@ class ScanLogRepository
     {
         $interval = env('SCAN_LOG_INTERVAL');
 
-        $to = $this->showLatestLog($cdnProviderId, $scanPlatformId)->created_at;
+        $lastLog = $this->showLatestLog($cdnProviderId, $scanPlatformId);
+        
+        if(!$lastLog){
+            return collect([]);
+        }
+
+        $to = $lastLog->created_at;
+
         $timestamp = strtotime($to) - $interval; // 最近一筆 Log.created_at 時間，往前推 $interval 秒。
         $from = date('Y-m-d H:i:s', $timestamp);
 
@@ -86,6 +94,7 @@ class ScanLogRepository
                     ->select('scan_logs.*')
                     ->leftJoin('cdn_providers', 'cdn_providers.id', '=', 'scan_logs.cdn_provider_id')
                     ->where('cdn_providers.user_group_id', $this->getJWTUserGroupId())
+                    ->where('cdn_providers.scannable', true)
                     ->whereBetween('scan_logs.created_at', [$from, $to]);
         
         if(! is_null($cdnProviderId))
