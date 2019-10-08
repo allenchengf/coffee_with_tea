@@ -31,14 +31,12 @@ class BatchService{
 
     public function store($domains, $user)
     {
-        $errors = [];
         $success = $failure = [];
         // 取此權限全部 cdn_providers
         $myCdnProviders = collect($this->cdnProviderRepository->getCdnProvider($user["user_group_id"])->toArray());
 
         // 批次新增 domain 迴圈
         foreach ($domains as $domain) {
-            // $error = [];
             $domainError = [];
             // 新增或查詢已存在 domain
             list($domain, $domain_id, $errorMessage) = $this->storeDomain($domain, $user);
