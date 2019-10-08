@@ -47,6 +47,8 @@ class InputError extends Enum
     const CHECK_CDN_PROVIDER_SETTING = 4035;
     const CANT_DELETE_THIS_CDN_PROVIDER = 4036;
     const UGID_WITHOUT_CDN_PROVIDER = 4037;
+    const GROUP_EXIST_BACKUPS = 4038;
+    const GROUP_NOT_EXIST_BACKUPS = 4039;
     
     /**
      * @var array
@@ -90,5 +92,7 @@ class InputError extends Enum
         self::CHECK_CDN_PROVIDER_SETTING => 'Check This Cdn Provider\'s setting.',
         self::CANT_DELETE_THIS_CDN_PROVIDER => "Can't delete this CDN Provider",
         self::UGID_WITHOUT_CDN_PROVIDER => "Ugid Without Cdn Provider",
+        self::GROUP_EXIST_BACKUPS => 'Group ID Exists In Backup',
+        self::GROUP_NOT_EXIST_BACKUPS => 'Group ID Not Exists In Backup',
     ];
 }

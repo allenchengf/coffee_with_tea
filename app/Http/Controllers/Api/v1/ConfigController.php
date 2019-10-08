@@ -4,23 +4,32 @@ namespace App\Http\Controllers\Api\v1;
 
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
-use Hiero7\Models\{Domain,Cdn,CdnProvider,LocationDnsSetting,DomainGroup,DomainGroupMapping};
-use Hiero7\Services\{ConfigService,DnsPodRecordSyncService};
+use Hiero7\Models\{Domain, Cdn, CdnProvider, LocationDnsSetting, DomainGroup, DomainGroupMapping};
+use Hiero7\Services\{ConfigService, DnsPodRecordSyncService, UserModuleService};
+use Hiero7\Repositories\BackupRepository;
 use Illuminate\Support\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Hiero7\Traits\DomainHelperTrait;
 use DB;
 use Cache;
-use Hiero7\Enums\{InputError,DbError};
+use Storage;
+use AWS;
+use Hiero7\Enums\{InputError, DbError, InternalError};
 class ConfigController extends Controller
 {
     use DomainHelperTrait;    
     protected $configService;
 
-    public function __construct(ConfigService $configService,DnsPodRecordSyncService $dnsPodRecordSyncService)
+    public function __construct(
+        ConfigService $configService,
+        DnsPodRecordSyncService $dnsPodRecordSyncService,
+        UserModuleService $userModuleService,
+        BackupRepository $backupRepository)
     {
         $this->configService = $configService;
         $this->dnsPodRecordSyncService = $dnsPodRecordSyncService;
+        $this->userModuleService = $userModuleService;
+        $this->backupRepository = $backupRepository;
     }
     
     public function index(Request $request,Domain $domain, CdnProvider $cdnProvider,DomainGroup $domainGroup)
@@ -29,6 +38,142 @@ class ConfigController extends Controller
         $result = $this->getDataBaseAllSetting($userGroupId, $domain, $cdnProvider, $domainGroup );
         return $this->response('', null, $result);
 
+    }
+    
+    public function storeBackup(Request $request, Domain $domain, CdnProvider $cdnProvider, DomainGroup $domainGroup)
+    {
+        $nowTimestamp = strtotime('now'); // 當下時間戳
+        $nowHoursMinutes = (string)date('H:i', $nowTimestamp); // (string) "小時:分鐘"
+        $envBackedupAt = env('BACKUP_AT', '03:00'); // `env 設定統一排程備份時間`，當 user 未設定排程備份時間ㄉ時候。
+        $boolSameTime = $nowHoursMinutes === $envBackedupAt; // 當下時間戳 同 `env 設定統一排程備份時間` ?
+        $nowHoursMinutesRegexPattern = "/^$nowHoursMinutes/"; // Regex Pattern: 當下時間
+        $results = [
+            'backup_at' => date('Y-m-d H:i:s', $nowTimestamp),
+            'consequences' => []
+        ];
+
+        // 預計備份時間，從 backups 表拿
+        $backups = $this->backupRepository->index();
+
+        // curl iRouteCDN>user_mudule 拿完整的 all users' Ugid
+        $userGroups = $this->userModuleService->getAllUserGroups($request)['data'];
+        if (! $userGroups)
+            return $this->setStatusCode(400)->response('', InternalError::INTERNAL_ERROR, []);
+
+        collect($userGroups)->each(function ($ug) use (&$backups, &$boolSameTime, &$nowHoursMinutesRegexPattern, &$nowTimestamp, &$results) {
+            $backup = $backups->where('user_group_id', $ug['id'])->first();
+
+            // user有設時間 依其時間，且剛好是現在時間～
+            if (! is_null($backup) && preg_match($nowHoursMinutesRegexPattern, $backup->backedup_at)) {
+                $results['consequences'][] = [
+                    'ugid' => $ug['id'],
+                    'isSuccessUploadToS3' => $this->storeBackupToS3($ug['id'], $nowTimestamp),
+                ];
+                return true;
+            }
+
+            // user沒設時間 依env時間，且env時間剛好是現在時間～
+            if (is_null($backup) && $boolSameTime) {
+                $results['consequences'][] = [
+                    'ugid' => $ug['id'],
+                    'isSuccessUploadToS3' => $this->storeBackupToS3($ug['id'], $nowTimestamp),
+                ];
+                return true;
+            }
+            
+            // 非為備份時間
+            $results['consequences'][] = [
+                'ugid' => $ug['id'],
+                'isSuccessUploadToS3' => [
+                    'success' => false,
+                    'message' => 'not in time',
+                ],
+            ];
+        });
+        return $this->response('', null, $results);
+    }
+    
+
+    private function storeBackupToS3($userGroupId, $timestamp)
+    {
+        $fileName = $userGroupId . '_' . $timestamp .'.json'; // s3 上的檔名: "$ugid_$fileName.json"
+
+        $domain = new Domain;
+        $cdnProvider = new CdnProvider;
+        $domainGroup = new DomainGroup;
+        
+        // 取該備份的 json 內容
+        $content = $this->getDataBaseAllSetting($userGroupId, $domain, $cdnProvider, $domainGroup);
+        if (! $content)
+            return [
+                'success' => false,
+                'message' => 'ConfigController::getDataBaseAllSetting() error',
+            ];
+        $jsonContent = json_encode($content);
+
+        // 暫存於: Storage::disk('local')
+        Storage::disk('local')->put($fileName, $jsonContent);
+        // 取檔案絕對路徑
+        $path = Storage::disk('local')->path($fileName);
+
+        // 上傳 s3 
+        $s3 = AWS::createClient('s3');
+        $s3Callback = $s3->putObject([
+            'Bucket'     => env('S3_BUCKET_NAME_CONFIG_BACKUP', 'iroutecdn-config-backup'), // Bucket 已設定文件 lifecycle 為 30 天
+            'Key'        => $fileName,
+            'SourceFile' => $path,
+            'ACL'        => 'public-read', // 上傳即公開 read 權限
+        ]);
+
+        // 上傳 s3 後，本地刪掉檔案
+        Storage::disk('local')->delete($fileName);
+        
+        return [
+            'success' => true,
+        ];
+    }
+    
+    public function indexBackupFromS3(Request $request, Domain $domain, CdnProvider $cdnProvider, DomainGroup $domainGroup)
+    {
+        $data = [];
+        $s3BucketDomain = '';
+
+        // ugid
+        $userGroupId = $this->getUgid($request);
+
+        // 建立 s3 channel
+        $s3 = AWS::createClient('s3');
+        
+        // 來去 s3 找找，前綴 prefix 會是 "$ugid_"
+        $s3Objects = $s3->listObjects([
+            'Bucket' => env('S3_BUCKET_NAME_CONFIG_BACKUP', 'iroutecdn-config-backup'), // 記得設定 s3 lifecycle
+            'Prefix' => $userGroupId . '_',
+        ]);
+        
+        // err: S3 Bucket 不存在，或根本沒 ugid 的檔案
+        if (! $s3Objects)
+            return $this->setStatusCode(400)->response('', InternalError::CHECK_S3_BUCKET_IF_EXISTS, []);
+
+        // err: S3 callback 異常
+        if (! isset($s3Objects['@metadata']) || ! isset($s3Objects['@metadata']['effectiveUri']) || ! isset($s3Objects['Contents']))
+            return $this->setStatusCode(400)->response('', InternalError::NO_S3_FILES_FROM_UIGD, []);
+        
+        // 取 s3 domain
+        $s3BucketDomain = explode('/?prefix=', $s3Objects['@metadata']['effectiveUri'])[0];
+        
+        // 取 s3 files
+        if (isset($s3Objects['Contents']))
+            collect($s3Objects['Contents'])->each(function ($objct) use (&$data, &$s3BucketDomain) {
+                $data[] = [
+                    'url' => $s3BucketDomain . '/' . $objct['Key'],
+                    'created_at' => $objct['LastModified']->format('Y-m-d H:i:s'),
+                ];
+            });
+        
+        // files 時間排序 ASC
+        $data = collect($data)->sortBy('created_at')->values();
+        
+        return $this->response('', null, $data);
     }
 
     private function getDataBaseAllSetting(int $userGroupId,Domain $domain, CdnProvider $cdnProvider,DomainGroup $domainGroup)
