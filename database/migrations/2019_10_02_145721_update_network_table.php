@@ -16,12 +16,15 @@ class UpdateNetworkTable extends Migration
     {
         Schema::table('networks', function (Blueprint $table) {
             $table->unsignedInteger('scheme_id')->nullable()->change();
-            $table->dropColumn('deleted_at');
+            $table->dropSoftDeletes();
+
             $driver_name = DB::getDriverName();
 
             if ($driver_name == 'mysql') {
                 $table->dropForeign('networks_scheme_id_foreign');
                 $table->foreign('scheme_id')->references('id')->on('schemes')->onDelete('set null');
+            } else {
+                $table->foreign('scheme_id')->references('id')->on('schemes')->onDelete('set null')->change();
             }
         });
     }
@@ -42,6 +45,8 @@ class UpdateNetworkTable extends Migration
             if ($driver_name == 'mysql') {
                 $table->dropForeign('networks_scheme_id_foreign');
                 $table->foreign('scheme_id')->references('id')->on('schemes')->onDelete('cascade');
+            } else {
+                $table->foreign('scheme_id')->references('id')->on('schemes')->onDelete('cascade')->change();
             }
 
         });

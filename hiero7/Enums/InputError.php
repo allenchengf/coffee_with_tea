@@ -46,9 +46,10 @@ class InputError extends Enum
     const THIS_CDNPROVIDER_STATUS_AND_URL_ARE_UNAVAILABLE = 4034;
     const CHECK_CDN_PROVIDER_SETTING = 4035;
     const CANT_DELETE_THIS_CDN_PROVIDER = 4036;
-    const UGID_WITHOUT_CDN_PROVIDER = 4037;
-    const GROUP_EXIST_BACKUPS = 4038;
-    const GROUP_NOT_EXIST_BACKUPS = 4039;
+    const NO_CDN_PROVIDER_TURNED_ON_SCANBLE = 4037;
+    const UGID_WITHOUT_CDN_PROVIDER = 4038;
+    const GROUP_EXIST_BACKUPS = 4039;
+    const GROUP_NOT_EXIST_BACKUPS = 4040;
     
     /**
      * @var array
@@ -91,6 +92,7 @@ class InputError extends Enum
         self::THIS_CDNPROVIDER_STATUS_AND_URL_ARE_UNAVAILABLE => 'This Cdn Provider\'s status and url are unavailable.',
         self::CHECK_CDN_PROVIDER_SETTING => 'Check This Cdn Provider\'s setting.',
         self::CANT_DELETE_THIS_CDN_PROVIDER => "Can't delete this CDN Provider",
+        self::NO_CDN_PROVIDER_TURNED_ON_SCANBLE => "No CDN Provider turned on Scanbled",
         self::UGID_WITHOUT_CDN_PROVIDER => "Ugid Without Cdn Provider",
         self::GROUP_EXIST_BACKUPS => 'Group ID Exists In Backup',
         self::GROUP_NOT_EXIST_BACKUPS => 'Group ID Not Exists In Backup',

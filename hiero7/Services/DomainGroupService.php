@@ -120,7 +120,7 @@ class DomainGroupService
             return 'cdnError';
         }
 
-        if (!empty($this->changeIrouteSetting($domainGroup, $request->domain_id))) {
+        if (!$this->changeIrouteSetting($domainGroup, $request->domain_id)) {
             return 'iRouteError';
         }
 
@@ -222,38 +222,51 @@ class DomainGroupService
     /**
      * 修改 要被加入 domainGroup 的 domain 的 iRoute 設定。
      * 
-     *
+     * 拿 Group 內的 Domain 為底 做比較
+     * 可分兩大類 「Group 內的 Domain 沒有 iRoute 」、「Group 內的 Domain 有 iRoute 」
+     * 
      * @param DomainGroup $domainGroup
      * @param integer $domainId
      * @param string $editedBy
-     * @return void
+     * @return boolean (false 都是 pod 上面有錯誤)
      */
     public function changeIrouteSetting(DomainGroup $domainGroup, int $domainId)
     {
         //取 Group 內的第一個 domain 下的 cdn
         $originCdnSetting = $domainGroup->domains->get(0)->cdns;
-        // 取該 cdn 下的所有 iroute
+        // 取該 cdn 下的所有 iRoute 設定，拿到 有設定的(originIrouteSetting) 和 沒有設定的 CDN (nonSettingCdn)
         list($originIrouteSetting,$nonSettingCdn) = $this->getLocationSetting($originCdnSetting);
 
+        $targetDomain = Domain::find($domainId);
+
+        // Group 內的 Domain 沒有 iRoute
         if (empty($originIrouteSetting)) {
-            return true; //如果 Group 內 cdn 沒有 iroute 設定就不做更改。
+            
+            // 刪除 targetDomain 的 iRoute 設定
+            empty($this->destroyTargetIrouteSetting($targetDomain)) ? 
+            $result = true : $result = false;
+
+            return $result; 
         }
 
-        $targetDomain = Domain::find($domainId);
-        $result = [];
+        $errors = []; 
 
-        // 拿 Group 內的 domain 設定
+        // Group 內的 Domain 有 iRoute
+
+        // 處理 有設定的
         foreach ($originIrouteSetting as $iRouteSetting) {
             $response = $this->locationDnsSettingService->decideAction($iRouteSetting->cdn_provider_id, $targetDomain, $iRouteSetting->location);
             
-            // 處理回傳的結果，如果是 'differentGroup' 和 false 就會 再傳出去。 
+            // 'differentGroup' 代表 目標 Domain 裡 沒有屬於 預期 cdnProviderId 的 CDN
+            // false 是打 pod 問題。 
             if (is_string($response)){
-                $result[] = $response;
+                $errors[$iRouteSetting->id] = $response;
             }else{
-                $response ? true : $result[] = $response;
+                $response ? true : $errors[$iRouteSetting->id] = $response;
             }
         }
 
+        //用 Group 內 沒有 iRoute 設定 的 CDN，檢查 目標 Domain 有沒有設定 
         foreach($nonSettingCdn as $cdnProviderId ){
             $targetCdn = $targetDomain->cdns()->where('cdn_provider_id', $cdnProviderId)->first();
             $targetLocationSetting = $targetCdn->locationDnsSetting;
@@ -261,13 +274,14 @@ class DomainGroupService
             if($targetLocationSetting->isEmpty()){
                 continue;
             }
-
+            
+            // 如果 目標 Domain 有 iRoute 設定 就刪掉
             foreach($targetLocationSetting as $locationDnsSetting){
                 $this->locationDnsSettingService->destroy($locationDnsSetting);
             }
         }
 
-        return $result;
+        return empty($errors) ?? false;
     }
 
     public function updateRouteCdn(DomainGroup $domainGroup, LocationNetwork $locationNetwork, int $cdnProviderId, string $editedBy)
@@ -341,6 +355,29 @@ class DomainGroupService
     }
 
     /**
+     * 刪除 Domain 內的所以有 iRoute Setting
+     * 
+     * 如果 刪除失敗 會 回傳 ['locationDnsSetting 的 ID'=> false ]
+     * 如果 都成功的話 或是 沒有iRoute設定 都 回傳 []
+     * @param Domain $targetDomain
+     * @return void
+     */
+    private function destroyTargetIrouteSetting(Domain $targetDomain)
+    {
+        $locationDnsSettingCollection = $targetDomain->locationDnsSettings;
+
+        $result = [];
+
+        foreach($locationDnsSettingCollection as $locationDnsSetting){
+
+            $this->locationDnsSettingService->destroy($locationDnsSetting) ?? 
+            $result[$locationDnsSetting->id] = false;
+        }
+
+        return $result;
+    }
+
+    /**
      * 依照 cdn 的設定分辨，哪些 cdn 是有存在  locationDnsSetting table 內，有哪些 cdn 是沒有設定的。
      * 
      * 會回傳 targetIrouteSetting 和 nonSettingCdn 兩個參數。
@@ -353,10 +390,9 @@ class DomainGroupService
      */
     private function getLocationSetting(Collection $cdnSetting)
     {
-        $nonSettingCdn = [];
+        $nonSettingCdn = $targetIrouteSetting = [];
 
         foreach ($cdnSetting as $cdns) {
-            // $originLocationDnsSetting = $cdns->locationDnsSetting;
             $originLocationDnsSetting = collect($cdns->locationDnsSetting);
             //檢查該 cdn 是否有存在 locationDnsSetting table
             if ($originLocationDnsSetting->isEmpty()) {

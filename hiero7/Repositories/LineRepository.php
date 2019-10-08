@@ -41,13 +41,13 @@ class LineRepository
     public function getLinesById()
     {
         $result = [];
-        $data = $this->locationNetwork->with('continent', 'country')->get();
+        $locationNetworks = $this->locationNetwork->with('continent', 'country')->get();
 
-        foreach ($data as $k => $v) {
-            if ($v['network']['scheme_id'] == env('SCHEME')) {
-                $result[] = $v;
+        $locationNetworks->map(function ($locationNetwork) use (&$result) {
+            if ($locationNetwork['status'] == 1) {
+                $result[] = $locationNetwork;
             }
-        }
+        });
 
         return $result;
     }
@@ -63,8 +63,6 @@ class LineRepository
 
     public function getRegion()
     {
-        return $this->locationNetwork->with('continent', 'country')->get()->filter(function ($item) {
-            return $item->network->scheme_id == env('SCHEME');
-        });
+        return $this->locationNetwork->with('continent', 'country')->where('status', 1)->get();
     }
 }

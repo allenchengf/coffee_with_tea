@@ -15,6 +15,7 @@ use Hiero7\Services\DnsProviderService;
 use Hiero7\Services\LineService;
 use Hiero7\Services\SchemeService;
 use Illuminate\Foundation\Testing\DatabaseMigrations;
+use Illuminate\Support\Collection;
 use Mockery as m;
 use Tests\TestCase;
 
@@ -129,6 +130,118 @@ class LineTest extends TestCase
         $this->assertEquals(200, $response->status());
     }
 
+    /** @test */
+    public function changeStatus_is_True()
+    {
+        $loginUid = 1;
+        $status = true;
+
+        $request = new Request;
+        $request->merge(compact('status'));
+
+        $this->addUuidforPayload()
+            ->setJwtTokenPayload($loginUid, $this->jwtPayload);
+
+        $line = $this->line->find(1);
+
+        $this->response = $this->controller->changeStatus($request, $line);
+
+        $this->checkoutResponse();
+
+        $this->assertEquals($status, $this->responseArrayData['data']['status']);
+    }
+
+    /** @test */
+    public function changeStatus_to_False()
+    {
+        $loginUid = 1;
+        $status = false;
+
+        $request = new Request;
+        $request->merge(compact('status'));
+
+        $this->addUuidforPayload()
+            ->setJwtTokenPayload($loginUid, $this->jwtPayload);
+
+        $this->useFakeLineController();
+
+        $this->controller->setDeletDNSRecordOutput(true);
+
+        $line = $this->line->find(1);
+
+        $this->response = $this->controller->changeStatus($request, $line);
+
+        $this->checkoutResponse();
+
+        $this->assertEquals($status, $this->responseArrayData['data']['status']);
+    }
+
+    /** @test */
+    public function changeStatus_to_False_but_409()
+    {
+        $loginUid = 1;
+        $status = false;
+
+        $request = new Request;
+        $request->merge(compact('status'));
+
+        $this->addUuidforPayload()
+            ->setJwtTokenPayload($loginUid, $this->jwtPayload);
+
+        $this->useFakeLineController();
+
+        $this->controller->setDeletDNSRecordOutput(false);
+
+        $line = $this->line->find(1);
+
+        $this->response = $this->controller->changeStatus($request, $line);
+
+        $this->checkoutResponse(409);
+    }
+
+    /** @test */
+    public function delete_line_409()
+    {
+        $this->useFakeLineController();
+
+        $this->controller->setDeletDNSRecordOutput(false);
+
+        $loginUid = 1;
+
+        $line = $this->line->find(1);
+
+        $this->addUuidforPayload()
+            ->setJwtTokenPayload($loginUid, $this->jwtPayload);
+
+        $response = $this->controller->destroy($line, $this->mockDnsProviderService);
+
+        $this->assertEquals(409, $response->status());
+    }
+
+    /** @test */
+    public function deletDNSRecord()
+    {
+        /**
+         * 如果輸入要刪除的資料數量為 0
+         * return true
+         */
+        $this->assertTrue($this->controller->deletDNSRecord($this->mockDnsProviderService, collect([])));
+
+        $this->shouldUseSyncRecordToDnsPodisFail();
+
+        /**
+         * 如果輸入要被刪除的資料
+         * 發生錯誤，
+         * return false
+         */
+        $this->assertFalse($this->controller->deletDNSRecord($this->mockDnsProviderService, collect(['1111'])));
+    }
+
+    private function useFakeLineController()
+    {
+        $this->controller = new FakeLineController($this->lineService, $this->schemeService);
+    }
+
     private function shouldUseSyncRecordToDnsPod()
     {
         $this->mockDnsProviderService
@@ -138,4 +251,27 @@ class LineTest extends TestCase
             );
     }
 
+    private function shouldUseSyncRecordToDnsPodisFail()
+    {
+        $this->mockDnsProviderService
+            ->shouldReceive('syncRecordToDnsPod')
+            ->andReturn(
+                json_decode('{"message":"Success","errorCode":3000,"data":{}', true)
+            );
+    }
+}
+
+class FakeLineController extends LineController
+{
+    protected $deletDNSRecordOutput = false;
+
+    public function setDeletDNSRecordOutput(bool $bool): void
+    {
+        $this->deletDNSRecordOutput = $bool;
+    }
+
+    public function deletDNSRecord(DnsProviderService $dnsProviderService, Collection $deleteData): bool
+    {
+        return $this->deletDNSRecordOutput;
+    }
 }

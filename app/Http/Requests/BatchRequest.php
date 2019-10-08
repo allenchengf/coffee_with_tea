@@ -44,8 +44,7 @@ class BatchRequest extends FormRequest
                 break;
             case ($routeName == "groups.$action"):
                 return [
-                    'domains' => 'required|array',
-                    'domains.*.name' => ['required', env('DOMAIN_REGULAR')]
+                    'domains' => 'required|array'
                 ];
                 break;
             default :

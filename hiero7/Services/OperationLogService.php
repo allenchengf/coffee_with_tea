@@ -44,6 +44,8 @@ class OperationLogService
     {
         if ($userGroup == self::GROUP_HIERO7) {
             return [
+                "from"=> 0,
+                "size"=> env('OPERATION_LOG_SIZE'),
                 "query" => [
                     "bool" => [
                         "must" => ["match" => ["type" => $this->getPlatform()]],
@@ -53,6 +55,8 @@ class OperationLogService
         }
 
         return [
+            "from"=> 0,
+            "size"=> env('OPERATION_LOG_SIZE'),
             "query" => [
                 "bool" => [
                     "must"   => ["match" => ["user_group" => $userGroup]],
