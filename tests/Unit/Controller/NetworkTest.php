@@ -21,12 +21,11 @@ class NetworkTest extends TestCase
         parent::setUp();
 
         $this->seed();
-        $this->seed('DomainTableSeeder');
-        $this->seed('CdnTableSeeder');
-        $this->seed('LocationDnsSettingSeeder');
 
         app()->call([$this, 'service']);
+
         $this->network = new network();
+
         $this->controller = new NetworkController(
             $this->networkService,
             $this->continentService,
@@ -74,11 +73,5 @@ class NetworkTest extends TestCase
         $this->response = $this->controller->store($request, $this->network);
         $this->checkoutResponse();
         $this->assertEquals($name, $this->responseArrayData['data']['name']);
-    }
-
-    private function checkoutResponse(int $code = 200)
-    {
-        $this->assertEquals($code, $this->response->status());
-        $this->responseArrayData = json_decode($this->response->getContent(), true);
     }
 }

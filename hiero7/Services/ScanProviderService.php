@@ -175,6 +175,21 @@ class ScanProviderService
         });
     }
 
+    public function changeLastScanLogSort(): Collection
+    {
+        $regions = [];
+
+        //取得最後一次 Scan 的結果
+        $lastScanLogs = $this->scanLogRepository->indexEarlierLogs();
+
+        $lastScanLogs->map(function ($lastScanLog) use (&$regions) {
+            $regions['scanPlatform'] = $lastScanLog->scan_platform_id;
+            return $regions[$lastScanLog->cdn_provider_id][$lastScanLog->location_network_id] = $lastScanLog;
+        });
+
+        return collect($regions);
+    }
+
     /**
      * 取得所有 Location Network
      *

@@ -40,7 +40,10 @@ class ScanProviderTest extends TestCase
         $this->scanPlatform = ScanPlatform::find(1);
         $this->cdnProvider = CdnProvider::find(1);
         $this->cdnProvider->scannable = 1; // 設定可被爬
+
         $this->setScanLogs();
+
+        $this->setCDNProvider();
 
         $this->addUuidforPayload()
             ->addUserGroupId(1)
@@ -1393,5 +1396,10 @@ class ScanProviderTest extends TestCase
             ]
         }', true);
         return (object) $data;
+    }
+
+    private function setCDNProvider()
+    {
+        CdnProvider::where('scannable', false)->update(['scannable' => true]);
     }
 }
