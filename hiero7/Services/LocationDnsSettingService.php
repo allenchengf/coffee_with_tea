@@ -88,7 +88,7 @@ class LocationDnsSettingService
             'record_id' => $locationDnsSetting->provider_record_id,
         ]);
 
-        if ($podResult['errorCode']) {
+        if (!$this->dnsProviderService->checkAPIOutput($podResult)) {
             return false;
         }
 
@@ -108,12 +108,14 @@ class LocationDnsSettingService
      * @param Int $cdnProviderId
      * @param Domain $domain
      * @param LocationNetwork $locationNetwork
-     * @return boolean|'differentGroup'
+     * @return boolean|'differentGroup'  (false 是打 pod 有問題)
      */
     public function decideAction(Int $cdnProviderId, Domain $domain, LocationNetwork $locationNetwork)
     {
+        //使用 目標 Domain 和 預期 cdnProviderId 取得 CDN 的 id
         $cdnModel = $this->getTargetCdn($cdnProviderId, $domain);
 
+        // $cdnModel 是空的代表 目標 Domain 裡沒有屬於 預期 cdnProviderId 的 CDN
         if (is_null($cdnModel)) {
             return 'differentGroup';
         }
@@ -133,9 +135,9 @@ class LocationDnsSettingService
             ];
 
             if ($isExistLocationDnsSetting) {
-                $result = ($existLocationDnsSetting->cdn_id != $cdnModel->id) ?
-                $this->updateSetting($data, $domain, $cdnModel, $existLocationDnsSetting) :
-                true;
+                // 如果 從 DB 撈出來的設定($existLocationDnsSetting) 和 預計要被改的 （$cdnModel) ID 不一樣就要 update
+                $result = ($existLocationDnsSetting->cdn_id == $cdnModel->id) ? true:
+                $this->updateSetting($data, $domain, $cdnModel, $existLocationDnsSetting);
             } else {
                 $result = $this->createSetting($data, $domain, $cdnModel, $locationNetwork);
             }
@@ -144,6 +146,13 @@ class LocationDnsSettingService
         return $result;
     }
 
+    /**
+     * 拿目標 Domain 和 預期 cdnProviderId 取得 CDN 的 id
+     *
+     * @param Int $cdnProviderId
+     * @param Domain $domain
+     * @return void
+     */
     private function getTargetCdn(Int $cdnProviderId, Domain $domain)
     {
         return $this->cdnRepository->indexByWhere(['cdn_provider_id' => $cdnProviderId, 'domain_id' => $domain->id])->first();
@@ -178,7 +187,7 @@ class LocationDnsSettingService
             'ttl' => $cdn->cdnProvider->ttl,
         ]);
 
-        if ($podResult['errorCode']) {
+        if (!$this->dnsProviderService->checkAPIOutput($podResult)) {
             return false;
         }
 
