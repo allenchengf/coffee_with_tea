@@ -7,6 +7,7 @@ DB_DATABASE=coffee_with_tea
 JWT_SECRET=s07mAuXcJUWZq3LZAiXrqjec6EEg2ZR5N97or1WytTONkjJwhfowVrK8eQzI1S5o
 
 OPERATION_LOG_URL=leodock_backend gateway IP:39452/api/v1
+OPERATION_LOG_SIZE=3000
 USER_MODULE=leodock_backend gateway IP:35320/api/v1
 DNS_PROVIDER_API=leodock_backend gateway IP:35341/api/v1
 
