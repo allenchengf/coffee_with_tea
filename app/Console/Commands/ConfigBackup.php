@@ -27,6 +27,7 @@ class ConfigBackup extends Command
         if (! $appUrl || ! $userModuleUrl) {
             Log::info('[ConfigBackup: Notice] .env > APP_URL or USER_MODULE');
         }
+        $appUrl .= '/api/v1';
 
         // login
         $email = "brian@123.com";

@@ -96,7 +96,7 @@ class ConfigController extends Controller
 
     private function storeBackupToS3($userGroupId, $timestamp)
     {
-        $fileName = $userGroupId . '_' . $timestamp .'.json'; // s3 上的檔名: "$ugid_$fileName.json"
+        $fileName = $userGroupId . '_' . $timestamp .'.json'; // s3 上的檔名: "$ugid_$timestamp.json"
 
         $domain = new Domain;
         $cdnProvider = new CdnProvider;
@@ -119,7 +119,7 @@ class ConfigController extends Controller
         // 上傳 s3 
         $s3 = AWS::createClient('s3');
         $s3Callback = $s3->putObject([
-            'Bucket'     => env('S3_BUCKET_NAME_CONFIG_BACKUP', 'iroutecdn-config-backup'), // Bucket 已設定文件 lifecycle 為 30 天
+            'Bucket'     => env('S3_BUCKET_NAME_CONFIG_BACKUP', 'iroutecdn-config-backup'), // Bucket 已設定內部檔案 lifecycle 為 30 天
             'Key'        => $fileName,
             'SourceFile' => $path,
             'ACL'        => 'public-read', // 上傳即公開 read 權限

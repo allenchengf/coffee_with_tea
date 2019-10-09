@@ -5,7 +5,8 @@ namespace Tests\Unit\Controller;
 use Tests\TestCase;
 use Illuminate\Foundation\Testing\WithFaker;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Hiero7\Services\{ConfigService,DnsPodRecordSyncService};
+use Hiero7\Services\{ConfigService,DnsPodRecordSyncService,UserModuleService};
+use Hiero7\Repositories\BackupRepository;
 use App\Http\Controllers\Api\v1\ConfigController;
 use Illuminate\Http\Request;
 use Hiero7\Models\{Domain,CdnProvider,DomainGroup};
@@ -27,7 +28,7 @@ class ConfigTest extends TestCase
         $this->uri = "/api/v1/config";
         $this->login();
         app()->call([$this, 'service']);
-        $this->controller = new ConfigController($this->configService,$this->dnsPodRecordSyncService);
+        $this->controller = new ConfigController($this->configService,$this->dnsPodRecordSyncService,$this->userModuleService,$this->backupRepository);
         $this->dnsPodRecordSyncService->shouldReceive('syncAndCheckRecords')->withAnyArgs()->andReturn([]);
 
     }
@@ -37,10 +38,12 @@ class ConfigTest extends TestCase
         parent::tearDown();
     }
 
-    public function service(ConfigService $configService,DnsPodRecordSyncService $dnsPodRecordSyncService)
+    public function service(ConfigService $configService,DnsPodRecordSyncService $dnsPodRecordSyncService,UserModuleService $userModuleService,BackupRepository $backupRepository)
     {
         $this->configService = $configService;
         $this->dnsPodRecordSyncService = $this->initMock(DnsPodRecordSyncService::class);
+        $this->userModuleService = $userModuleService;
+        $this->backupRepository = $backupRepository;
     }
 
     private function login()
