@@ -1,6 +1,8 @@
 <?php
 
-Route::group(['middleware' => ['api', 'check.config'], 'namespace' => 'Api\v1', 'prefix' => 'v1'], function () {
+Route::group(['middleware' => ['api'], 'namespace' => 'Api\v1', 'prefix' => 'v1'], function () {
+    Route::get('config/cronjob', 'ConfigController@storeBackup')->name('config.storeBackup');
+
     Route::group(['prefix' => 'domains'], function () {
 
         Route::group(['middleware' => ['internal.group']], function () {
@@ -44,6 +46,7 @@ Route::group(['middleware' => ['api', 'check.config'], 'namespace' => 'Api\v1', 
             Route::get('', 'LineController@index')->name('lines.index');
             Route::post('', 'LineController@create')->name('lines.create');
             Route::put('{line}', 'LineController@edit')->name('lines.edit');
+            Route::patch('{line}/status', 'LineController@changeStatus')->name('lines.status');
             Route::delete('{line}', 'LineController@destroy')->name('lines.destroy');
         });
 
@@ -97,7 +100,15 @@ Route::group(['middleware' => ['api', 'check.config'], 'namespace' => 'Api\v1', 
 
     Route::group(['prefix' => 'config'], function () {
         Route::get('', 'ConfigController@index')->name('config.index');
+        
+        Route::get('s3', 'ConfigController@indexBackupFromS3')->name('config.indexBackup');
         Route::post('', 'ConfigController@import')->name('config.indexByGroup');
+    });
+
+    Route::group(['prefix' => 'backups'], function () {
+        Route::get('self', 'BackupController@show')->name('backups.show');
+        Route::post('', 'BackupController@create')->name('backups.create');
+        Route::put('{backup}', 'BackupController@update')->name('backups.update');
     });
 
     Route::group(['prefix' => 'operation_log'], function () {

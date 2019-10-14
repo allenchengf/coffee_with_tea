@@ -76,6 +76,27 @@ class UserModuleService
     }
 
     /**
+     * Get All Users' Groups
+     *
+     * @param $request
+     * @return array
+     */
+    public function getAllUserGroups($request): array
+    {
+        $uid = $request->uid ?? null;
+        $user_group_id = $request->user_group_id ?? null;
+
+        $response = Curl::to($this->user_module_API . '/userGroups')
+            ->withHeaders(['Authorization: ' . $request->header('Authorization')])
+            ->asJson(true)
+            ->get();
+
+        $this->userModuleOutputCheck($response);
+
+        return $response;
+    }
+
+    /**
      * Notifications By Users function
      *
      * @param $request

@@ -9,13 +9,13 @@ use Hiero7\Enums\InternalError;
 use Hiero7\Models\CdnProvider;
 use Hiero7\Models\Domain;
 use Hiero7\Models\DomainGroup;
-use Hiero7\Models\LocationNetwork;
 use Hiero7\Models\ScanPlatform;
+use Hiero7\Repositories\CdnProviderRepository;
 use Hiero7\Repositories\DomainRepository;
+use Hiero7\Repositories\LineRepository;
+use Hiero7\Repositories\ScanLogRepository;
 use Hiero7\Services\ScanProviderService;
 use Hiero7\Traits\JwtPayloadTrait;
-
-use Hiero7\Repositories\{ScanLogRepository, CdnProviderRepository, LineRepository};
 
 class ScanProviderController extends Controller
 {
@@ -34,8 +34,7 @@ class ScanProviderController extends Controller
         ScanLogRepository $scanLogRepository,
         CdnProviderRepository $cdnProviderRepository,
         LineRepository $lineRepository
-    )
-    {
+    ) {
         $this->scanProviderService = $scanProviderService;
         $this->scanLogRepository = $scanLogRepository;
         $this->cdnProviderRepository = $cdnProviderRepository;
@@ -49,68 +48,61 @@ class ScanProviderController extends Controller
     public function indexScannedData()
     {
         $scanneds = [];
-        $lastScanLogCreatedAt = date('Y-m-d H:i:s');
         $scanPlatform = null;
 
-        // 權限
+        // 取得當前 login ugid
         $ugid = $this->getJWTUserGroupId();
 
-        // 權限所有 cdn_providers
-        $cdnProviders = $this->cdnProviderRepository->getCdnProvider($ugid);
-        if (! $cdnProviders) {
-            return $this->setStatusCode(400)->response('', InputError::UGID_WITHOUT_CDN_PROVIDER, []);
+        // 取得 cdn_providers
+        $cdnProviders = $this->cdnProviderRepository->getCdnProvider($ugid)->filter(function ($cdnProvider) {
+            // cdn_provider->scannable == true
+            return $cdnProvider->scannable == true;
+        })->values();
+
+        if ($cdnProviders->isEmpty()) {
+            return $this->setStatusCode(400)->response('', InputError::NO_CDN_PROVIDER_TURNED_ON_SCANBLE, []);
         }
 
-        // 權限所有 (cdn_providers 的 scan_logs) 與 regions - mapping)
-        // 最後 scan_log 的 created_at, scan_platform_id
-        $lastScanLog = $this->scanLogRepository->showLatestLog();
-        if ($lastScanLog) {
-            $lastScanLogCreatedAt = $lastScanLog['created_at'];
-            $scanPlatformModel = ScanPlatform::find($lastScanLog['scan_platform_id']);
+        $lastScanLogs = $this->scanProviderService->changeLastScanLogSort();
+
+        if ($lastScanLogs->isNotEmpty()) {
+            // scanPlatform used: 17ce or chinaz
+            $scanPlatform = app()->call(
+                [$this, 'getScanPlatformById'],
+                ['id' => $lastScanLogs['scanPlatform']]
+            )->only(['id', 'name']);
         }
 
-        // scanPlatform used: 17ce or chinaz
-        $scanPlatform = collect($scanPlatformModel)->only(['id', 'name']);
-
-        // all `networks` for `scheme` which is dnspod_free or dnspod_enterprise
         $regions = $this->lineRepository->getRegion();
 
         // mapping regions & scan_logs within ugid's cdnProviders
-        $cdnProviders->each(function ($cdnProviderModel, $i) use (&$scanneds, &$lastScanLogCreatedAt, &$scanPlatformModel, &$regions) {
+        $cdnProviders->each(function ($cdnProvider, $i) use (&$scanneds, $regions, $lastScanLogs) {
 
-            // 抓 `scan_logs` where scanPlatform ＆ cdnProvider
-            $scannedLogs = $this->scanProviderService->indexScannedData($scanPlatformModel, $cdnProviderModel);
-
-            // mapping 啦
-            $scanneds[$i]['cdnProvider'] = $cdnProviderModel;
+            $scanneds[$i]['cdnProvider'] = $cdnProvider;
             $scanneds[$i]['scannedAt'] = null;
-            $scanneds[$i]['scanned'] = $regions->map(function ($region) use (&$scannedLogs, &$scanneds, &$i) {
-                $scanned = collect($scannedLogs)->filter(function ($item) use (&$region) {
-                    return $item->location_networks->network_id == $region->network->id;
-                })->first();
 
-                // 有 mapping 到
-                if($scanned) {
-                    $scanneds[$i]['scannedAt'] = $scanned->created_at;
-                    return [
-                        'latency' => $scanned->latency,
-                        'created_at' => $scanned->created_at,
-                        'location_networks' => $region
-                    ];
-                }
-                
-                // 沒 mapping 到
-                return [
+            $scanneds[$i]['scanned'] = $regions->map(function ($region) use ($lastScanLogs, &$scanneds, $i, $cdnProvider) {
+
+                $regionOutTemplate = [
                     'latency' => null,
                     'created_at' => null,
-                    'location_networks' => $region
+                    'location_networks' => $region,
                 ];
+
+                if (isset($lastScanLogs[$cdnProvider->id][$region->id])) {
+                    $scanTime = $lastScanLogs[$cdnProvider->id][$region->id]['created_at']->format('Y-m-d H:m:s');
+
+                    $scanneds[$i]['scannedAt'] = $scanTime;
+                    $regionOutTemplate['latency'] = $lastScanLogs[$cdnProvider->id][$region->id]['latency'];
+                    $regionOutTemplate['created_at'] = $scanTime;
+                }
+
+                return $regionOutTemplate;
             })->values();
         });
 
         return $this->response("", null, compact('scanPlatform', 'scanneds'));
     }
-
 
     /**
      * 根據最後一次掃瞄的結果
@@ -195,7 +187,7 @@ class ScanProviderController extends Controller
         $cdnProvider = $this->initCdnProviderForScannedData($request);
 
         $scanned = $this->scanProviderService->indexScannedData($scanPlatform, $cdnProvider);
-        if ($scanned && ! $scanned->isEmpty()) {
+        if ($scanned && !$scanned->isEmpty()) {
             $scannedAt = $scanned->first()->created_at;
         }
 
@@ -209,5 +201,10 @@ class ScanProviderController extends Controller
         return CdnProvider::where('id', $request->get('cdn_provider_id'))
             ->where('user_group_id', $this->getJWTUserGroupId())
             ->first();
+    }
+
+    public function getScanPlatformById(ScanPlatform $scanPlatform, int $id): ScanPlatform
+    {
+        return $scanPlatform->find($id);
     }
 }
