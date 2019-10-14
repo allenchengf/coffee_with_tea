@@ -31,5 +31,6 @@ class ExampleTest extends TestCase
         $this->assertTrue(!empty(env('SCHEME')), 'SCHEME is not set');
         $this->assertTrue(!empty(env('PLATFORM_KEY')), 'PLATFORM_KEY is not set');
         $this->assertTrue(!empty(env('CONFIG_WAIT_TIME')), 'CONFIG_WAIT_TIME is not set');
+        $this->assertTrue(!empty(env('S3_BUCKET_NAME_CONFIG_BACKUP')), 'S3_BUCKET_NAME_CONFIG_BACKUP is not set');
     }
 }
