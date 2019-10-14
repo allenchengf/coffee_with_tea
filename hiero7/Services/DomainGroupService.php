@@ -181,8 +181,9 @@ class DomainGroupService
     }
 
     /**
-     * 比較 domainGroup 的 cdn 是否和要被加進去的 domain 的 cdn 設定相同
+     * 比較 domainGroup 的 cdn 是否和 要被加進去的 domain 的 cdn 設定相同
      *
+     * 此 function 也有用在 BatchGroupService 的 checkDomain() 
      * @param DomainGroup $domainGroup
      * @param [type] $targetDomainId
      * @return void
@@ -190,6 +191,7 @@ class DomainGroupService
     public function compareDomainCdnSetting(DomainGroup $domainGroup, $targetDomainId)
     {
         $controlDomain = $domainGroup->domains;
+        // Group 內的 Domain 的 CDN Provider ID
         $controlCdnProvider = $controlDomain[0]->cdns()->get(['cdn_provider_id'])->pluck('cdn_provider_id');
 
         try {
@@ -198,12 +200,18 @@ class DomainGroupService
             $errorMessage = $e->getMessage();
             $targetCdnProvider = [];
         }
-        $different = $controlCdnProvider->diff($targetCdnProvider);
-        return !$different->isEmpty() ? false : true;
+
+        // 以比較 目標 Domain 和 Group 內的 Cdn Provider 
+        $differentWithTarget = $controlCdnProvider->diff($targetCdnProvider);
+        // 以比較 Group 和 目標 Domain 的 Cdn Provider 
+        $differentWithGroup = $targetCdnProvider->diff($controlCdnProvider);
+
+        // 如果 比較出來 有一個 沒有是空的，就不能新增 return false
+        return (!$differentWithTarget->isEmpty() || !$differentWithGroup->isEmpty()) ?  false : true;
     }
 
     /**
-     * 修改 要被加入 domainGroup 的 domain 的 defaultCdn
+     * 修改 要被加入 Group 的 domain 的 defaultCdn
      *
      * @param DomainGroup $domainGroup
      * @param integer $domainId

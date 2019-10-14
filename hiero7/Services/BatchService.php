@@ -3,10 +3,11 @@
 namespace Hiero7\Services;
 use Hiero7\Repositories\{CdnRepository, DomainRepository, CdnProviderRepository};
 use Hiero7\Services\DnsProviderService;
+use Hiero7\Enums\InputError;
 use Hiero7\Traits\DomainHelperTrait;
 use Illuminate\Support\Collection;
 use DB;
-
+use Exception;
 
 class BatchService{
 
@@ -31,14 +32,12 @@ class BatchService{
 
     public function store($domains, $user)
     {
-        $errors = [];
         $success = $failure = [];
         // 取此權限全部 cdn_providers
         $myCdnProviders = collect($this->cdnProviderRepository->getCdnProvider($user["user_group_id"])->toArray());
 
         // 批次新增 domain 迴圈
         foreach ($domains as $domain) {
-            // $error = [];
             $domainError = [];
             // 新增或查詢已存在 domain
             list($domain, $domain_id, $errorMessage) = $this->storeDomain($domain, $user);
@@ -124,8 +123,15 @@ class BatchService{
         $domain["name"] = strtolower($domain["name"]);
 
         try {
+            $domainValidate= $this->validateDomain($domain["name"]);
+            // 判斷 domain 有沒有各式錯誤
+            if(!$domainValidate){
+                throw new Exception(InputError::getDescription(InputError::DOMAIN_FORMATE_IS_INVALID));
+            }
+
             // domain.cname 為 domain.name 去 . 後再補尾綴 `.user_group_id`
             $domain['cname'] = $this->formatDomainCname($domain["name"], $user["user_group_id"]);
+
             // 新增 domain
             $domainObj = $this->domainRepository->store($domain, $user);
             if(is_null($domainObj))
@@ -153,6 +159,12 @@ class BatchService{
         $errorMessage = null;
 
         try {
+            // 判斷 cdn.cname 格式(和 domain 規則一樣)是否錯誤，有就不做任何事。
+            $cdnCnameValidate= $this->validateDomain($cdn["cname"]);
+            if(!$cdnCnameValidate){
+                throw new Exception(InputError::getDescription(InputError::CNAME_FORMATE_IS_INVALID));
+            }
+
             // 若非為第一次新增 cdn 之欄位預設值
             $cdn["default"] = 0;
             $cdn["provider_record_id"] = 0;
