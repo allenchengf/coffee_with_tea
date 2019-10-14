@@ -48,7 +48,12 @@ class LineRequest extends FormRequest
                     "isp" => "required|string",
                 ];
                 break;
-            default :
+            case ($routeName == "$prefix.status"):
+                return [
+                    "status" => "required|bool",
+                ];
+                break;
+            default:
                 return [];
                 break;
         }

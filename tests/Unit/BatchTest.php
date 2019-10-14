@@ -8,12 +8,16 @@ use Tests\TestCase;
 use Hiero7\Services\DnsProviderService;
 use Faker\Factory as Faker;
 use Hiero7\Models\Cdn;
+use Hiero7\Repositories\{CdnRepository, DomainRepository, CdnProviderRepository};
+
 
 class BatchTest extends TestCase
 {
     use DatabaseMigrations;
     protected $batchService;
-    protected $dnsprovider;
+    protected $dnsProvider;
+    protected $cdnRepository;
+    protected $cdnProviderRepository;
 
     protected $domains = [];
     protected $user;
@@ -22,17 +26,33 @@ class BatchTest extends TestCase
     protected function setUp()
     {
         parent::setUp();
+        
+        app()->call([$this, 'repository']);
+        app()->call([$this, 'mockery']);
+        $this->seed();
+        $this->seed('DomainTableSeeder');
+        $this->batchService = new BatchService($this->cdnRepository,$this->dnsProvider, $this->domainRepository, $this->cdnProviderRepository);
 
-        $this->dnsprovider = $this->initMock(DnsProviderService::class);
-        if($this->getName() !== "testDnsPodError")
-            $this->dnsprovider->shouldReceive('createRecord')
-                ->withAnyArgs()
-                ->andReturn(["errorCode"=>null,"data"=>["record"=>["id"=>1]]]);  
-
-        $this->domains[] = $this->addDomain("hello.com", $this->addCdn("cdn1", "cdn1.com", 90));
-        $this->user = array("uuid" => \Illuminate\Support\Str::uuid(), "user_group_id" => 3);
-        $this->batchService = $this->app->make('Hiero7\Services\BatchService');
+        $this->user = array("uuid" => \Illuminate\Support\Str::uuid(), "user_group_id" => 1);
         $this->cdn = new Cdn();
+    }
+
+    public function repository(CdnRepository $cdnRepository,
+        DomainRepository $domainRepository,
+        CdnProviderRepository $cdnProviderRepository)
+    {
+        $this->cdnRepository = $cdnRepository;
+        $this->dnsProvider = $this->initMock(DnsProviderService::class);
+        $this->domainRepository = $domainRepository;
+        $this->cdnProviderRepository = $cdnProviderRepository;
+    }
+
+    public function mockery()
+    {
+        $this->dnsProvider->shouldReceive('createRecord')
+        ->withAnyArgs()
+        ->andReturn(["errorCode"=>4001,"message"=>"Subdomain roll record is limited : (500026)"]);  
+
     }
 
     public function tearDown()
@@ -40,73 +60,68 @@ class BatchTest extends TestCase
         $this->user = null;
         $this->domains = [];
         $this->batchService = null;
-        $this->dnsprovider = null;
+        $this->dnsProvider = null;
         parent::tearDown();
     }
 
-    public function testDuplicateDomain() {
-        $this->domains[] = $this->domains[0];
+    public function testBatchAddDomainNonCdnToAdd() 
+    {
+        $this->domains[] = $this->addDomain("hello2.com");
+
         $result = $this->batchService->store($this->domains, $this->user);
-        $this->assertEquals(count($result), 1);
+
+        $this->assertEquals(count($result), 2);
+
+        $this->assertArrayHasKey('success', $result);
+        $this->assertEquals($result['success']['domain'], []); 
+
+        $this->assertArrayHasKey('failure', $result);
+        $this->assertEquals($result['failure']['domain'][0]['name'], 'hello2.com');        
+        $this->assertEquals($result['failure']['domain'][0]['cdn'], []); 
     }
 
-    public function testAppendCdn(){
-        $result = $this->batchService->store($this->domains, $this->user);
-        // $this->assertEquals($result["hello.com"], []);
+    public function testBatchAddDomainSuccessAndAddCdnFail()
+    {
+        $this->domains[] = $this->addDomain("hello.com", $this->addCdn("Hiero7", "hiero8.hero.com"));
 
-        $this->domains = [];
-        $this->domains[] = $this->addDomain("hello.com", $this->addCdn("cdn10", "cdn10.com", 90));  
         $result = $this->batchService->store($this->domains, $this->user);
 
-        // $this->assertEquals($result["hello.com"], []);
+        $this->assertEquals(count($result), 2);
+
+        $this->assertArrayHasKey('success', $result);
+        $this->assertEquals($result['success']['domain'][0]['name'], 'hello.com'); 
+        $this->assertArrayHasKey('cdn', $result['success']['domain'][0]);
+        $this->assertEquals($result['success']['domain'][0]['cdn'], []); 
+
+        $this->assertArrayHasKey('failure', $result);
+        $this->assertEquals($result['failure']['domain'][0]['name'], 'hello.com');        
+        $this->assertEquals($result['failure']['domain'][0]['cdn'][0]['name'], 'Hiero7'); 
+
+        $this->assertArrayHasKey('errorCode', $result['failure']['domain'][0]['cdn'][0]);
+        $this->assertArrayHasKey('message', $result['failure']['domain'][0]['cdn'][0]);
     }
 
-    public function testDuplicateCdn() {
-        $this->domains[0]["cdns"][] = $this->addCdn("cdn1", "cdn1.com");
-        $result = $this->batchService->store($this->domains, $this->user);
-        $this->assertEquals(count($result), 1);        
-    }
-
-    public function testBatchSuccess() {
-        $this->domains[] = $this->addDomain("hello2.com", $this->addCdn("cdn1", "cdn1.com"), $this->addCdn("cdn2", "cdn2.com"));
-        $result = $this->batchService->store($this->domains, $this->user);
-        // $this->assertEquals($result["hello.com"], []);
-        // $this->assertEquals($result["hello2.com"], []);
-    }
-
-    public function testBatchUpdate() {
-        $actual = $this->cdn
-            ->where("cname", $this->domains[0]["cdns"][0]["cname"])
-            ->where("name", $this->domains[0]["cdns"][0]["name"])
-            ->first();
-
-        $this->assertEquals($actual, null);
+    public function testBatchAddDomainFormatFailAndCnameFormatFail()
+    {
+        $this->domains[] = $this->addDomain("hello,com", $this->addCdn("Hiero7", "hiero8.hero.com"));
+        $this->domains[] = $this->addDomain("hello2.com", $this->addCdn("Hiero7", "hiero8,hero.com"));
 
         $result = $this->batchService->store($this->domains, $this->user);
-        $actual = $this->cdn
-            ->where("cname", $this->domains[0]["cdns"][0]["cname"])
-            ->where("name", $this->domains[0]["cdns"][0]["name"])
-            ->first();
 
-        // $this->assertNotEquals($actual, null);
+        $this->assertEquals(count($result), 2);
 
-        $this->domains[0]["cdns"][0]["cname"] = "cdn999.com";
-        $result = $this->batchService->store($this->domains, $this->user);
-        $actual = $this->cdn
-            ->where("cname", $this->domains[0]["cdns"][0]["cname"])
-            ->where("name", $this->domains[0]["cdns"][0]["name"])
-            ->first();
+        // 只有 hello2.com 可以被加入，hello,com 因為格式有誤，後續就無動作
+        $this->assertArrayHasKey('success', $result);
+        $this->assertEquals($result['success']['domain'][0]['name'], 'hello2.com'); 
+        $this->assertEquals($result['success']['domain'][0]['cdn'], []); 
 
-        // $this->assertNotEquals($actual, null);
-    }
+        // hello,com 格式有誤，hello2.com 的 cdn.cname 有誤
+        $this->assertArrayHasKey('failure', $result);
+        $this->assertEquals($result['failure']['domain'][0]['name'], 'hello,com');        
+        $this->assertEquals($result['failure']['domain'][0]['message'], 'The Domain Format Is Invalid.'); 
 
-    public function testDnsPodError() {
-        $this->dnsprovider = $this->dnsprovider->shouldReceive('createRecord')
-            ->withAnyArgs()
-            ->andReturn(["errorCode"=>4001,"message"=>"Subdomain roll record is limited : (500026)"]);   
-
-        $result = $this->batchService->store($this->domains, $this->user);
-        $this->assertEquals(count($result), 1);
+        $this->assertEquals($result['failure']['domain'][1]['name'], 'hello2.com');        
+        $this->assertEquals($result['failure']['domain'][1]['cdn'][0]['message'], 'hiero8,hero.com The Cname Format Is Invalid.'); 
     }
 
     protected function addDomain($name, array ...$cdn):array{
@@ -116,11 +131,10 @@ class BatchTest extends TestCase
         ];
     }  
 
-    protected function addCdn($name, $cname, $ttl= 60):array{
+    protected function addCdn($name, $cname):array{
         return [
             'name' => $name,
-            'cname'  => $cname,
-            'ttl' => $ttl
+            'cname'  => $cname
         ];
     }
 }

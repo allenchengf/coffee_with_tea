@@ -34,13 +34,13 @@ class NetworkRepository
 
     public function getLineList()
     {
-        $networkLine = $this->getNetworksById();
+        $networks = $this->getNetworksById();
 
         $line = [];
 
-        foreach ($networkLine as $key => $value) {
-            if ($value->locationNetwork != null) {
-                $line[$value->name] = $value->locationNetwork->id;
+        foreach ($networks as $network) {
+            if ($network->locationNetwork != null) {
+                $line[$network->name] = $network->locationNetwork->id;
             }
         }
 

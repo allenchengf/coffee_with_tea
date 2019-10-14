@@ -33,7 +33,7 @@ trait OperationLogTrait
     //createEsLog has not been testing,so there may be bugs
     public function createEsLog(int $targetUser, $category, $behavior, $item)
     {
-        if (!$this->status){
+        if (env('APP_ENV') === 'testing'){
             return true;
         }
 

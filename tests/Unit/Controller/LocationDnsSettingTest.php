@@ -2,103 +2,100 @@
 
 namespace Tests\Unit\Controller;
 
-use Tests\TestCase;
-use Illuminate\Foundation\Testing\WithFaker;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use App\Http\Controllers\Api\v1\LocationDnsSettingController;
-use App\Http\Middleware\AuthUserModule;
-use App\Http\Middleware\DomainPermission;
-use App\Http\Middleware\TokenCheck;
+use App\Http\Requests\LocationDnsSettingRequest as Request;
+use Hiero7\Models\Domain;
+use Hiero7\Models\LocationNetwork;
+use Hiero7\Services\DomainGroupService;
+use Hiero7\Services\LocationDnsSettingService;
+use Illuminate\Foundation\Testing\DatabaseMigrations;
+use Mockery as m;
+use Tests\TestCase;
 
 class LocationDnsSettingTest extends TestCase
 {
+    use DatabaseMigrations;
+
     protected function setUp()
     {
         parent::setUp();
 
-        $this->withoutMiddleware([AuthUserModule::class, TokenCheck::class, DomainPermission::class]);
-        $this->artisan('migrate');        
         $this->seed();
         $this->seed('DomainTableSeeder');
         $this->seed('CdnTableSeeder');
         $this->seed('LocationDnsSettingSeeder');
-        $this->seed('DomainGroupTableSeeder');
-        $this->seed('DomainGroupMappingTableSeeder');
-        $this->uri = "/api/v1/domains";
-        $this->login();
+
+        app()->call([$this, 'service']);
+
+        $this->domain = (new Domain())->find(1);
+        $this->locationNetwork = (new LocationNetwork())->find(1);
+        $this->request = new Request;
+        $this->addUuidforPayload()->setJwtTokenPayload(1, $this->jwtPayload);
+
+        $this->mockLocationDnsSettingService = m::mock(LocationDnsSettingService::class);
+
+        $this->controller = new LocationDnsSettingController(
+            $this->mockLocationDnsSettingService,
+            $this->domainGroupService
+        );
     }
 
-    protected function tearDown()
+    public function service(DomainGroupService $domainGroupService)
     {
-        parent::tearDown();
+        $this->domainGroupService = $domainGroupService;
     }
 
-    private function login()
+    /** @test */
+    public function editSetting_is_Success()
     {
-        $this->addUuidforPayload()->addUserGroupId(1)->setJwtTokenPayload(1,$this->jwtPayload);
+        $this->setRequest([
+            'cdn_provider_id' => 1,
+        ]);
+
+        $this->set_Mock_Method_DecideAction_output();
+
+        $this->response = $this->controller->editSetting($this->request, $this->domain, $this->locationNetwork);
+
+        $this->checkoutResponse();
     }
 
-    public function testIndexByDomain()
+    /** @test */
+    public function editSetting_HttpStatus_is_400()
     {
-        $response = $this->call('GET', $this->uri.'/1/routing-rules');
-        $response->assertStatus(200);
+        $this->setRequest([
+            'cdn_provider_id' => 1,
+        ]);
+
+        $this->set_Mock_Method_DecideAction_output('differentGroup');
+
+        $this->response = $this->controller->editSetting($this->request, $this->domain, $this->locationNetwork);
+
+        $this->checkoutResponse(400);
     }
 
-    public function testIndexByGroup()
+    /** @test */
+    public function editSetting_HttpStatus_is_409()
     {
-        $response = $this->call('GET', 'api/v1/routing-rules/lists');
-        $response->assertStatus(200);
+        $this->setRequest([
+            'cdn_provider_id' => 1,
+        ]);
 
-        $data = json_decode($response->getContent(), true);
-        $this->assertArrayHasKey('domainGroup',$data['data']);
-        $this->assertArrayHasKey('domains',$data['data']);
+        $this->set_Mock_Method_DecideAction_output(false);
 
+        $this->response = $this->controller->editSetting($this->request, $this->domain, $this->locationNetwork);
+
+        $this->checkoutResponse(409);
     }
 
-    public function testIndexAll()
+    private function setRequest(array $array = [])
     {
-        $response = $this->call('GET', 'api/v1/routing-rules/all');
-        $response->assertStatus(200);
-
-        $data = json_decode($response->getContent(), true);
-
-        $this->assertArrayHasKey('domainGroup',$data['data']);
-        $this->assertArrayHasKey('location_network',$data['data']['domainGroup'][0]);
-        $this->assertArrayHasKey('domains',$data['data']);
-        $this->assertArrayHasKey('location_network',$data['data']['domains'][0]);
+        $this->request->merge($array);
     }
 
-    public function testIndexGroups()
+    private function set_Mock_Method_DecideAction_output($output = true)
     {
-        $response = $this->call('GET', 'api/v1/routing-rules/groups');
-        $response->assertStatus(200);
-
-        $data = json_decode($response->getContent(), true);
-
-        // 換頁
-        $this->assertArrayHasKey('current_page',$data['data']);
-        $this->assertArrayHasKey('last_page',$data['data']);
-        $this->assertArrayHasKey('total',$data['data']);
-
-        // 資料
-        $this->assertArrayHasKey('domain_groups',$data['data']);
-        $this->assertArrayHasKey('location_network',$data['data']['domain_groups'][0]);
-    }
-
-    public function testIndexDomains()
-    {
-        $response = $this->call('GET', 'api/v1/routing-rules/domains');
-        $response->assertStatus(200);
-
-        $data = json_decode($response->getContent(), true);
-
-        // 換頁
-        $this->assertArrayHasKey('current_page',$data['data']);
-        $this->assertArrayHasKey('last_page',$data['data']);
-        $this->assertArrayHasKey('total',$data['data']);
-
-        // 資料
-        $this->assertArrayHasKey('domains',$data['data']);
-        $this->assertArrayHasKey('location_network',$data['data']['domains'][0]);
+        $this->mockLocationDnsSettingService
+            ->shouldReceive('decideAction')
+            ->andReturn($output);
     }
 }
