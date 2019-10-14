@@ -3,10 +3,11 @@
 namespace Hiero7\Services;
 use Hiero7\Repositories\{CdnRepository, DomainRepository, CdnProviderRepository};
 use Hiero7\Services\DnsProviderService;
+use Hiero7\Enums\InputError;
 use Hiero7\Traits\DomainHelperTrait;
 use Illuminate\Support\Collection;
 use DB;
-
+use Exception;
 
 class BatchService{
 
@@ -122,8 +123,15 @@ class BatchService{
         $domain["name"] = strtolower($domain["name"]);
 
         try {
+            $domainValidate= $this->validateDomain($domain["name"]);
+            // 判斷 domain 有沒有各式錯誤
+            if(!$domainValidate){
+                throw new Exception(InputError::getDescription(InputError::DOMAIN_FORMATE_IS_INVALID));
+            }
+
             // domain.cname 為 domain.name 去 . 後再補尾綴 `.user_group_id`
             $domain['cname'] = $this->formatDomainCname($domain["name"], $user["user_group_id"]);
+
             // 新增 domain
             $domainObj = $this->domainRepository->store($domain, $user);
             if(is_null($domainObj))

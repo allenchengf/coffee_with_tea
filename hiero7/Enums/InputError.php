@@ -47,6 +47,7 @@ class InputError extends Enum
     const CHECK_CDN_PROVIDER_SETTING = 4035;
     const CANT_DELETE_THIS_CDN_PROVIDER = 4036;
     const NO_CDN_PROVIDER_TURNED_ON_SCANBLE = 4037;
+    const DOMAIN_FORMATE_IS_INVALID = 4038;
     
     /**
      * @var array
@@ -90,5 +91,6 @@ class InputError extends Enum
         self::CHECK_CDN_PROVIDER_SETTING => 'Check This Cdn Provider\'s setting.',
         self::CANT_DELETE_THIS_CDN_PROVIDER => "Can't delete this CDN Provider",
         self::NO_CDN_PROVIDER_TURNED_ON_SCANBLE => "No CDN Provider turned on Scanbled",
+        self::DOMAIN_FORMATE_IS_INVALID => "The domain format is invalid",
     ];
 }

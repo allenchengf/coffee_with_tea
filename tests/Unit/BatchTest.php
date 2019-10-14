@@ -101,6 +101,22 @@ class BatchTest extends TestCase
         $this->assertArrayHasKey('message', $result['failure']['domain'][0]['cdn'][0]);
     }
 
+    public function testBatchAddDomainFormatFail()
+    {
+        $this->domains[] = $this->addDomain("hello,com", $this->addCdn("Hiero7", "hiero8.hero.com"));
+
+        $result = $this->batchService->store($this->domains, $this->user);
+
+        $this->assertEquals(count($result), 2);
+
+        $this->assertArrayHasKey('success', $result);
+        $this->assertEquals($result['success']['domain'], []); 
+
+        $this->assertArrayHasKey('failure', $result);
+        $this->assertEquals($result['failure']['domain'][0]['name'], 'hello,com');        
+        $this->assertEquals($result['failure']['domain'][0]['cdn'], []); 
+    }
+
     protected function addDomain($name, array ...$cdn):array{
         return [
             'name' => $name,

@@ -35,7 +35,6 @@ class BatchRequest extends FormRequest
             case ($routeName == "domains.$action"):
                 return [
                     'domains' => 'required|array',
-                    'domains.*.name' => ['required', env('DOMAIN_REGULAR')],
                     'domains.*.cdns' => 'array',
                     'domains.*.cdns.*.name' => ['required', 'string'],
                     'domains.*.cdns.*.cname' => ['required', env('DOMAIN_REGULAR')],
