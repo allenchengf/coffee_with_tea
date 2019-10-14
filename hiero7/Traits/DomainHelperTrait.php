@@ -4,6 +4,12 @@ namespace Hiero7\Traits;
 
 trait DomainHelperTrait
 {
+    /**
+     * 驗證格式，如果符合回傳 1 ，不符合回傳 0
+     *
+     * @param string $domain
+     * @return void
+     */
     public function validateDomain(string $domain)
     {
         // validate online: https://www.regextester.com/93928

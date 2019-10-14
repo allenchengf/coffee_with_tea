@@ -58,6 +58,25 @@ class LineController extends Controller
         return $this->response("Success", null, $line);
     }
 
+    public function changeStatus(Request $request, Line $line)
+    {
+        if (!$request->status) {
+            if (!$this->checkLineAndDeleteDNSPodRecord($line)) {
+
+                return $this->setStatusCode(409)->response('please contact the admin', InternalError::INTERNAL_ERROR);
+            }
+            $line->locationDnsSetting()->delete();
+            unset($line->locationDnsSetting);
+        }
+
+        $line->update($request->only('status'));
+
+        $line->continent;
+        $line->country;
+        $line->locationDnsSetting;
+
+        return $this->response("", null, $line);
+    }
 
     /**
      * @param Line $line
@@ -85,18 +104,34 @@ class LineController extends Controller
     }
 
     /**
+     * 檢查 Line 是否有被使用
+     *
+     * 找出所有正在使用的 Record 然後刪除 DNS Pod Reocrd
+     * 
+     * @param Line $line
+     * @return boolean
+     */
+    private function checkLineAndDeleteDNSPodRecord(Line $line): bool
+    {
+        $deleteData = $line->locationDnsSetting->map(function ($locationDnsSetting) {
+            return ['id' => $locationDnsSetting->provider_record_id];
+        });
+
+        return app()->call([$this, 'deletDNSRecord'], ['deleteData' => $deleteData]);
+    }
+
+    /**
      * 刪除 DNS Record 會判斷是否刪除成功
      *
      * @param DnsProviderService $dnsProviderService
-     * @param Collection $deleteData
+     * @param Collection $deleteData 需要刪除的 Record id
      * @return bool
      */
-    private function deletDNSRecord(DnsProviderService $dnsProviderService, Collection $deleteData): bool
+    public function deletDNSRecord(DnsProviderService $dnsProviderService, Collection $deleteData): bool
     {
         if (!$deleteData->count()) {
             return true;
         }
-
         $response = $dnsProviderService->syncRecordToDnsPod([
             'delele' => json_encode($deleteData),
         ]);
@@ -107,4 +142,5 @@ class LineController extends Controller
 
         return false;
     }
+
 }

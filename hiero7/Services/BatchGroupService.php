@@ -17,27 +17,38 @@ class BatchGroupService{
 
     public function store($domains,$domainGroup, $user)
     {
-        $errors = [];
+        $success = $failure = [];
+
         foreach($domains as $domain){
-            $error = [];
+
             list($domain, $domainId, $errorMessage)  = $this->checkDomain($domain,$domainGroup, $user);
-            
+
             if ($errorMessage) {
-                $errors[$domain["name"]] = $errorMessage; // checkDomain 沒有過就不下去執行
+                $failure[] = ['name' => $domain["name"],
+                                'errorCode' => 40000,
+                                'message' => $errorMessage]; // checkDomain 沒有過就不下去執行
                 continue;
             }
 
             $changeCdnResult = $this->domainGroupService->changeCdnDefault($domainGroup, $domainId, $user['uuid']);
-            
+
             if(!$changeCdnResult){
-                $errors[$domain["name"]] = 'Internal service error';
+                $failure[] = ['name' => $domain["name"],
+                            'errorCode' => 5001,
+                            'message' => 'Internal change CDN service error',
+                            // 'message' => 'Internal service error'
+                            ];
                 continue;
             }
 
-            $changeIrouteResult = $this->domainGroupService->changeIrouteSetting($domainGroup, $domainId, $user['uuid']);
+            $changeIrouteResult = $this->domainGroupService->changeIrouteSetting($domainGroup, $domainId);
 
             if(!$changeIrouteResult){
-                $errors[$domain["name"]] = 'Internal service error';
+                $failure[]  = ['name' => $domain["name"],
+                            'errorCode' => 5001,
+                            'message' => 'Internal change iRoute service error', 
+                            // 'message' => 'Internal service error'
+                            ];
                 continue;
             }
 
@@ -45,14 +56,15 @@ class BatchGroupService{
                 'domain_id' => $domainId,
                 'domain_group_id' => $domainGroup->id
             ]);
-
-            $errorMessage ? $error[] = $errorMessage : $error = 'success';
-                
             
-            $errors[$domain["name"]]=$error;
+            $success[] = $domain["name"];
         }
 
-        return $errors;
+        $result = ['success' => $success,
+                    'failure' => $failure
+                    ];
+            
+        return $result;
     }
 
     public function checkDomain($domain,$domainGroup, $user)
