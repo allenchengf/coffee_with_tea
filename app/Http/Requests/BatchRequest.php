@@ -37,7 +37,6 @@ class BatchRequest extends FormRequest
                     'domains' => 'required|array',
                     'domains.*.cdns' => 'array',
                     'domains.*.cdns.*.name' => ['required', 'string'],
-                    'domains.*.cdns.*.cname' => ['required', env('DOMAIN_REGULAR')],
                     'domains.*.cdns.*.ttl' => ['integer', 'min:'.env('CDN_TTL'), 'max:604800'],
                 ];
                 break;

@@ -159,6 +159,12 @@ class BatchService{
         $errorMessage = null;
 
         try {
+            // 判斷 cdn.cname 格式(和 domain 規則一樣)是否錯誤，有就不做任何事。
+            $cdnCnameValidate= $this->validateDomain($cdn["cname"]);
+            if(!$cdnCnameValidate){
+                throw new Exception(InputError::getDescription(InputError::CNAME_FORMATE_IS_INVALID));
+            }
+
             // 若非為第一次新增 cdn 之欄位預設值
             $cdn["default"] = 0;
             $cdn["provider_record_id"] = 0;
