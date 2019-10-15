@@ -71,7 +71,7 @@ class BatchGroupService{
     public function checkDomain($domain,$domainGroup, $user)
     {
         $domainId = null;
-        $errorMessage = null;
+        $errorCode = null;
         try{
             $domainModel = $this->domainRepository->getDomainIdIfExist($domain["name"], $user["user_group_id"]);
             if(is_null($domainModel)){
