@@ -50,6 +50,9 @@ class InputError extends Enum
     const UGID_WITHOUT_CDN_PROVIDER = 4038;
     const GROUP_EXIST_BACKUPS = 4039;
     const GROUP_NOT_EXIST_BACKUPS = 4040;
+    const DOMAIN_FORMATE_IS_INVALID = 4041;
+    const CNAME_FORMATE_IS_INVALID = 4042;
+
     
     /**
      * @var array
@@ -96,5 +99,8 @@ class InputError extends Enum
         self::UGID_WITHOUT_CDN_PROVIDER => "Ugid Without Cdn Provider",
         self::GROUP_EXIST_BACKUPS => 'Group ID Exists In Backup',
         self::GROUP_NOT_EXIST_BACKUPS => 'Group ID Not Exists In Backup',
+        self::DOMAIN_FORMATE_IS_INVALID => "The domain format is invalid.",
+        self::CNAME_FORMATE_IS_INVALID => "The cname format is invalid.",
+
     ];
 }

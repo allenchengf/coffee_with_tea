@@ -4,6 +4,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.0] - 2019-10-09
+### Added
+- Backup 排程
+- Backup 時間設定 CRU
+- 新增 location_networks status 欄位
+- 新增 switch Region
+- 新增 Network Create, Delete API
+
+### Fixed
+- 修改 Get Last Scan Log Logic
+- 修改 Save Scan 
+- 修改 Batch Create Domain In to Group Bug
+- 修改 Batch Create Domain & CDN Bug
+- 修改 Edit iRouteCDN Region Output
+
 ## [0.4.3] - 2019-10-03
 ### Fixed
 - 修改 Get Last Scan Log Output 格式
