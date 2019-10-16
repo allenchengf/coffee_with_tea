@@ -54,4 +54,9 @@ class CdnProviderRepository
     {
         return $cdnProvider->update(['scannable' => $scannable, 'edited_by' => $editedBy]);
     }
+
+    public function getUgids()
+    {
+        return $this->cdnProvider->select('user_group_id')->groupBy('user_group_id')->get();
+    }
 }

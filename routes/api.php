@@ -1,7 +1,6 @@
 <?php
 
 Route::group(['middleware' => ['api'], 'namespace' => 'Api\v1', 'prefix' => 'v1'], function () {
-    Route::get('config/cronjob', 'ConfigController@storeBackup')->name('config.storeBackup');
 
     Route::group(['prefix' => 'domains'], function () {
 

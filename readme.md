@@ -22,8 +22,15 @@ SCHEME=1 #dnspod free
 PLATFORM_KEY=eu7nxsfttc
 
 CONFIG_WAIT_TIME=2 (分鐘)
-SCAN_SECOND=30 (爬蟲執行的時間 秒)
-SCAN_LOG_INTERVAL=30 (取得最後一筆 log，往前推算的秒數，時間區間內之 logs)
+SCAN_SECOND=30 (爬蟲執行的時間 秒 - Justin)
+
+AWS_ACCESS_KEY_ID= (目前為 Config Backup 用 - Justin)
+AWS_SECRET_ACCESS_KEY=
+AWS_REGION=
+
+S3_BUCKET_NAME_CONFIG_BACKUP= (S3 Bucket 名稱，目前為 Config Backup 用 - Justin)
+
+BACKUP_AT=03:00 (沒設定 Backup 時間的 user_group 們其備份時間 - Justin)
 ```
 
 #### Note
@@ -43,4 +50,15 @@ php artisan db:seed --class=ContinentTableSeeder
 php artisan db:seed --class=CountryTableSeeder
 php artisan db:seed --class=NetworkTableSeeder
 php artisan db:seed --class=LocationNetworkTableSeeder
+```
+
+
+#### Crontab Config Backup
+$ crontab -e
+```vim
+# local
+* * * * * cd /Applications/MAMP/htdocs/coffee_with_tea && php artisan schedule:run >> /dev/null 2>&1
+
+# dev (exec container: leodock_php)
+* * * * * /usr/local/bin/php /var/www/html/coffee_with_tea/artisan schedule:run >> /dev/null 2>&1
 ```
