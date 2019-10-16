@@ -4,7 +4,7 @@ Route::group(['middleware' => ['api'], 'namespace' => 'Api\v1', 'prefix' => 'v1'
 
     Route::group(['prefix' => 'domains'], function () {
 
-        Route::group(['middleware' => ['internal.group']], function () {
+        Route::group(['middleware' => ['internal.group','check.dnspod']], function () {
             Route::get('check', 'DnsPodRecordSyncController@index');
             Route::get('{domain}/check', 'DnsPodRecordSyncController@getDomain');
             Route::get('check-diff', 'DnsPodRecordSyncController@checkDataDiff');
@@ -16,21 +16,23 @@ Route::group(['middleware' => ['api'], 'namespace' => 'Api\v1', 'prefix' => 'v1'
         Route::middleware(['auth.user.module', 'domain.permission'])->group(function () {
             Route::post('', 'DomainController@create')->name('domain.create');
 
-            Route::group(['prefix' => '/{domain}'], function () {
-                Route::resource('/cdn', 'CdnController', ['only' => ['index', 'store', 'destroy']]);
-                Route::patch('cdn/{cdn}/default', 'CdnController@updateDefault')->name('cdn.default');
-                Route::patch('cdn/{cdn}/cname', 'CdnController@updateCname')->name('cdn.cname');
+            Route::middleware(['check.dnspod'])->group(function () {
+                Route::group(['prefix' => '/{domain}'], function () {
+                    Route::resource('/cdn', 'CdnController', ['only' => ['index', 'store', 'destroy']]);
+                    Route::patch('cdn/{cdn}/default', 'CdnController@updateDefault')->name('cdn.default');
+                    Route::patch('cdn/{cdn}/cname', 'CdnController@updateCname')->name('cdn.cname');
 
-                //yuan
-                Route::group(['prefix' => '/routing-rules'], function () {
-                    Route::get('', 'LocationDnsSettingController@indexByDomain')->name('iRoute.indexByDomain');
-                    Route::middleware(['admin.check'])->group(function () {
-                        Route::put('/{locationNetwork}', 'LocationDnsSettingController@editSetting')->name('iRoute.edit');
+                    //yuan
+                    Route::group(['prefix' => '/routing-rules'], function () {
+                        Route::get('', 'LocationDnsSettingController@indexByDomain')->name('iRoute.indexByDomain');
+                        Route::middleware(['admin.check'])->group(function () {
+                            Route::put('/{locationNetwork}', 'LocationDnsSettingController@editSetting')->name('iRoute.edit');
+                        });
                     });
                 });
-            });
 
-            Route::post('batch', 'BatchController@store')->name('domains.batch');
+                Route::post('batch', 'BatchController@store')->name('domains.batch');
+            });
         });
 
         Route::middleware(['domain.permission'])->group(function () {
@@ -46,7 +48,7 @@ Route::group(['middleware' => ['api'], 'namespace' => 'Api\v1', 'prefix' => 'v1'
             Route::post('', 'LineController@create')->name('lines.create');
             Route::put('{line}', 'LineController@edit')->name('lines.edit');
             Route::patch('{line}/status', 'LineController@changeStatus')->name('lines.status');
-            Route::delete('{line}', 'LineController@destroy')->name('lines.destroy');
+            Route::delete('{line}', 'LineController@destroy')->name('lines.destroy')->middleware('check.dnspod');
         });
 
         Route::group(['prefix' => 'schemes'], function () {
@@ -65,7 +67,7 @@ Route::group(['middleware' => ['api'], 'namespace' => 'Api\v1', 'prefix' => 'v1'
     Route::get('continents', 'ContinentController@index')->name('continents.index');
     Route::get('countries', 'CountryController@index')->name('countries.index');
 
-    Route::group(['middleware' => ['auth.user.module'], 'prefix' => 'cdn_providers'], function () {
+    Route::group(['middleware' => ['auth.user.module','networks.index'], 'prefix' => 'cdn_providers'], function () {
         Route::get('', 'CdnProviderController@index')->name('cdn_providers.index');
         Route::post('', 'CdnProviderController@store')->name('cdn_providers.store');
         Route::patch('{cdn_provider}', 'CdnProviderController@update')->name('cdn_providers.update');
@@ -80,13 +82,13 @@ Route::group(['middleware' => ['api'], 'namespace' => 'Api\v1', 'prefix' => 'v1'
         Route::get('{domainGroup}/routing-rules', 'DomainGroupController@indexGroupIroute')->name('groups.indexGroupIroute');
         Route::get('{domainGroup}', 'DomainGroupController@indexByDomainGroupId')->name('groups.indexByDomainGroupId');
         Route::post('', 'DomainGroupController@create')->name('groups.create');
-        Route::post('{domainGroup}', 'DomainGroupController@createDomainToGroup')->name('groups.createDomainToGroup');
+        Route::post('{domainGroup}', 'DomainGroupController@createDomainToGroup')->name('groups.createDomainToGroup')->middleware('check.dnspod');
         Route::put('{domainGroup}', 'DomainGroupController@edit')->name('groups.edit');
         Route::put('{domainGroup}/defaultCdn', 'DomainGroupController@changeDefaultCdn')->name('groups.changeDefaultCdn');
-        Route::put('{domainGroup}/routing-rules/{locationNetwork}', 'DomainGroupController@updateRouteCdn')->name('groups.updateRouteCdn');
+        Route::put('{domainGroup}/routing-rules/{locationNetwork}', 'DomainGroupController@updateRouteCdn')->name('groups.updateRouteCdn')->middleware('check.dnspod');
         Route::delete('{domainGroup}', 'DomainGroupController@destroy')->name('groups.destroy');
         Route::delete('{domainGroup}/domain/{domain}', 'DomainGroupController@destroyByDomainId')->name('groups.destroyByDomainId');
-        Route::post('{domainGroup}/batch', 'BatchController@storeDomainToGroup')->name('groups.batch');
+        Route::post('{domainGroup}/batch', 'BatchController@storeDomainToGroup')->name('groups.batch')->middleware('check.dnspod');;
     });
 
 
@@ -127,7 +129,7 @@ Route::group(['middleware' => ['api'], 'namespace' => 'Api\v1', 'prefix' => 'v1'
 
         Route::put('change-all', 'ScanProviderController@changeRegion');
 
-        Route::middleware(['domain.permission'])->group(function () {
+        Route::middleware(['domain.permission','check.dnspod'])->group(function () {
             Route::put('domain/{domain}', 'ScanProviderController@changeDomainRegion');
             Route::put('domain-group/{domainGroup}', 'ScanProviderController@changeDomainGroupRegion');
         });

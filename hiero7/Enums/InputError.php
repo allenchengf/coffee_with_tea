@@ -52,6 +52,9 @@ class InputError extends Enum
     const GROUP_NOT_EXIST_BACKUPS = 4040;
     const DOMAIN_FORMATE_IS_INVALID = 4041;
     const CNAME_FORMATE_IS_INVALID = 4042;
+    const DOMAIN_ALREADY_HAS_GROUP = 4043;
+    const DOMAIN_IS_UNDEFINED = 4044;
+    const DOMAIN_CDNPROVIDER_DIFFERENT_WITH_GROUPS = 4045;
 
     
     /**
@@ -101,6 +104,9 @@ class InputError extends Enum
         self::GROUP_NOT_EXIST_BACKUPS => 'Group ID Not Exists In Backup',
         self::DOMAIN_FORMATE_IS_INVALID => "The domain format is invalid.",
         self::CNAME_FORMATE_IS_INVALID => "The cname format is invalid.",
+        self::DOMAIN_ALREADY_HAS_GROUP => "Domain already has Group.",
+        self::DOMAIN_IS_UNDEFINED => "The domain is undefined.",
+        self::DOMAIN_CDNPROVIDER_DIFFERENT_WITH_GROUPS => "Domain's Cdn Provider are different with Group's.",
 
     ];
 }
