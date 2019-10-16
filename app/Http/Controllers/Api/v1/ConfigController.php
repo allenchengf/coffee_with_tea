@@ -164,13 +164,12 @@ class ConfigController extends Controller
         
         // 取 s3 domain
         $s3BucketDomain = explode('/?prefix=', $s3Objects['@metadata']['effectiveUri'])[0];
-        
         // 取 s3 files
         if (isset($s3Objects['Contents']))
-            collect($s3Objects['Contents'])->each(function ($objct) use (&$data, &$s3BucketDomain) {
+            collect($s3Objects['Contents'])->each(function ($object) use (&$data, &$s3BucketDomain) {
                 $data[] = [
-                    'url' => $s3BucketDomain . '/' . $objct['Key'],
-                    'created_at' => $objct['LastModified']->format('Y-m-d H:i:s'),
+                    'url' => $s3BucketDomain . '/' . $object['Key'],
+                    'created_at' => date('Y-m-d H:i:s', $object['LastModified']->getTimestamp()),
                 ];
             });
         
