@@ -31,6 +31,11 @@ class ExampleTest extends TestCase
         $this->assertTrue(!empty(env('SCHEME')), 'SCHEME is not set');
         $this->assertTrue(!empty(env('PLATFORM_KEY')), 'PLATFORM_KEY is not set');
         $this->assertTrue(!empty(env('CONFIG_WAIT_TIME')), 'CONFIG_WAIT_TIME is not set');
+
+        $this->assertTrue(!empty(env('SCAN_SECOND')), 'SCAN_SECOND is not set');
+        $this->assertTrue(!empty(env('SCAN_COOL_DOWN')), 'SCAN_COOL_DOWN is not set');
+        $this->assertTrue(!empty(env('OPERATION_LOG_SIZE')), 'OPERATION_LOG_SIZE is not set');
+        
         $this->assertTrue(!empty(env('AWS_ACCESS_KEY_ID')), 'AWS_ACCESS_KEY_ID is not set');
         $this->assertTrue(!empty(env('AWS_SECRET_ACCESS_KEY')), 'AWS_SECRET_ACCESS_KEY is not set');
         $this->assertTrue(!empty(env('AWS_REGION')), 'AWS_REGION is not set');

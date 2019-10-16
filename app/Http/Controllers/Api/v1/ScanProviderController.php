@@ -4,8 +4,11 @@ namespace App\Http\Controllers\Api\v1;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\ScanProviderRequest;
+use Cache;
+use Carbon\Carbon;
 use Hiero7\Enums\InputError;
 use Hiero7\Enums\InternalError;
+use Hiero7\Enums\PermissionError;
 use Hiero7\Models\CdnProvider;
 use Hiero7\Models\Domain;
 use Hiero7\Models\DomainGroup;
@@ -25,6 +28,7 @@ class ScanProviderController extends Controller
     protected $scanLogRepository;
     protected $cdnProviderRepository;
     protected $lineRepository;
+    private $defaultCoolMinute;
 
     /**
      * NetworkService constructor.
@@ -39,6 +43,8 @@ class ScanProviderController extends Controller
         $this->scanLogRepository = $scanLogRepository;
         $this->cdnProviderRepository = $cdnProviderRepository;
         $this->lineRepository = $lineRepository;
+
+        $this->defaultCoolMinute = env('SCAN_COOL_DOWN', 5);
     }
 
     /**
@@ -54,10 +60,7 @@ class ScanProviderController extends Controller
         $ugid = $this->getJWTUserGroupId();
 
         // 取得 cdn_providers
-        $cdnProviders = $this->cdnProviderRepository->getCdnProvider($ugid)->filter(function ($cdnProvider) {
-            // cdn_provider->scannable == true
-            return $cdnProvider->scannable == true;
-        })->values();
+        $cdnProviders = $this->getCdnProviderIsScannable();
 
         if ($cdnProviders->isEmpty()) {
             return $this->setStatusCode(400)->response('', InputError::NO_CDN_PROVIDER_TURNED_ON_SCANBLE, []);
@@ -158,6 +161,11 @@ class ScanProviderController extends Controller
         $scanned = [];
         $scannedAt = date('Y-m-d H:i:s', $request->scanned_at);
 
+        //檢查是否可執行 Scan
+        if ($this->getScanCool()) {
+            return $this->setStatusCode(400)->response('', PermissionError::PLEASE_WAIT_SCAN, []);
+        }
+
         $cdnProvider = $this->initCdnProviderForScannedData($request);
 
         // cdn_provider: url未設定 / scannable 關閉狀態
@@ -170,6 +178,8 @@ class ScanProviderController extends Controller
         if (empty($scanned)) {
             return $this->setStatusCode(400)->response('', InternalError::CHECK_DATA_AND_SCHEME_SETTING, []);
         }
+
+        $this->setScanCoolTime();
 
         return $this->response("", null, compact('cdnProvider', 'scannedAt', 'scanned'));
     }
@@ -196,6 +206,91 @@ class ScanProviderController extends Controller
         return $this->response("", null, compact('cdnProvider', 'scanPlatform', 'scannedAt', 'scanned'));
     }
 
+    public function checkLockTime()
+    {
+        $default_lock_second = $this->defaultCoolMinute * 60;
+
+        $ugid = $this->getJWTUserGroupId();
+
+        $lock_second = $this->getScanCool();
+
+        $cdnProviderCount = $this->getCdnProviderIsScannable()->count();
+
+        return $this->response(
+            "",
+            null,
+            compact('lock_second', 'default_lock_second')
+        );
+    }
+
+    /**
+     * 取得 Scan CD 時間
+     *
+     * @return int
+     */
+    private function getScanCool(): int
+    {
+        $ugid = $this->getJWTUserGroupId();
+
+        return Cache::has("Scan_Group_Is_Lock_$ugid") ?
+        Cache::get("Scan_Group_Is_Lock_$ugid")->diffInSeconds(Carbon::now()) :
+        0;
+    }
+
+    /**
+     * 設定 Scan CD 時間
+     *
+     * @return void
+     */
+    private function setScanCoolTime()
+    {
+        $ugid = $this->getJWTUserGroupId();
+
+        $scanAmount = $this->getScanUseCount();
+
+        Cache::put("Scan_Group_Lock_$ugid", $scanAmount + 1, $this->defaultCoolMinute);
+
+        $this->checkNeedLockScan();
+    }
+
+    /**
+     * 取得 Scan 使用次數
+     *
+     * @return int
+     */
+    private function getScanUseCount(): int
+    {
+        $scanAmount = 0;
+        $ugid = $this->getJWTUserGroupId();
+
+        if (Cache::has("Scan_Group_Lock_$ugid")) {
+            $scanAmount = Cache::get("Scan_Group_Lock_$ugid");
+        }
+
+        return $scanAmount;
+    }
+
+    /**
+     * 檢查是否要上鎖 Scan
+     *
+     * @return void
+     */
+    private function checkNeedLockScan()
+    {
+        $ugid = $this->getJWTUserGroupId();
+
+        $cdnProviderCount = $this->getCdnProviderIsScannable()->count();
+
+        $scanAmount = $this->getScanUseCount();
+
+        //只要執行 Scan 的次數，超過CDN Provider 的總量就直接鎖定
+        if ($cdnProviderCount >= $scanAmount) {
+            $expiresAt = now()->addMinutes($this->defaultCoolMinute);
+
+            Cache::put("Scan_Group_Is_Lock_$ugid", $expiresAt, $expiresAt);
+        }
+    }
+
     private function initCdnProviderForScannedData($request)
     {
         return CdnProvider::where('id', $request->get('cdn_provider_id'))
@@ -206,5 +301,15 @@ class ScanProviderController extends Controller
     public function getScanPlatformById(ScanPlatform $scanPlatform, int $id): ScanPlatform
     {
         return $scanPlatform->find($id);
+    }
+
+    private function getCdnProviderIsScannable()
+    {
+        $ugid = $this->getJWTUserGroupId();
+
+        return $this->cdnProviderRepository->getCdnProvider($ugid)->filter(function ($cdnProvider) {
+            // cdn_provider->scannable == true
+            return $cdnProvider->scannable == true;
+        })->values();
     }
 }
