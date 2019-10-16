@@ -77,25 +77,18 @@ class ScanLogRepository
      */
     public function indexEarlierLogs($cdnProviderId=null, $scanPlatformId=null)
     {
-        $interval = env('SCAN_LOG_INTERVAL');
-
         $lastLog = $this->showLatestLog($cdnProviderId, $scanPlatformId);
         
         if(!$lastLog){
             return collect([]);
         }
 
-        $to = $lastLog->created_at;
-
-        $timestamp = strtotime($to) - $interval; // 最近一筆 Log.created_at 時間，往前推 $interval 秒。
-        $from = date('Y-m-d H:i:s', $timestamp);
-
         $scanLogs = $this->scanLogModel
                     ->select('scan_logs.*')
                     ->leftJoin('cdn_providers', 'cdn_providers.id', '=', 'scan_logs.cdn_provider_id')
                     ->where('cdn_providers.user_group_id', $this->getJWTUserGroupId())
                     ->where('cdn_providers.scannable', true)
-                    ->whereBetween('scan_logs.created_at', [$from, $to]);
+                    ->where('scan_logs.created_at', $lastLog->created_at);
         
         if(! is_null($cdnProviderId))
             $scanLogs = $scanLogs->where('scan_logs.cdn_provider_id', $cdnProviderId);
