@@ -67,14 +67,14 @@ Route::group(['middleware' => ['api'], 'namespace' => 'Api\v1', 'prefix' => 'v1'
     Route::get('continents', 'ContinentController@index')->name('continents.index');
     Route::get('countries', 'CountryController@index')->name('countries.index');
 
-    Route::group(['middleware' => ['auth.user.module','networks.index'], 'prefix' => 'cdn_providers'], function () {
+    Route::group(['middleware' => ['auth.user.module'], 'prefix' => 'cdn_providers'], function () {
         Route::get('', 'CdnProviderController@index')->name('cdn_providers.index');
         Route::post('', 'CdnProviderController@store')->name('cdn_providers.store');
-        Route::patch('{cdn_provider}', 'CdnProviderController@update')->name('cdn_providers.update');
-        Route::patch('{cdn_provider}/status', 'CdnProviderController@changeStatus')->name('cdn_providers.status');
+        Route::patch('{cdn_provider}', 'CdnProviderController@update')->name('cdn_providers.update')->middleware('check.dnspod');
+        Route::patch('{cdn_provider}/status', 'CdnProviderController@changeStatus')->name('cdn_providers.status')->middleware('check.dnspod');
         Route::patch('{cdn_provider}/scannable', 'CdnProviderController@changeScannable')->name('cdn_providers.scannable');
         Route::get('{cdn_provider}/check', 'CdnProviderController@checkDefault')->name('cdn_providers.check');
-        Route::delete('{cdn_provider}', 'CdnProviderController@destroy')->name('cdn_providers.destroy');
+        Route::delete('{cdn_provider}', 'CdnProviderController@destroy')->name('cdn_providers.destroy')->middleware('check.dnspod');
     });
 
     Route::group(['middleware' => ['auth.user.module'], 'prefix' => 'groups'], function () {
