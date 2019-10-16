@@ -7,6 +7,7 @@ use Illuminate\Foundation\Testing\WithFaker;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use App\Http\Middleware\AuthUserModule;
 use App\Http\Middleware\DomainPermission;
+use App\Http\Middleware\CheckDnsPod;
 use App\Http\Middleware\TokenCheck;
 use Hiero7\Services\CdnService; 
 
@@ -17,7 +18,7 @@ class DomainGroupTest extends TestCase
     {
         parent::setUp();
 
-        $this->withoutMiddleware([AuthUserModule::class, TokenCheck::class, DomainPermission::class]);
+        $this->withoutMiddleware([AuthUserModule::class, TokenCheck::class, DomainPermission::class, CheckDnsPod::class]);
         $this->artisan('migrate');        
         $this->seed();
         $this->seed('LocationDnsSettingSeeder');

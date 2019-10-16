@@ -10,6 +10,7 @@ use Hiero7\Repositories\BackupRepository;
 use App\Http\Controllers\Api\v1\ConfigController;
 use Illuminate\Http\Request;
 use Hiero7\Models\{Domain,CdnProvider,DomainGroup};
+use App\Http\Middleware\CheckDnsPod;
 
 
 
@@ -28,6 +29,9 @@ class ConfigTest extends TestCase
         $this->uri = "/api/v1/config";
         $this->login();
         app()->call([$this, 'service']);
+
+        $this->withoutMiddleware([CheckDnsPod::class]);
+
         $this->controller = new ConfigController($this->configService,$this->dnsPodRecordSyncService,$this->userModuleService,$this->backupRepository);
         $this->dnsPodRecordSyncService->shouldReceive('syncAndCheckRecords')->withAnyArgs()->andReturn([]);
 

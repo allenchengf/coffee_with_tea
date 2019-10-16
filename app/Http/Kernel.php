@@ -67,5 +67,6 @@ class Kernel extends HttpKernel
         'domain.permission' => \App\Http\Middleware\DomainPermission::class,
         'admin.check' => \App\Http\Middleware\AdminCheck::class,
         'check.config' => \App\Http\Middleware\CheckForImportConfig::class,
+        'check.dnspod' => \App\Http\Middleware\CheckDnsPod::class,
     ];
 }
