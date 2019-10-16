@@ -39,6 +39,6 @@ class PermissionError extends Enum
         self::THIS_DOMAIN_DONT_HAVE_ANY_CDN => "This Domain don't have any CDN.",
         self::THIS_GROUP_ID_NOT_MATCH => "This group id does not match the operation permissions.",
         self::YOUR_GROUP_IS_IMPORTING_CONFIG => 'Your group is importing config.',
-        self::PLEASE_WAIT_SCAN => 'Please wait for a while to perform a scan.',
+        self::PLEASE_WAIT_SCAN => 'Please wait for a while to scan.',
     ];
 }

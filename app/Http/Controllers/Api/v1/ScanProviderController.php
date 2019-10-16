@@ -7,7 +7,6 @@ use App\Http\Requests\ScanProviderRequest;
 use Cache;
 use Carbon\Carbon;
 use Hiero7\Enums\InputError;
-use Hiero7\Enums\InternalError;
 use Hiero7\Enums\PermissionError;
 use Hiero7\Models\CdnProvider;
 use Hiero7\Models\Domain;
@@ -162,8 +161,9 @@ class ScanProviderController extends Controller
         $scannedAt = date('Y-m-d H:i:s', $request->scanned_at);
 
         //檢查是否可執行 Scan
-        if ($this->getScanCool()) {
-            return $this->setStatusCode(400)->response('', PermissionError::PLEASE_WAIT_SCAN, []);
+        if ($lockSecond = $this->getScanCool()) {
+            return $this->setStatusCode(400)->response(PermissionError::getDescription(PermissionError::PLEASE_WAIT_SCAN) . "($lockSecond)",
+                PermissionError::PLEASE_WAIT_SCAN);
         }
 
         $cdnProvider = $this->initCdnProviderForScannedData($request);
