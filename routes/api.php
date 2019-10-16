@@ -118,6 +118,8 @@ Route::group(['middleware' => ['api'], 'namespace' => 'Api\v1', 'prefix' => 'v1'
 
 
     Route::group(['prefix' => 'scan-platform'], function () {
+        Route::get('lock-time', 'ScanProviderController@checkLockTime');
+
         Route::get('', 'ScanPlatformController@index')->name('scanPlatform.index');
         Route::post('', 'ScanPlatformController@create')->name('scanPlatform.create');
         Route::patch('{scanPlatform}', 'ScanPlatformController@edit')->name('scanPlatform.edit');
