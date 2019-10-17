@@ -14,12 +14,10 @@ class BackupController extends Controller
     use JwtPayloadTrait;
 
     protected $backupRepository;
-    protected $userGroupId;
 
     public function __construct(BackupRepository $backupRepository)
     {
         $this->backupRepository = $backupRepository;
-        $this->userGroupId = $this->getJWTUserGroupId();    
     }
 
     public function show(Request $request)
