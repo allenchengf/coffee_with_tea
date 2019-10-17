@@ -36,7 +36,7 @@ Route::group(['middleware' => ['api'], 'namespace' => 'Api\v1', 'prefix' => 'v1'
         Route::middleware(['domain.permission'])->group(function () {
             Route::get('{domain}', 'DomainController@getDomainById');
             Route::put('{domain}', 'DomainController@editDomain')->name('domain.edit');
-            Route::delete('{domain}', 'DomainController@destroy');
+            Route::delete('{domain}', 'DomainController@destroy')->middleware('check.dnspod');
         });
     });
 
@@ -45,7 +45,7 @@ Route::group(['middleware' => ['api'], 'namespace' => 'Api\v1', 'prefix' => 'v1'
             Route::get('', 'LineController@index')->name('lines.index');
             Route::post('', 'LineController@create')->name('lines.create');
             Route::put('{line}', 'LineController@edit')->name('lines.edit');
-            Route::patch('{line}/status', 'LineController@changeStatus')->name('lines.status');
+            Route::patch('{line}/status', 'LineController@changeStatus')->name('lines.status')->middleware('check.dnspod');
             Route::delete('{line}', 'LineController@destroy')->name('lines.destroy')->middleware('check.dnspod');
         });
 
@@ -101,7 +101,7 @@ Route::group(['middleware' => ['api'], 'namespace' => 'Api\v1', 'prefix' => 'v1'
         Route::get('', 'ConfigController@index')->name('config.index');
         
         Route::get('s3', 'ConfigController@indexBackupFromS3')->name('config.indexBackup');
-        Route::post('', 'ConfigController@import')->name('config.indexByGroup');
+        Route::post('', 'ConfigController@import')->name('config.import')->middleware('check.dnspod');
     });
 
     Route::group(['prefix' => 'backups'], function () {
@@ -127,7 +127,7 @@ Route::group(['middleware' => ['api'], 'namespace' => 'Api\v1', 'prefix' => 'v1'
         Route::get('{scanPlatform}/scanned-data', 'ScanProviderController@indexScannedDataByPlatform')->name('scan.show');
         Route::get('scanned-data', 'ScanProviderController@indexScannedData')->name('scan.index');
 
-        Route::put('change-all', 'ScanProviderController@changeRegion');
+        Route::put('change-all', 'ScanProviderController@changeRegion')->middleware('check.dnspod');
 
         Route::middleware(['domain.permission','check.dnspod'])->group(function () {
             Route::put('domain/{domain}', 'ScanProviderController@changeDomainRegion');
