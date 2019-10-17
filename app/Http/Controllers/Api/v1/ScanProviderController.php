@@ -210,11 +210,7 @@ class ScanProviderController extends Controller
     {
         $default_lock_second = $this->defaultCoolMinute * 60;
 
-        $ugid = $this->getJWTUserGroupId();
-
         $lock_second = $this->getScanCool();
-
-        $cdnProviderCount = $this->getCdnProviderIsScannable()->count();
 
         return $this->response(
             "",
