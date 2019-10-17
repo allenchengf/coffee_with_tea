@@ -16,23 +16,21 @@ Route::group(['middleware' => ['api'], 'namespace' => 'Api\v1', 'prefix' => 'v1'
         Route::middleware(['auth.user.module', 'domain.permission'])->group(function () {
             Route::post('', 'DomainController@create')->name('domain.create');
 
-            Route::middleware(['check.dnspod'])->group(function () {
-                Route::group(['prefix' => '/{domain}'], function () {
-                    Route::resource('/cdn', 'CdnController', ['only' => ['index', 'store', 'destroy']]);
-                    Route::patch('cdn/{cdn}/default', 'CdnController@updateDefault')->name('cdn.default');
-                    Route::patch('cdn/{cdn}/cname', 'CdnController@updateCname')->name('cdn.cname');
+            Route::group(['prefix' => '/{domain}'], function () {
+                Route::get('/cdn', 'CdnController@index')->name('cdn.index');
+                Route::resource('/cdn', 'CdnController', ['only' => ['store', 'destroy']])->middleware('check.dnspod');
+                Route::patch('cdn/{cdn}/default', 'CdnController@updateDefault')->name('cdn.default')->middleware('check.dnspod');
+                Route::patch('cdn/{cdn}/cname', 'CdnController@updateCname')->name('cdn.cname')->middleware('check.dnspod');
 
-                    //yuan
-                    Route::group(['prefix' => '/routing-rules'], function () {
-                        Route::get('', 'LocationDnsSettingController@indexByDomain')->name('iRoute.indexByDomain');
-                        Route::middleware(['admin.check'])->group(function () {
-                            Route::put('/{locationNetwork}', 'LocationDnsSettingController@editSetting')->name('iRoute.edit');
-                        });
+                Route::group(['prefix' => '/routing-rules'], function () {
+                    Route::get('', 'LocationDnsSettingController@indexByDomain')->name('iRoute.indexByDomain');
+                    Route::middleware(['admin.check'])->group(function () {
+                        Route::put('/{locationNetwork}', 'LocationDnsSettingController@editSetting')->name('iRoute.edit')->middleware('check.dnspod');
                     });
                 });
-
-                Route::post('batch', 'BatchController@store')->name('domains.batch');
             });
+
+            Route::post('batch', 'BatchController@store')->name('domains.batch')->middleware('check.dnspod');
         });
 
         Route::middleware(['domain.permission'])->group(function () {
