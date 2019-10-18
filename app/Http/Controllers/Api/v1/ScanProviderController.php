@@ -273,12 +273,12 @@ class ScanProviderController extends Controller
      */
     private function checkNeedLockScan()
     {
-        $scanAmount = $this->getScanUseCount();
+        $scanTotal = $this->getScanUseCount();
 
         $cdnProviderCount = $this->getCdnProviderIsScannable()->count();
 
         //只要執行 Scan 的次數，超過CDN Provider 的總量就直接鎖定
-        if ($scanAmount <= $cdnProviderCount) {
+        if ($scanTotal >= $cdnProviderCount) {
             $expiresAt = now()->addMinutes($this->defaultCoolMinute);
 
             $ugid = $this->getJWTUserGroupId();
