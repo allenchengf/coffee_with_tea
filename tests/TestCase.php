@@ -26,6 +26,9 @@ abstract class TestCase extends BaseTestCase
     public function setJwtTokenPayload($uid = 1, $data = ['platformKey' => 'u9fiaplome']): array
     {
         JWTFactory::sub($uid);
+        
+        $data = array_merge($this->jwtPayload, $data);
+
         foreach ($data as $key => $value) {
             JWTFactory::$key($value);
         }
