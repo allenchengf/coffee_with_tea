@@ -6,7 +6,7 @@ use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use Hiero7\Models\{Domain, Cdn, CdnProvider, LocationDnsSetting, DomainGroup, DomainGroupMapping};
 use Hiero7\Services\{ConfigService, DnsPodRecordSyncService, UserModuleService};
-use Hiero7\Repositories\BackupRepository;
+use Hiero7\Repositories\{BackupRepository, CdnProviderRepository};
 use Illuminate\Support\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Hiero7\Traits\DomainHelperTrait;
@@ -24,12 +24,14 @@ class ConfigController extends Controller
         ConfigService $configService,
         DnsPodRecordSyncService $dnsPodRecordSyncService,
         UserModuleService $userModuleService,
-        BackupRepository $backupRepository)
+        BackupRepository $backupRepository,
+        CdnProviderRepository $cdnProviderRepository)
     {
         $this->configService = $configService;
         $this->dnsPodRecordSyncService = $dnsPodRecordSyncService;
         $this->userModuleService = $userModuleService;
         $this->backupRepository = $backupRepository;
+        $this->cdnProviderRepository = $cdnProviderRepository;
     }
     
     public function index(Request $request,Domain $domain, CdnProvider $cdnProvider,DomainGroup $domainGroup)
@@ -40,7 +42,7 @@ class ConfigController extends Controller
 
     }
     
-    public function storeBackup(Request $request, Domain $domain, CdnProvider $cdnProvider, DomainGroup $domainGroup)
+    public function storeBackup()
     {
         $nowTimestamp = strtotime('now'); // 當下時間戳
         $nowHoursMinutes = (string)date('H:i', $nowTimestamp); // (string) "小時:分鐘"
@@ -55,19 +57,21 @@ class ConfigController extends Controller
         // 預計備份時間，從 backups 表拿
         $backups = $this->backupRepository->index();
 
-        // curl iRouteCDN>user_mudule 拿完整的 all users' Ugid
-        $userGroups = $this->userModuleService->getAllUserGroups($request)['data'];
+        // 取得完整的 all users' Ugid
+        $userGroups = $this->cdnProviderRepository->getUgids();
+        // (註解後有可能恢復) curl iRouteCDN>user_mudule 拿完整的 all users' Ugid
+        // $userGroups = $this->userModuleService->getAllUserGroups($request)['data'];
         if (! $userGroups)
             return $this->setStatusCode(400)->response('', InternalError::INTERNAL_ERROR, []);
 
-        collect($userGroups)->each(function ($ug) use (&$backups, &$boolSameTime, &$nowHoursMinutesRegexPattern, &$nowTimestamp, &$results) {
-            $backup = $backups->where('user_group_id', $ug['id'])->first();
+        $userGroups->each(function ($ug) use (&$backups, &$boolSameTime, &$nowHoursMinutesRegexPattern, &$nowTimestamp, &$results) {
+            $backup = $backups->where('user_group_id', $ug['user_group_id'])->first();
 
             // user有設時間 依其時間，且剛好是現在時間～
             if (! is_null($backup) && preg_match($nowHoursMinutesRegexPattern, $backup->backedup_at)) {
                 $results['consequences'][] = [
-                    'ugid' => $ug['id'],
-                    'isSuccessUploadToS3' => $this->storeBackupToS3($ug['id'], $nowTimestamp),
+                    'ugid' => $ug['user_group_id'],
+                    'upload_s3' => $this->storeBackupToS3($ug['user_group_id'], $nowTimestamp),
                 ];
                 return true;
             }
@@ -75,19 +79,19 @@ class ConfigController extends Controller
             // user沒設時間 依env時間，且env時間剛好是現在時間～
             if (is_null($backup) && $boolSameTime) {
                 $results['consequences'][] = [
-                    'ugid' => $ug['id'],
-                    'isSuccessUploadToS3' => $this->storeBackupToS3($ug['id'], $nowTimestamp),
+                    'ugid' => $ug['user_group_id'],
+                    'upload_s3' => $this->storeBackupToS3($ug['user_group_id'], $nowTimestamp),
                 ];
                 return true;
             }
             
             // 非為備份時間
             $results['consequences'][] = [
-                'ugid' => $ug['id'],
-                'isSuccessUploadToS3' => [
+                'ugid' => $ug['user_group_id'],
+                'upload_s3' => [
                     'success' => false,
                     'message' => 'not in time',
-                ],
+                ]
             ];
         });
         return $this->response('', null, $results);
@@ -160,13 +164,12 @@ class ConfigController extends Controller
         
         // 取 s3 domain
         $s3BucketDomain = explode('/?prefix=', $s3Objects['@metadata']['effectiveUri'])[0];
-        
         // 取 s3 files
         if (isset($s3Objects['Contents']))
-            collect($s3Objects['Contents'])->each(function ($objct) use (&$data, &$s3BucketDomain) {
+            collect($s3Objects['Contents'])->each(function ($object) use (&$data, &$s3BucketDomain) {
                 $data[] = [
-                    'url' => $s3BucketDomain . '/' . $objct['Key'],
-                    'created_at' => $objct['LastModified']->format('Y-m-d H:i:s'),
+                    'url' => $s3BucketDomain . '/' . $object['Key'],
+                    'created_at' => date('Y-m-d H:i:s', $object['LastModified']->getTimestamp()),
                 ];
             });
         

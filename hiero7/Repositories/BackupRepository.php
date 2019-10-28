@@ -32,7 +32,10 @@ class BackupRepository
 
     public function showByUgid()
     {
-        return $this->backup->where('user_group_id', $this->getJWTUserGroupId())->first();
+        $backup = $this->backup->where('user_group_id', $this->getJWTUserGroupId())->first();
+        $backup['backedup_at'] = substr($backup['backedup_at'], 0, 5);
+        
+        return $backup;
     }
 
     public function create(array $data)
