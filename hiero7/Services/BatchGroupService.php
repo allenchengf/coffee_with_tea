@@ -4,6 +4,7 @@ namespace Hiero7\Services;
 use Hiero7\Services\DomainGroupService;
 use Hiero7\Models\DomainGroupMapping;
 use Hiero7\Repositories\DomainRepository;
+use Hiero7\Enums\InputError;
 use Exception;
 
 
@@ -21,12 +22,12 @@ class BatchGroupService{
 
         foreach($domains as $domain){
 
-            list($domain, $domainId, $errorMessage)  = $this->checkDomain($domain,$domainGroup, $user);
+            list($domain, $domainId, $errorCode)  = $this->checkDomain($domain,$domainGroup, $user);
 
-            if ($errorMessage) {
+            if ($errorCode) {
                 $failure[] = ['name' => $domain["name"],
-                                'errorCode' => 40000,
-                                'message' => $errorMessage]; // checkDomain 沒有過就不下去執行
+                                'errorCode' => $errorCode,
+                                'message' => InputError::getDescription($errorCode)]; // checkDomain 沒有過就不下去執行
                 continue;
             }
 
@@ -70,30 +71,32 @@ class BatchGroupService{
     public function checkDomain($domain,$domainGroup, $user)
     {
         $domainId = null;
-        $errorMessage = null;
-
+        $errorCode = null;
         try{
             $domainModel = $this->domainRepository->getDomainIdIfExist($domain["name"], $user["user_group_id"]);
             if(is_null($domainModel)){
-                throw new Exception("The domain is undefined.");
+                throw new Exception(InputError::DOMAIN_IS_UNDEFINED);
             }
             $domainId = $domainModel->id;
             
+            if(!$domainModel->domainGroup->isEmpty()){
+                throw new Exception(InputError::DOMAIN_ALREADY_HAS_GROUP);
+            }
+            
             $domainGroupModel = $domainGroup->mapping->where('domain_id',$domainId)->isEmpty();
-
             if(!$domainGroupModel){
-                throw new Exception('Domain already exist at this Group.');
+                throw new Exception(InputError::DOMAIN_ALREADY_EXIST_GROUP);
             }
             
             $checkDomainCdnSetting = $this->domainGroupService->compareDomainCdnSetting($domainGroup, $domainId);
             if(!$checkDomainCdnSetting){
-                throw new Exception("Domain's Cdn Provider are different with Group's");
+                throw new Exception(InputError::DOMAIN_CDNPROVIDER_DIFFERENT_WITH_GROUPS);
             }
         } catch  (\Exception $e){
-            $errorMessage = $e->getMessage();
+            $errorCode = $e->getMessage();
         }
 
-        return  [$domain, $domainId, $errorMessage];
+        return  [$domain, $domainId, $errorCode];
 
     }
 

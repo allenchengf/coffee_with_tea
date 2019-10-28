@@ -4,11 +4,16 @@ namespace Tests\Unit\Controller;
 
 use App\Http\Controllers\Api\v1\ScanProviderController;
 use App\Http\Requests\ScanProviderRequest as Request;
+use Carbon\Carbon;
+use Hiero7\Models\CdnProvider;
 use Hiero7\Models\LocationNetwork;
+use Hiero7\Repositories\CdnProviderRepository;
 use Hiero7\Repositories\DomainRepository;
+use Hiero7\Repositories\LineRepository;
 use Hiero7\Repositories\ScanLogRepository;
 use Hiero7\Services\LocationDnsSettingService;
 use Hiero7\Services\ScanProviderService;
+use Illuminate\Support\Facades\Cache;
 use Mockery as m;
 use Tests\TestCase;
 
@@ -32,10 +37,24 @@ class ScanProviderTest extends TestCase
         $this->setLocationNetwork();
 
         app()->call([$this, 'repository']);
+        $this->cdnProvider = new CdnProvider();
+        $this->setCdnProviderScannable();
 
         $this->spyLocationDnsSettingService = m::spy(LocationDnsSettingService::class);
+
         $this->fakeScanProviderService = new FakeScanProviderService($this->spyLocationDnsSettingService, $this->scanLogRepository);
-        $this->controller = new ScanProviderController($this->fakeScanProviderService);
+
+        $this->controller = new ScanProviderController(
+            $this->fakeScanProviderService,
+            $this->scanLogRepository,
+            $this->cdnProviderRepository,
+            $this->lineRepository
+        );
+
+        $this->addUuidforPayload()
+            ->addUserGroupId(1)
+            ->setJwtTokenPayload(1);
+
     }
 
     protected function tearDown()
@@ -43,11 +62,61 @@ class ScanProviderTest extends TestCase
         parent::tearDown();
     }
 
-    public function repository(ScanLogRepository $scanLogRepository, DomainRepository $domainRepository)
-    {
+    public function repository(ScanLogRepository $scanLogRepository,
+        DomainRepository $domainRepository,
+        CdnProviderRepository $cdnProviderRepository,
+        LineRepository $lineRepository
+    ) {
         $this->scanLogRepository = $scanLogRepository;
         $this->domainRepository = $domainRepository;
+        $this->cdnProviderRepository = $cdnProviderRepository;
+        $this->lineRepository = $lineRepository;
     }
+
+    /**
+     *
+     *
+     * @test
+     */
+    public function checkLockTime()
+    {
+        $expiresAt = now()->addMinutes(1);
+
+        Cache::put("Scan_Group_Is_Lock_1", $expiresAt, $expiresAt);
+
+        $this->response = $this->controller->checkLockTime();
+
+        $this->checkoutResponse();
+
+        $this->assertEquals(59, $this->responseArrayData['data']['lock_second']);
+    }
+
+    /**
+     * @test
+     *
+     */
+    public function setScanCoolTime()
+    {
+        $method = $this->getPrivateMethod(ScanProviderController::class, 'setScanCoolTime');
+
+        $method->invokeArgs($this->controller, []);
+
+        $this->assertEquals(1, Cache::get("Scan_Group_Lock_1"));
+        $this->assertNull(Cache::get("Scan_Group_Is_Lock_1"));
+
+        $method->invokeArgs($this->controller, []);
+
+        $this->assertEquals(2, Cache::get("Scan_Group_Lock_1"));
+        $this->assertNull(Cache::get("Scan_Group_Is_Lock_1"));
+
+        $method->invokeArgs($this->controller, []);
+
+        $this->assertEquals(3, Cache::get("Scan_Group_Lock_1"));
+
+        $seconds = Cache::get("Scan_Group_Is_Lock_1")->diffInSeconds(Carbon::now());
+        $this->assertEquals('integer', gettype($seconds));
+    }
+
     private function shouldUseDecideAction()
     {
         $this->spyLocationDnsSettingService
@@ -123,6 +192,14 @@ class ScanProviderTest extends TestCase
                     "latency" => 123,
                 ],
             ],
+        ]);
+    }
+
+    private function setCdnProviderScannable()
+    {
+        $this->cdnProvider->where('scannable', '0')->update([
+            'status' => 'active',
+            'scannable' => 1,
         ]);
     }
 

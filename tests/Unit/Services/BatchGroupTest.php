@@ -8,6 +8,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Hiero7\Models\DomainGroup;
 use Hiero7\Services\{BatchGroupService,DomainGroupService};
 use Hiero7\Repositories\DomainRepository;
+use App\Http\Middleware\CheckDnsPod;
 
 class BatchGroupTest extends TestCase
 {
@@ -29,6 +30,7 @@ class BatchGroupTest extends TestCase
         $this->user = array("uuid" => \Illuminate\Support\Str::uuid(), "user_group_id" => 1);
         $this->domainGroup = DomainGroup::find(1);
         app()->call([$this, 'repository']);
+        $this->withoutMiddleware([CheckDnsPod::class]);
         $this->batchGroupService = new BatchGroupService($this->domainGroupService, $this->domainRepository);
         app()->call([$this, 'serviceMock']);
     }
@@ -55,7 +57,7 @@ class BatchGroupTest extends TestCase
         $this->domainGroupService->shouldReceive('changeIrouteSetting')->withAnyArgs()->andReturn(true);
     }
 
-    public function testStoreUnsuccess()
+    public function testStoreUnSuccess()
     {
         $this->domain = ['domains' => 
                             ['name' =>'hiero7.test1.com'],
@@ -67,8 +69,8 @@ class BatchGroupTest extends TestCase
 
         $this->assertArrayHasKey('success', $result);
         $this->assertArrayHasKey('failure', $result);
-        $this->assertEquals('Domain already exist at this Group.',$result['failure'][0]['message']);
-        $this->assertEquals('The domain is undefined.',$result['failure'][2]['message']);
+        $this->assertEquals("Domain Already Has Group.",$result['failure'][0]['message']);
+        $this->assertEquals('The Domain Is Undefined.',$result['failure'][2]['message']);
         $this->assertCount(4, $result['failure']);
     }
 }

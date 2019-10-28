@@ -9,6 +9,7 @@ use App\Events\CdnWasEdited;
 use App\Http\Middleware\AuthUserModule;
 use App\Http\Middleware\DomainPermission;
 use App\Http\Middleware\TokenCheck;
+use App\Http\Middleware\CheckDnsPod;
 use Hiero7\Models\Cdn;
 use Hiero7\Models\CdnProvider;
 use Hiero7\Models\Domain;
@@ -43,7 +44,7 @@ class CdnControllerTest extends TestCase
 
         $this->login();
 
-        $this->withoutMiddleware([AuthUserModule::class, TokenCheck::class, DomainPermission::class]);
+        $this->withoutMiddleware([AuthUserModule::class, TokenCheck::class, DomainPermission::class, CheckDnsPod::class]);
 
         $this->domain = Domain::where('user_group_id', 1)->inRandomOrder()->first();
 
