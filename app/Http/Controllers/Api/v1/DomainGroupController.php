@@ -183,10 +183,10 @@ class DomainGroupController extends Controller
         if($result ==false){
             $this->error = PermissionError::CANT_DELETE_LAST_DOMAIN;
         }
-        
-        $result = [];
 
-        return $this->setStatusCode($this->error ? 400 : 200)->response($this->message, $this->error, $result);
+        $domain->domainGroup;
+
+        return $this->setStatusCode($this->error ? 400 : 200)->response($this->message, $this->error, $domain);
     }
 
     /**
