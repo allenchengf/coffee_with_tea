@@ -113,12 +113,14 @@ class DomainGroupController extends Controller
         if ($result == false) {
             $this->error = InputError::DOMAIN_CDNPROVIDER_DIFFERENT;
             $result = [];
-        }
-
-        if ($result == 'cdnError' || $result == 'iRouteError') {
+        }else if ($result == 'cdnError' || $result == 'iRouteError') {
             $this->error = InternalError::INTERNAL_SERVICE_ERROR;
             $result = [];
+        }else{
+            $result->domain;
+            $result->domainGroup;
         }
+
 
         return $this->setStatusCode($this->error ? 400 : 200)->response($this->message, $this->error, $result);
     }
