@@ -64,8 +64,6 @@ class BatchService{
             $cdnSuccess = $cdnError = [];
             // 批次新增 cdn 迴圈
             foreach ($domain["cdns"] as $cdn) {
-                // $cdn["name"] = trim($cdn["name"]);
-                $cdn["cname"] = strtolower($cdn["cname"]);
 
                 // 此次 $cdn['name'] 換 cdn_providers.id、ttl欄位
                 $myCdnProviders->each(function ($v) use (&$cdn) {
@@ -120,10 +118,11 @@ class BatchService{
     {
         $domain_id = null;
         $errorMessage = null;
-        $domain["name"] = strtolower($domain["name"]);
+
+        $domain["name"] = $this->checkDomainFormate($domain['name']);
 
         try {
-            $domainValidate= $this->validateDomain($domain["name"]);
+            $domainValidate = $this->validateDomain($domain["name"]);
             // 判斷 domain 有沒有各式錯誤
             if(!$domainValidate){
                 throw new Exception(InputError::getDescription(InputError::DOMAIN_FORMATE_IS_INVALID));
@@ -153,14 +152,15 @@ class BatchService{
         return [$domain, $domain_id, $errorMessage];
     }
 
-
     public function storeCdn($domain, $domain_id, $cdn, $user, $isFirstCdn)
     {
         $errorMessage = null;
 
+        $cdn["cname"] = $this->checkDomainFormate($cdn['cname']);
+
         try {
             // 判斷 cdn.cname 格式(和 domain 規則一樣)是否錯誤，有就不做任何事。
-            $cdnCnameValidate= $this->validateDomain($cdn["cname"]);
+            $cdnCnameValidate = $this->validateDomain($cdn["cname"]);
             if(!$cdnCnameValidate){
                 throw new Exception(InputError::getDescription(InputError::CNAME_FORMATE_IS_INVALID));
             }
@@ -217,5 +217,25 @@ class BatchService{
         }
 
         return [$cdn, $errorMessage];
+    }
+
+    /**
+     * 修改 Domain 格式
+     * 
+     * 如果最後有 . 會將它刪除
+     * 
+     * example:
+     * sample.com. => sample.com
+     *
+     * @param string $domain
+     * @return string
+     */
+    private function checkDomainFormate(string $domain): string
+    {
+        if(substr($domain, strlen($domain)-1,1) == '.'){
+            $domain = (substr($domain, 0, -1));
+        }
+
+        return strtolower($domain);
     }
 }
