@@ -22,10 +22,9 @@ class CallWorker implements ShouldQueue
      *
      * @return void
      */
-    public function __construct($queueName, $count)
+    public function __construct($queueName)
     {
         $this->queueName = $queueName;
-        $this->count = $count;
     }
 
     /**
@@ -36,11 +35,15 @@ class CallWorker implements ShouldQueue
     public function handle()
     {
         $i = 0;
-        while($i < $this->count){
+        // while($i < $this->count){
             Artisan::call('queue:work', [ 'connection' => 'database',
             '--queue' => $this->queueName , '--once' => true
             ]);
-        }
+sleep(2);
+        //     $result[] = Artisan::output();
+        // }
+// echo $result;
+        return;
     }
 
     public function failed(Exception $exception = null)

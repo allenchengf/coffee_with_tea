@@ -143,19 +143,17 @@ class BatchService{
 
             // 這個到時候可以拿到 jobId 
             $this->dispatch($job);
+
+            $workerJob = (new CallWorker($queueName))
+            ->onConnection('database')
+            ->onQueue('worker');
+    
+            $this->dispatch($workerJob);
         }
 
         // 記錄總共有幾筆
         $redis->set($queueName,$count);
 
-        // 叫 worker 做事，當目標沒有就會自己停掉
-
-        $workerJob = (new CallWorker($queueName,$count))
-        ->onConnection('database')
-        ->onQueue('worker');
-
-        $this->dispatch($workerJob);
-        
         return $result;
     }
 
