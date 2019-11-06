@@ -6,13 +6,13 @@ use Hiero7\Services\DnsProviderService;
 use Hiero7\Enums\InputError;
 use Hiero7\Traits\DomainHelperTrait;
 use Illuminate\Support\Collection;
-use Redis;
 use Hiero7\Models\Job;
 use Artisan;
 use Exception;
 use App\Jobs\AddDomainAndCdn;
 use App\Jobs\CallWorker;
 use Illuminate\Foundation\Bus\DispatchesJobs;
+use Illuminate\Support\Facades\Redis;
 
 class BatchService{
 
