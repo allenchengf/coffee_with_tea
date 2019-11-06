@@ -6,12 +6,18 @@ use Hiero7\Services\DnsProviderService;
 use Hiero7\Enums\InputError;
 use Hiero7\Traits\DomainHelperTrait;
 use Illuminate\Support\Collection;
-use DB;
+use Redis;
+use Hiero7\Models\Job;
+use Artisan;
 use Exception;
+use App\Jobs\AddDomainAndCdn;
+use App\Jobs\CallWorker;
+use Illuminate\Foundation\Bus\DispatchesJobs;
 
 class BatchService{
 
     use DomainHelperTrait;
+    use DispatchesJobs;
 
     protected $cdnRepository;
     protected $domainRepository;
@@ -32,7 +38,7 @@ class BatchService{
 
     public function store($domains, $user)
     {
-        $success = $failure = [];
+        $success = $failure  = [];
         // 取此權限全部 cdn_providers
         $myCdnProviders = collect($this->cdnProviderRepository->getCdnProvider($user["user_group_id"])->toArray());
 
@@ -55,7 +61,6 @@ class BatchService{
 
                 continue;
             }
-
 
             // 查詢 cdns.domain_id 是否存在 ? 不存在才打 POD，代表 POD 的 default 尚未存在
             $cdns = $this->cdnRepository->indexByWhere(['domain_id' => $domain_id]);
@@ -116,6 +121,42 @@ class BatchService{
         return $result;
     }
 
+    public function process($domains, $user, $ugId)
+    {
+        $result = [];
+        // 取此權限全部 cdn_providers
+        $myCdnProviders = collect($this->cdnProviderRepository->getCdnProvider($user["user_group_id"])->toArray());
+
+        $queueName = 'batchCreateDomainAndCdn'.$user['uuid'].$ugId;
+
+        //連 Redis 的 2 dataBase
+        $redis = Redis::connection('jobs');
+
+        // 批次新增 domain & cdn 迴圈， $count 記錄總共有幾筆
+        $count = 0;
+        foreach ($domains as $domain) {
+            $count++;
+            //把原邏輯 搬去 job 
+            $job = (new AddDomainAndCdn($domain,$user,$myCdnProviders))
+            ->onConnection('database')
+            ->onQueue($queueName);
+
+            // 這個到時候可以拿到 jobId 
+            $this->dispatch($job);
+
+            $workerJob = (new CallWorker($queueName))
+            ->onConnection('database')
+            ->onQueue('worker');
+    
+            $this->dispatch($workerJob);
+        }
+
+        // 記錄總共有幾筆
+        $redis->set($queueName,$count);
+
+        return $result;
+    }
+
     public function storeDomain($domain, $user)
     {
         $domain_id = null;
@@ -145,6 +186,8 @@ class BatchService{
             // domain 早已存在
             if (! is_null($result)) {
                 $domain_id = $result->id;
+                // 判斷 domain 有沒有 Group
+                $result->domainGroup->isEmpty() ? null : $errorMessage = 'Domain already has Group.';
             } else {
                 $errorMessage = $e->getMessage();
             }
