@@ -113,12 +113,14 @@ class DomainGroupController extends Controller
         if ($result == false) {
             $this->error = InputError::DOMAIN_CDNPROVIDER_DIFFERENT;
             $result = [];
-        }
-
-        if ($result == 'cdnError' || $result == 'iRouteError') {
+        }else if ($result == 'cdnError' || $result == 'iRouteError') {
             $this->error = InternalError::INTERNAL_SERVICE_ERROR;
             $result = [];
+        }else{
+            $result->domain;
+            $result->domainGroup;
         }
+
 
         return $this->setStatusCode($this->error ? 400 : 200)->response($this->message, $this->error, $result);
     }
@@ -181,10 +183,10 @@ class DomainGroupController extends Controller
         if($result ==false){
             $this->error = PermissionError::CANT_DELETE_LAST_DOMAIN;
         }
-        
-        $result = [];
 
-        return $this->setStatusCode($this->error ? 400 : 200)->response($this->message, $this->error, $result);
+        $domain->domainGroup;
+
+        return $this->setStatusCode($this->error ? 400 : 200)->response($this->message, $this->error, $domain);
     }
 
     /**
