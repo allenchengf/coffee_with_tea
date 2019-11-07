@@ -16,19 +16,21 @@ class ProcessServiceTest extends TestCase
     {
         parent::setUp();
         $this->artisan('migrate');
-        $this->seed('JobTableSeeder');
         $this->job = new Job;
         $this->service = new ProcessService($this->job);
         $this->functionName = 'batchCreateDomainAndCdn';
         $this->editedBy = 'ProcessTest';
         $this->ugId = 1;
+        $this->count = 2;
         $this->redis = Redis::connection('jobs');
         app()->call([$this, 'insertProcess']);
     }
 
 
     /**
-     * A basic feature test example.
+     * 驗證 job 剛加進去 queue 的情況下
+     * Done 不會是負數
+     * All 會等於 Process
      *
      * @return void
      */
@@ -39,23 +41,59 @@ class ProcessServiceTest extends TestCase
                     ];
 
         $response = $this->service->index($request, $this->ugId);
-dd($response);
+
+        $this->assertEquals($response['done'], 0);
+        $this->assertEquals($response['all'], $response['process']);
+    }
+    
+    /**
+     * 驗證 job 都處理完畢的情況
+     * Done 會等於 All
+     * Process 會是 0 不會是負數
+     *
+     * @return void
+     */
+    public function testIndexAllDone()
+    {        
+        $this->job->where('queue',$this->functionName.$this->editedBy.$this->ugId)->delete();
+        
+
+        $request = [ 'function_name' => $this->functionName,
+                        'edited_by' => $this->editedBy,
+                    ];
+        
+        $response = $this->service->index($request, $this->ugId);
+
+        // dd($response, $this->redis->get($this->functionName.$this->editedBy.$this->ugId));
+
+        $this->assertEquals($response['done'], $this->count);
+        $this->assertEquals($response['process'], 0);
+        $this->assertEquals($response['all'], $response['done']);
     }
 
     public function insertProcess()
     {
-        $data =[
+        $data =[[
+                'id' => 1,
                 'queue' => $this->functionName.$this->editedBy.$this->ugId,
                 'payload' => '',
                 'attempts' => 0,
                 'reserved_at' => \Carbon\Carbon::now()->timestamp,
                 'available_at' => \Carbon\Carbon::now()->timestamp,
                 'created_at' => \Carbon\Carbon::now()->timestamp,
-        ];
+            ],[
+                'id' => 2,
+                'queue' => $this->functionName.$this->editedBy.$this->ugId,
+                'payload' => '',
+                'attempts' => 0,
+                'reserved_at' => \Carbon\Carbon::now()->timestamp,
+                'available_at' => \Carbon\Carbon::now()->timestamp,
+                'created_at' => \Carbon\Carbon::now()->timestamp,
+            ]];
 
         $this->job->insert($data);
 
-        $this->redis->set($this->functionName.$this->editedBy.$this->ugId,1);
+        $this->redis->set($this->functionName.$this->editedBy.$this->ugId,$this->count);
 
     }
 }

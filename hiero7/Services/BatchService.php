@@ -121,7 +121,6 @@ class BatchService{
 
     public function process($domains, $user, $ugId)
     {
-        $result = [];
         // 取此權限全部 cdn_providers
         $myCdnProviders = collect($this->cdnProviderRepository->getCdnProvider($user["user_group_id"])->toArray());
 
@@ -152,7 +151,7 @@ class BatchService{
         // 記錄總共有幾筆
         $redis->set($queueName,$count);
 
-        return $result;
+        return ;
     }
 
     public function storeDomain($domain, $user)

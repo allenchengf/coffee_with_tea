@@ -34,15 +34,10 @@ class CallWorker implements ShouldQueue
      */
     public function handle()
     {
-        $i = 0;
-        // while($i < $this->count){
             Artisan::call('queue:work', [ 'connection' => 'database',
             '--queue' => $this->queueName , '--once' => true
             ]);
-sleep(2);
-        //     $result[] = Artisan::output();
-        // }
-// echo $result;
+
         return;
     }
 
