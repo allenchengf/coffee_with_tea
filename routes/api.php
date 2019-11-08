@@ -134,4 +134,6 @@ Route::group(['middleware' => ['api'], 'namespace' => 'Api\v1', 'prefix' => 'v1'
             Route::put('domain-group/{domainGroup}', 'ScanProviderController@changeDomainGroupRegion');
         });
     });
+
+    Route::get('process', 'ProcessController@index')->name('process.index');
 });

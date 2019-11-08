@@ -140,6 +140,8 @@ class DomainController extends Controller
 
     public function destroy(Domain $domain)
     {
+        $domain_name = $domain->name;
+
         //有 DomainGroup 並且 不能是 Group 內唯一的 Domain
         if (!$domain->domainGroup->isEmpty() && $domain->domainGroup->first()->domains->count() == 1) {
             return $this->setStatusCode(400)->response('', PermissionError::CANT_DELETE_LAST_DOMAIN, []);
@@ -153,7 +155,8 @@ class DomainController extends Controller
         }
         $domain->delete();
         $this->createEsLog($this->getJWTPayload()['sub'], "Domain", "delete", "domain");
-        return $this->response('', '', []);
+
+        return $this->response('', '', compact('domain_name'));
     }
 
     private function modifyName(Request $request)

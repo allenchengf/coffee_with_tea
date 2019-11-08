@@ -6,12 +6,18 @@ use Hiero7\Services\DnsProviderService;
 use Hiero7\Enums\InputError;
 use Hiero7\Traits\DomainHelperTrait;
 use Illuminate\Support\Collection;
-use DB;
+use Hiero7\Models\Job;
+use Artisan;
 use Exception;
+use App\Jobs\AddDomainAndCdn;
+use App\Jobs\CallWorker;
+use Illuminate\Foundation\Bus\DispatchesJobs;
+use Illuminate\Support\Facades\Redis;
 
 class BatchService{
 
     use DomainHelperTrait;
+    use DispatchesJobs;
 
     protected $cdnRepository;
     protected $domainRepository;
@@ -32,7 +38,7 @@ class BatchService{
 
     public function store($domains, $user)
     {
-        $success = $failure = [];
+        $success = $failure  = [];
         // 取此權限全部 cdn_providers
         $myCdnProviders = collect($this->cdnProviderRepository->getCdnProvider($user["user_group_id"])->toArray());
 
@@ -56,7 +62,6 @@ class BatchService{
                 continue;
             }
 
-
             // 查詢 cdns.domain_id 是否存在 ? 不存在才打 POD，代表 POD 的 default 尚未存在
             $cdns = $this->cdnRepository->indexByWhere(['domain_id' => $domain_id]);
             $isFirstCdn = count($cdns) == 0 ? true : false;
@@ -64,8 +69,6 @@ class BatchService{
             $cdnSuccess = $cdnError = [];
             // 批次新增 cdn 迴圈
             foreach ($domain["cdns"] as $cdn) {
-                // $cdn["name"] = trim($cdn["name"]);
-                $cdn["cname"] = strtolower($cdn["cname"]);
 
                 // 此次 $cdn['name'] 換 cdn_providers.id、ttl欄位
                 $myCdnProviders->each(function ($v) use (&$cdn) {
@@ -116,14 +119,53 @@ class BatchService{
         return $result;
     }
 
+    public function process($domains, $user, $ugId)
+    {
+        // 取此權限全部 cdn_providers
+        $myCdnProviders = collect($this->cdnProviderRepository->getCdnProvider($user["user_group_id"])->toArray());
+
+        $queueName = 'batchCreateDomainAndCdn'.$user['uuid'].$ugId;
+
+        //連 Redis 的 2 dataBase
+        $redis = Redis::connection('jobs');
+
+        // 批次新增 domain & cdn 迴圈， $count 記錄總共有幾筆
+        $count = 0;
+        foreach ($domains as $domain) {
+            $count++;
+            //把原邏輯 搬去 job 
+            $job = (new AddDomainAndCdn($domain,$user,$myCdnProviders))
+            ->onConnection('database')
+            ->onQueue($queueName);
+
+            // 這個到時候可以拿到 jobId 
+            $this->dispatch($job);
+
+            // 用 job 呼叫指令(Artisan::Call) 才不會 return 被吃掉
+            // 一個 AddDomainAndCdn job 配一個 worker job 才會剛好都處理完，table 不會有殘留 worker
+            // supervisor 監督的 queue 是此 worker
+            $workerJob = (new CallWorker($queueName))
+            ->onConnection('database')
+            ->onQueue('worker');
+    
+            $this->dispatch($workerJob);
+        }
+
+        // 記錄總共有幾筆
+        $redis->set($queueName,$count);
+
+        return ;
+    }
+
     public function storeDomain($domain, $user)
     {
         $domain_id = null;
         $errorMessage = null;
-        $domain["name"] = strtolower($domain["name"]);
+
+        $domain["name"] = $this->checkDomainFormate($domain['name']);
 
         try {
-            $domainValidate= $this->validateDomain($domain["name"]);
+            $domainValidate = $this->validateDomain($domain["name"]);
             // 判斷 domain 有沒有各式錯誤
             if(!$domainValidate){
                 throw new Exception(InputError::getDescription(InputError::DOMAIN_FORMATE_IS_INVALID));
@@ -145,6 +187,8 @@ class BatchService{
             // domain 早已存在
             if (! is_null($result)) {
                 $domain_id = $result->id;
+                // 判斷 domain 有沒有 Group
+                $result->domainGroup->isEmpty() ? null : $errorMessage = 'Domain already has Group.';
             } else {
                 $errorMessage = $e->getMessage();
             }
@@ -153,14 +197,15 @@ class BatchService{
         return [$domain, $domain_id, $errorMessage];
     }
 
-
     public function storeCdn($domain, $domain_id, $cdn, $user, $isFirstCdn)
     {
         $errorMessage = null;
 
+        $cdn["cname"] = $this->checkDomainFormate($cdn['cname']);
+
         try {
             // 判斷 cdn.cname 格式(和 domain 規則一樣)是否錯誤，有就不做任何事。
-            $cdnCnameValidate= $this->validateDomain($cdn["cname"]);
+            $cdnCnameValidate = $this->validateDomain($cdn["cname"]);
             if(!$cdnCnameValidate){
                 throw new Exception(InputError::getDescription(InputError::CNAME_FORMATE_IS_INVALID));
             }
@@ -217,5 +262,25 @@ class BatchService{
         }
 
         return [$cdn, $errorMessage];
+    }
+
+    /**
+     * 修改 Domain 格式
+     * 
+     * 如果最後有 . 會將它刪除
+     * 
+     * example:
+     * sample.com. => sample.com
+     *
+     * @param string $domain
+     * @return string
+     */
+    private function checkDomainFormate(string $domain): string
+    {
+        if(substr($domain, strlen($domain)-1,1) == '.'){
+            $domain = (substr($domain, 0, -1));
+        }
+
+        return strtolower($domain);
     }
 }
