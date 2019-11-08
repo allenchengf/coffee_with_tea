@@ -4,6 +4,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.0] - 2019-11-08
+### Added
+- 查詢 Job Process 進度
+
+### Upate
+- Supervisor 的 conf 新增 --queue = woker
+- Domain CNAME 後尾的點可自動移除
+
+### Fixed
+- 修改 Batch Add Domain & CDN 改由 Job 觸發
+
 ## [0.6.0] - 2019-10-28
 ### Added
 - scan cooling time
