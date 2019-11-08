@@ -17,7 +17,7 @@ class ProcessController extends Controller
 
     public function index(Request $request)
     {
-        $result = $this->processService->index($request->all(),$this->getUgid($request));
+        $result = $this->processService->index($request->all(), $this->getUgid($request));
 
         return $this->response('', null, $result);
     }

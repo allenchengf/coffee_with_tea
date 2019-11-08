@@ -6,13 +6,13 @@ use Hiero7\Services\DnsProviderService;
 use Hiero7\Enums\InputError;
 use Hiero7\Traits\DomainHelperTrait;
 use Illuminate\Support\Collection;
-use Redis;
 use Hiero7\Models\Job;
 use Artisan;
 use Exception;
 use App\Jobs\AddDomainAndCdn;
 use App\Jobs\CallWorker;
 use Illuminate\Foundation\Bus\DispatchesJobs;
+use Illuminate\Support\Facades\Redis;
 
 class BatchService{
 
@@ -121,7 +121,6 @@ class BatchService{
 
     public function process($domains, $user, $ugId)
     {
-        $result = [];
         // 取此權限全部 cdn_providers
         $myCdnProviders = collect($this->cdnProviderRepository->getCdnProvider($user["user_group_id"])->toArray());
 
@@ -142,6 +141,9 @@ class BatchService{
             // 這個到時候可以拿到 jobId 
             $this->dispatch($job);
 
+            // 用 job 呼叫指令(Artisan::Call) 才不會 return 被吃掉
+            // 一個 AddDomainAndCdn job 配一個 worker job 才會剛好都處理完，table 不會有殘留 worker
+            // supervisor 監督的 queue 是此 worker
             $workerJob = (new CallWorker($queueName))
             ->onConnection('database')
             ->onQueue('worker');
@@ -152,7 +154,7 @@ class BatchService{
         // 記錄總共有幾筆
         $redis->set($queueName,$count);
 
-        return $result;
+        return ;
     }
 
     public function storeDomain($domain, $user)
