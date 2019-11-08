@@ -141,6 +141,9 @@ class BatchService{
             // 這個到時候可以拿到 jobId 
             $this->dispatch($job);
 
+            // 用 job 呼叫指令(Artisan::Call) 才不會 return 被吃掉
+            // 一個 AddDomainAndCdn job 配一個 worker job 才會剛好都處理完，table 不會有殘留 worker
+            // supervisor 監督的 queue 是此 worker
             $workerJob = (new CallWorker($queueName))
             ->onConnection('database')
             ->onQueue('worker');
