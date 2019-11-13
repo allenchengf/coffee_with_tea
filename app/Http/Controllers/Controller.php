@@ -7,17 +7,17 @@ use Hiero7\Enums\InputError;
 use Hiero7\Enums\InternalError;
 use Hiero7\Enums\NotFoundError;
 use Hiero7\Enums\PermissionError;
+use Hiero7\Traits\JwtPayloadTrait;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Foundation\Bus\DispatchesJobs;
 use Illuminate\Foundation\Validation\ValidatesRequests;
-use Illuminate\Routing\Controller as BaseController;
-use Tymon\JWTAuth\Facades\JWTAuth;
-use Validator;
 use Illuminate\Http\Request;
+use Illuminate\Routing\Controller as BaseController;
+use Validator;
 
 class Controller extends BaseController
 {
-    use AuthorizesRequests, DispatchesJobs, ValidatesRequests;
+    use AuthorizesRequests, DispatchesJobs, ValidatesRequests, JwtPayloadTrait;
 
     protected $statusCode = 200;
 
@@ -82,12 +82,6 @@ class Controller extends BaseController
         return Validator::make($input, $rules, $custom_message ?? $message);
     }
 
-    public function getJWTPayload()
-    {
-        $token = JWTAuth::getToken();
-        return JWTAuth::getPayload($token)->toArray();
-    }
-
     /**
      * get User Group ID function
      *
@@ -106,8 +100,8 @@ class Controller extends BaseController
 
         $ugid = (($getPayload['user_group_id'] == $request->get('user_group_id')) ||
             ($getPayload['user_group_id'] == 1)) ?
-            $request->get('user_group_id', $getPayload['user_group_id']) :
-            $getPayload['user_group_id'];
+        $request->get('user_group_id', $getPayload['user_group_id']) :
+        $getPayload['user_group_id'];
 
         return $ugid;
     }
