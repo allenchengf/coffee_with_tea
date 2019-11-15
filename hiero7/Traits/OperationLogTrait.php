@@ -45,6 +45,8 @@ trait OperationLogTrait
     /**
      * 新增操作 Log
      *
+     * 要寫入 Log 一定要呼叫此 Method
+     *
      * @param string $category
      * @param string $changeType
      * @param string $message
@@ -150,6 +152,12 @@ trait OperationLogTrait
         ];
     }
 
+    /**
+     * set Change From
+     *
+     * @param array $changeFrom
+     * @return $this
+     */
     private function setChangeFrom($changeFrom = [])
     {
         $this->changeFrom = $changeFrom;
@@ -157,6 +165,17 @@ trait OperationLogTrait
         return $this;
     }
 
+    /**
+     * 設定 change Type
+     *
+     * 如果 Input is Null 會去自動 Mapping to Request Method
+     * Mapping 沒有就會轉成 Undefined
+     * 
+     * 如果已經有設定就會依直接照給予的設定
+     * 
+     * @param string $changeType
+     * @return $this
+     */
     private function setChangeType(string $changeType = null)
     {
         if (!$changeType && !$this->changeType) {
@@ -173,6 +192,9 @@ trait OperationLogTrait
         return $this;
     }
 
+    /**
+     * 設定 Change 後得資訊
+     */
     private function setChangeTo($changeTo = [])
     {
         $this->changeTo = $changeTo;
@@ -180,6 +202,12 @@ trait OperationLogTrait
         return $this;
     }
 
+    /**
+     * 設定 Category 資訊
+     *
+     * @param string $category
+     * @return $this
+     */
     private function setCategory(string $category)
     {
         $this->category = $category;
@@ -187,12 +215,20 @@ trait OperationLogTrait
         return $this;
     }
 
-    private function getChangeFrom()
+    private function getChangeFrom(): array
     {
         return $this->changeFrom;
     }
 
-    private function getChangeTo()
+    /**
+     * get Change To 的資訊
+     *
+     * 如果 ChangeType 是 Update 時
+     * 會自動 Filter 出有改變的 Key Value
+     *
+     * @return array
+     */
+    private function getChangeTo(): array
     {
         if ($this->getChangeType() === 'Update') {
             return collect($this->changeTo)->diffAssoc($this->changeFrom)->all();
