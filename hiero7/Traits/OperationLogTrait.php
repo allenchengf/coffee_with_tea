@@ -13,12 +13,13 @@ use Ixudra\Curl\Facades\Curl;
 
 trait OperationLogTrait
 {
-
-    protected $changeFrom = [], $changeTo = [];
-
     use JwtPayloadTrait;
 
-    protected function curlWithUri($domain, $uri, array $body, $method, $asJson = true)
+    protected $autoSave = true;
+    protected $changeFrom = [], $changeTo = [], $changeType = null;
+    protected $category = null;
+
+    protected function curlWithUri(string $domain, string $uri, array $body, string $method, $asJson = true)
     {
         return Curl::to($domain . $uri)
             ->withHeader('Authorization: ' . 'Bearer ' . $this->getJWTToken())
@@ -41,18 +42,6 @@ trait OperationLogTrait
         $this->curlWithUri(self::getOperationLogURL(), '/log/platform', $data, 'post');
     }
 
-    public function setChangeFrom(array $changeFrom = [])
-    {
-        $this->changeFrom = $changeFrom;
-        return $this;
-    }
-
-    public function setChangeTo(array $changeTo = [])
-    {
-        $this->changeTo = $changeTo;
-        return $this;
-    }
-
     /**
      * 新增操作 Log
      *
@@ -61,29 +50,30 @@ trait OperationLogTrait
      * @param string $message
      * @return void
      */
-    public function createOperationLog(string $category, string $changeType, string $message = null)
+    public function createOperationLog(string $category = null, string $changeType = null, string $message = 'Success')
     {
         if (env('APP_ENV') === 'testing') {
             return true;
         }
 
+        $this->setChangeType($changeType);
+
         $body = [
-            'category' => $category,
             'uid' => $this->getJWTUserId(),
-            'uuid' => $this->getJWTUuid(),
             'userGroup' => $this->getJWTUserGroupId(),
             'platform' => $this->getPlatform(),
+            'category' => $category ?? $this->getCategory(),
+            'change_type' => $this->getChangeType(),
+            'changed_from' => $this->getChangeFrom(),
+            'changed_to' => $this->getChangeTo(),
+            'message' => $message,
             'ip' => Request::ip(),
-            'method' => Request::method(),
+            'method' => $this->getRequestMethod(),
             'url' => Request::url(),
             'input' => Request::except(['password', 'password_confirmation', 'edited_by', 'old', 'new']),
-            'change_type' => $changeType,
-            'changed_from' => json_encode($this->changeFrom),
-            'changed_to' => json_encode($this->changeTo),
-            'message' => $message,
         ];
 
-        return $this->curlWithUri(self::getOperationLogURL(), '/log/platform/iRouteCDN', $body, 'post');
+        $this->curlWithUri(self::getOperationLogURL(), '/log/platform/iRouteCDN', $body, 'post');
     }
 
     public function getEsLog($platform, $category)
@@ -130,7 +120,6 @@ trait OperationLogTrait
             ],
             'get',
             false);
-
     }
 
     private function getTargetUser($uid)
@@ -141,7 +130,6 @@ trait OperationLogTrait
                 'uid' => $uid,
             ],
             'get', false);
-
     }
 
     private function checkOperatorNTargetUserIsTheSame($operator, $targetUser)
@@ -149,6 +137,83 @@ trait OperationLogTrait
         $targetUserData = $targetUser->data;
         $operatorData = $operator->data;
         return $operatorData->uid == $targetUserData->uid ? true : false;
+    }
+
+    protected function getMappingChangeType()
+    {
+        return [
+            'GET' => 'Check',
+            'POST' => 'Create',
+            'PATCH' => 'Update',
+            'PUT' => 'Update',
+            'DELETE' => 'Delete',
+        ];
+    }
+
+    private function setChangeFrom($changeFrom = [])
+    {
+        $this->changeFrom = $changeFrom;
+
+        return $this;
+    }
+
+    private function setChangeType(string $changeType = null)
+    {
+        if (!$changeType && !$this->changeType) {
+
+            $mappingType = $this->getMappingChangeType();
+
+            $method = $this->getRequestMethod();
+
+            $this->changeType = $mappingType[$method] ?? 'Undefined';
+        } else {
+            $this->changeType = $changeType ?? $this->changeType;
+        }
+
+        return $this;
+    }
+
+    private function setChangeTo($changeTo = [])
+    {
+        $this->changeTo = $changeTo;
+
+        return $this;
+    }
+
+    private function setCategory(string $category)
+    {
+        $this->category = $category;
+
+        return $this;
+    }
+
+    private function getChangeFrom()
+    {
+        return $this->changeFrom;
+    }
+
+    private function getChangeTo()
+    {
+        if ($this->getChangeType() === 'Update') {
+            return collect($this->changeTo)->diffAssoc($this->changeFrom)->all();
+        }
+
+        return $this->changeTo;
+    }
+
+    private function getCategory()
+    {
+        return $this->category ?? 'Undefined';
+    }
+
+    private function getChangeType()
+    {
+        return $this->changeType;
+    }
+
+    private function getRequestMethod()
+    {
+        return Request::method();
     }
 
     /**
