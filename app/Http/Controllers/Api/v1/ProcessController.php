@@ -2,9 +2,9 @@
 
 namespace App\Http\Controllers\Api\v1;
 
-use Illuminate\Http\Request;
 use Hiero7\Services\ProcessService;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\ProcessRequest as Request;
 
 
 class ProcessController extends Controller
@@ -20,5 +20,13 @@ class ProcessController extends Controller
         $result = $this->processService->index($request->all(), $this->getUgid($request));
 
         return $this->response('', null, $result);
+    }
+
+    public function getBatchResult(Request $request)
+    {
+        $result = $this->processService->getBatchResult($request->all(), $this->getUgid($request));
+
+        return $this->response('', null, $result);
+
     }
 }
