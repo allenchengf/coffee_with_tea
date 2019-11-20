@@ -198,11 +198,17 @@ class DomainGroupController extends Controller
      */
     public function destroyByDomainId(DomainGroupRequest $request, DomainGroup $domainGroup, Domain $domain)
     {
+        $log = $domainGroup->saveLog() + ['domain' => $domain->name];
+        $this->setChangeFrom($log);
+
         $this->formatRequestAndThis($request);
         $result = $this->domainGroupService->destroyByDomainId($request, $domainGroup, $domain);
 
         if ($result == false) {
             $this->error = PermissionError::CANT_DELETE_LAST_DOMAIN;
+        } else {
+            unset($log['domain']);
+            $this->setChangeTo($domainGroup->fresh()->saveLog())->createOperationLog();
         }
 
         $domain->domainGroup;
