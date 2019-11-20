@@ -21,4 +21,9 @@ class DomainGroup extends Model
     {
         return $this->hasMany(DomainGroupMapping::class,'domain_group_id');
     }
+
+    public function saveLog()
+    {
+        return $this->only('name', 'label');
+    }
 }
