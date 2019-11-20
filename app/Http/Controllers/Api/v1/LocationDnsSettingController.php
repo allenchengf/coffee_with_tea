@@ -29,6 +29,7 @@ class LocationDnsSettingController extends Controller
     {
         $this->locationDnsSettingService = $locationDnsSettingService;
         $this->domainGroupService = $domainGroupService;
+        $this->setCategory('iRouteCDN');
     }
 
     public function indexByDomain(Domain $domain)
@@ -193,6 +194,12 @@ class LocationDnsSettingController extends Controller
      */
     public function editSetting(LocationDnsSettingRequest $request, Domain $domain, LocationNetwork $locationNetwork)
     {
+        $log['cdnProvider'] = $this->getOriginCdnProvider($domain, $locationNetwork)->name;
+        $log['domain'] = $domain->name;
+        $log['region'] = $locationNetwork->saveLog();
+
+        $this->setChangeFrom($log);
+
         $httpStatusCode = 200;
         $message = '';
         $errorCode = null;
@@ -214,7 +221,10 @@ class LocationDnsSettingController extends Controller
             $locationNetwork->continent;
             $locationNetwork->country;
 
-            $this->createEsLog($this->getJWTPayload()['sub'], "IRoute", "update", "IRouteCDN");
+            unset($log['region']);
+            $log['cdnProvider'] = $locationNetwork->cdn['name'];
+
+            $this->setChangeTo($log)->createOperationLog();
         }
 
         return $this->response(
@@ -222,5 +232,27 @@ class LocationDnsSettingController extends Controller
             $errorCode,
             $errorCode ? null : $locationNetwork
         );
+    }
+
+    /**
+     * 取得變更 location DNS Setting 原始的 CDN Provider 資訊
+     *
+     * @param Domain $domain
+     * @param LocationNetwork $locationNetwork
+     * @return CdnProvider
+     */
+    private function getOriginCdnProvider(Domain $domain, LocationNetwork $locationNetwork)
+    {
+        $locationDnsSetting = $domain->locationDnsSettings()->where('location_networks_id', $locationNetwork->id)->first();
+
+        if ($locationDnsSetting) {
+            $cdnProvider = $locationDnsSetting->cdn()->first()->cdnProvider()->first();
+
+        } else {
+            $cdnProvider = $domain->getDefaultCdnProvider()->first();
+        }
+
+        return $cdnProvider;
+
     }
 }

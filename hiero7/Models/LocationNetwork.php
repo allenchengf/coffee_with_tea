@@ -35,4 +35,14 @@ class LocationNetwork extends Model
     {
         return $this->hasMany(LocationDnsSetting::class, 'location_networks_id');
     }
+
+    public function saveLog()
+    {
+        $logArray = $this->only('location', 'isp');
+        $logArray['continent'] = $this->continent()->first()->name;
+        $logArray['country'] = $this->country()->first()->name;
+
+        return $logArray;
+    }
+
 }

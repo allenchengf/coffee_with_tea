@@ -47,9 +47,9 @@ trait OperationLogTrait
      *
      * 要寫入 Log 一定要呼叫此 Method
      *
-     * @param string $category
-     * @param string $changeType
-     * @param string $message
+     * @param string $category Log 的種類
+     * @param string $changeType Log 的型態(Create, Update , Delete)
+     * @param string $message Log 訊息(Success, Fail, any other...)
      * @return void
      */
     public function createOperationLog(string $category = null, string $changeType = null, string $message = 'Success')
