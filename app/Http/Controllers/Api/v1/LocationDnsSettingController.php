@@ -234,6 +234,13 @@ class LocationDnsSettingController extends Controller
         );
     }
 
+    /**
+     * 取得變更 location DNS Setting 原始的 CDN Provider 資訊
+     *
+     * @param Domain $domain
+     * @param LocationNetwork $locationNetwork
+     * @return CdnProvider
+     */
     private function getOriginCdnProvider(Domain $domain, LocationNetwork $locationNetwork)
     {
         $locationDnsSetting = $domain->locationDnsSettings()->where('location_networks_id', $locationNetwork->id)->first();
