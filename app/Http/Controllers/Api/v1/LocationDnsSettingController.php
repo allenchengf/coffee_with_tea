@@ -29,7 +29,7 @@ class LocationDnsSettingController extends Controller
     {
         $this->locationDnsSettingService = $locationDnsSettingService;
         $this->domainGroupService = $domainGroupService;
-        $this->setCategory('iRouteCDN');
+        $this->setCategory(config('logging.category.iroutecdn'));
     }
 
     public function indexByDomain(Domain $domain)

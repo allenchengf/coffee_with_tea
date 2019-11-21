@@ -29,8 +29,7 @@ class CdnProviderController extends Controller
     public function __construct(CdnProviderService $cdnProviderService)
     {
         $this->cdnProviderService = $cdnProviderService;
-        $this->status = (env('APP_ENV') !== 'testing') ?? false;
-        $this->setCategory('CDN Provider');
+        $this->setCategory(config('logging.category.cdn_provider'));
     }
 
     /**

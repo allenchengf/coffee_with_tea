@@ -30,7 +30,7 @@ class CdnController extends Controller
     public function __construct(CdnService $cdnService)
     {
         $this->cdnService = $cdnService;
-        $this->setCategory('CDN');
+        $this->setCategory(config('logging.category.cdn'));
     }
 
     /**
@@ -78,10 +78,11 @@ class CdnController extends Controller
 
             $cdn->update(['provider_record_id' => $createdDnsProviderRecordResult[0]['data']['record']['id']]);
 
-            $this->setChangeTo($cdn->saveLog())->createOperationLog(); // SaveLog
         }
 
         DB::commit();
+
+        $this->setChangeTo($cdn->fresh()->saveLog())->createOperationLog(); // SaveLog
 
         return $this->setStatusCode(200)->response('success', null, $cdn);
 
