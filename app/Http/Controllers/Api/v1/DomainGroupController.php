@@ -28,7 +28,8 @@ class DomainGroupController extends Controller
     {
         $this->domainGroupService = $domainGroupService;
         $this->cdnService = $cdnService;
-        $this->setCategory('Group');
+        $this->setCategory(config('logging.category.domain_group'));
+
     }
 
     /**

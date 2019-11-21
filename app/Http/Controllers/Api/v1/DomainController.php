@@ -24,7 +24,7 @@ class DomainController extends Controller
 
         $this->status = (env('APP_ENV') !== 'testing') ?? false;
 
-        $this->setCategory('Domain');
+        $this->setCategory(config('logging.category.domain'));
     }
 
     /**
