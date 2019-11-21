@@ -15,7 +15,6 @@ trait OperationLogTrait
 {
     use JwtPayloadTrait;
 
-    protected $autoSave = true;
     protected $changeFrom = [], $changeTo = [], $changeType = null;
     protected $category = null;
 
@@ -54,7 +53,7 @@ trait OperationLogTrait
      */
     public function createOperationLog(string $category = null, string $changeType = null, string $message = 'Success')
     {
-        if (env('APP_ENV') === 'testing') {
+        if (config('app.env') === 'testing') {
             return true;
         }
 
@@ -170,9 +169,9 @@ trait OperationLogTrait
      *
      * 如果 Input is Null 會去自動 Mapping to Request Method
      * Mapping 沒有就會轉成 Undefined
-     * 
+     *
      * 如果已經有設定就會依直接照給予的設定
-     * 
+     *
      * @param string $changeType
      * @return $this
      */
