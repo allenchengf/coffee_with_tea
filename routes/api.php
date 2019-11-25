@@ -135,5 +135,8 @@ Route::group(['middleware' => ['api'], 'namespace' => 'Api\v1', 'prefix' => 'v1'
         });
     });
 
-    Route::get('process', 'ProcessController@index')->name('process.index');
+    Route::group(['prefix' => 'process'], function () {
+        Route::get('', 'ProcessController@index')->name('process.index');
+        Route::get('result', 'ProcessController@getBatchResult')->name('process.getBatchResult');
+    });
 });

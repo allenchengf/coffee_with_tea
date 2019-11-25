@@ -61,6 +61,15 @@ class Cdn extends Model
         return $this->insertGetId($input);
     }
 
+    public function saveLog()
+    {
+        $logArray = $this->only('cname', 'default');
+        $logArray['domain'] = $this->domain()->first()->name;
+        $logArray['cdnProvider'] = $this->cdnProvider()->first()->name;
+
+        return $logArray;
+    }
+
     // public function updateOrInsertGetId(array $attributes, array $values = []): int
     // {
     //     $instance = $this;
