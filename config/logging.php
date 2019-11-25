@@ -13,7 +13,7 @@ return [
     | messages to the logs. The name specified in this option should match
     | one of the channels defined in the "channels" configuration array.
     |
-    */
+     */
 
     'default' => env('LOG_CHANNEL', 'stack'),
 
@@ -30,7 +30,7 @@ return [
     |                    "errorlog", "monolog",
     |                    "custom", "stack"
     |
-    */
+     */
 
     'channels' => [
         'stack' => [
@@ -76,6 +76,15 @@ return [
             'driver' => 'errorlog',
             'level' => 'debug',
         ],
+    ],
+
+    'category' => [
+        'domain' => 'Domain',
+        'cdn_provider' => 'CDN Provider',
+        'cdn' => 'CDN',
+        'domain_group' => 'Domain group',
+        'iroutecdn' => 'iRouteCDN',
+        'network' => 'Network',
     ],
 
 ];
