@@ -8,25 +8,29 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Redis;
+
 
 
 class AddDomainAndCdn implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    public $tries = 2;
-    public $domain, $user, $cdnProviders, $batchService;
+    public $tries = 1;
+    public $domain, $user, $cdnProviders, $batchService, $queueName ,$redis;
     
     /**
      * Create a new job instance.
      *
      * @return void
      */
-    public function __construct(array $domain, array $user, Collection $cdnProviders)
+    public function __construct(array $domain, array $user, Collection $cdnProviders, string $queueName)
     {
         $this->domain = $domain;
         $this->user = $user;
         $this->cdnProviders = $cdnProviders;
+        $this->queueName = $queueName;
+        $this->redis = Redis::connection('record');
     }
 
     /**
@@ -50,7 +54,6 @@ class AddDomainAndCdn implements ShouldQueue
             ];
             
             $failure[] = $domainError; //記錄失敗
-
         }
 
         if(empty($domainError)){
@@ -108,6 +111,10 @@ class AddDomainAndCdn implements ShouldQueue
         $array = ['success' => ['domain' => $success],
                     'failure' => ['domain' =>  $failure]
                 ];
+
+        //塞入處理結果在 Redis
+        $this->redis->lpush($this->queueName,json_encode($array));
+
     }
 
 }

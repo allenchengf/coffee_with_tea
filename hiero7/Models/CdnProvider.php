@@ -8,7 +8,7 @@ class CdnProvider extends Model
 {
     protected $table = 'cdn_providers';
 
-    protected $fillable = ['name', 'ttl', 'edited_by', 'user_group_id', 'status', 'url','scannable'];
+    protected $fillable = ['name', 'ttl', 'edited_by', 'user_group_id', 'status', 'url', 'scannable'];
     public $timestamps = true;
 
     protected $hidden = ['created_at', 'updated_at', 'edited_by'];
@@ -31,5 +31,10 @@ class CdnProvider extends Model
     public function cdns()
     {
         return $this->hasMany(Cdn::class);
+    }
+
+    public function saveLog()
+    {
+        return $this->only('name', 'status', 'ttl', 'url', 'scannable');
     }
 }

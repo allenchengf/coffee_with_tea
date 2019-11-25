@@ -41,7 +41,6 @@ class BatchService{
         $success = $failure  = [];
         // 取此權限全部 cdn_providers
         $myCdnProviders = collect($this->cdnProviderRepository->getCdnProvider($user["user_group_id"])->toArray());
-
         // 批次新增 domain 迴圈
         foreach ($domains as $domain) {
             $domainError = [];
@@ -58,7 +57,7 @@ class BatchService{
                 ];
                 
                 $failure[] = $domainError;
-
+                
                 continue;
             }
 
@@ -134,7 +133,7 @@ class BatchService{
         foreach ($domains as $domain) {
             $count++;
             //把原邏輯 搬去 job 
-            $job = (new AddDomainAndCdn($domain,$user,$myCdnProviders))
+            $job = (new AddDomainAndCdn($domain,$user,$myCdnProviders,$queueName))
             ->onConnection('database')
             ->onQueue($queueName);
 

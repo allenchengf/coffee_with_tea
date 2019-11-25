@@ -29,7 +29,7 @@ class CdnProviderController extends Controller
     public function __construct(CdnProviderService $cdnProviderService)
     {
         $this->cdnProviderService = $cdnProviderService;
-        $this->status = (env('APP_ENV') !== 'testing') ?? false;
+        $this->setCategory(config('logging.category.cdn_provider'));
     }
 
     /**
@@ -55,11 +55,13 @@ class CdnProviderController extends Controller
     {
         $request->merge([
             'edited_by' => $this->getJWTPayload()['uuid'],
-            'status' => 'active',
-            'scannable' => 0,
         ]);
+
         $cdnProvider = $cdnProvider->create($request->all());
-        $this->createEsLog($this->getJWTPayload()['sub'], "CDN", "create", "CDN Provider");
+        $cdnProvider->update(['status' => 'active']);
+
+        $this->setChangeTo($cdnProvider->fresh()->saveLog())->createOperationLog();
+
         return $this->response('', null, $cdnProvider);
     }
 
@@ -72,6 +74,8 @@ class CdnProviderController extends Controller
      */
     public function update(Request $request, CdnProvider $cdnProvider)
     {
+        $this->setChangeFrom($cdnProvider->saveLog());
+
         $recordList = [];
         $request->merge([
             'edited_by' => $this->getJWTPayload()['uuid'],
@@ -98,7 +102,9 @@ class CdnProviderController extends Controller
         }
         DB::commit();
         $this->cdnProviderService->checkWhetherStopScannable($cdnProvider, $request->get('edited_by'));
-        $this->createEsLog($this->getJWTPayload()['sub'], "CDN", "update", "CDN Provider");
+
+        $this->setChangeTo($cdnProvider->saveLog())->createOperationLog();
+
         return $this->response("Success", null, $cdnProvider);
     }
 
@@ -109,6 +115,8 @@ class CdnProviderController extends Controller
      */
     public function changeStatus(Request $request, CdnProvider $cdnProvider)
     {
+        $this->setChangeFrom($cdnProvider->saveLog());
+
         $request->merge(['edited_by' => $this->getJWTPayload()['uuid']]);
         $recordList = [];
         $status = $request->get('status') ? 'active' : 'stop';
@@ -131,7 +139,9 @@ class CdnProviderController extends Controller
         }
         DB::commit();
         $this->cdnProviderService->checkWhetherStopScannable($cdnProvider, $request->get('edited_by'));
-        $this->createEsLog($this->getJWTPayload()['sub'], "CDN", "change", "CDN Provider status");
+
+        $this->setChangeTo($cdnProvider->fresh()->saveLog())->createOperationLog();
+
         return $this->response();
     }
 
@@ -170,6 +180,8 @@ class CdnProviderController extends Controller
      */
     public function changeScannable(Request $request, CdnProvider $cdnProvider)
     {
+        $this->setChangeFrom($cdnProvider->saveLog());
+
         $scannable = $request->get('scannable') ? true : false;
 
         if ($scannable) {
@@ -186,8 +198,9 @@ class CdnProviderController extends Controller
                 return $this->setStatusCode(400)->response('', InputError::THIS_CDNPROVIDER_URL_IS_NULL, []);
             }
         }
-
         $cdnProvider->update(['scannable' => $scannable, 'edited_by' => $request->get('edited_by')]);
+
+        $this->setChangeTo($cdnProvider->saveLog())->createOperationLog();
         return $this->response('', null, $cdnProvider);
     }
 
@@ -210,6 +223,8 @@ class CdnProviderController extends Controller
 
     public function destroy(CdnProvider $cdnProvider)
     {
+        $this->setChangeFrom($cdnProvider->saveLog());
+
         $payload = $this->getJWTPayload();
 
         $errorCode = null;
@@ -219,7 +234,7 @@ class CdnProviderController extends Controller
         } else if ($cdnProvider->cdns->isEmpty()) {
             $cdnProvider->delete();
 
-            $this->createEsLog($payload['sub'], "CDN", "delete", "CDN Provider");
+            $this->createOperationLog();
         } else {
             $errorCode = InputError::CANT_DELETE_THIS_CDN_PROVIDER;
         }
