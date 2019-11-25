@@ -57,8 +57,9 @@ class CdnProviderController extends Controller
             'edited_by' => $this->getJWTPayload()['uuid'],
         ]);
 
-        $cdnProvider = $cdnProvider->create($request->all());
-        $cdnProvider->update(['status' => 'active']);
+        $createData = $request->only('name', 'ttl', 'user_group_id', 'url') + ['status' => 'active'];
+
+        $cdnProvider = $cdnProvider->create($createData);
 
         $this->setChangeTo($cdnProvider->fresh()->saveLog())->createOperationLog();
 
