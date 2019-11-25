@@ -55,12 +55,13 @@ class CdnProviderController extends Controller
     {
         $request->merge([
             'edited_by' => $this->getJWTPayload()['uuid'],
-            'status' => 'active',
-            'scannable' => 0,
         ]);
-        $cdnProvider = $cdnProvider->create($request->all());
 
-        $this->setChangeTo($cdnProvider->saveLog())->createOperationLog();
+        $cdnProvider = $cdnProvider->create($request->all());
+        $cdnProvider->update(['status' => 'active']);
+
+        $this->setChangeTo($cdnProvider->fresh()->saveLog())->createOperationLog();
+
         return $this->response('', null, $cdnProvider);
     }
 
