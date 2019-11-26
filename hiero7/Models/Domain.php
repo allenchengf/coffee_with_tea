@@ -50,4 +50,9 @@ class Domain extends Model
             'id'
         );
     }
+
+    public function saveLog()
+    {
+        return $this->only('name', 'cname', 'label');
+    }
 }

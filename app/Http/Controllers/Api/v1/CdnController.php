@@ -6,17 +6,20 @@ use App\Events\CdnWasCreated;
 use App\Events\CdnWasDelete;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\CdnCreateRequest;
-use App\Http\Requests\CdnUpdateRequest;
 use App\Http\Requests\CdnDeleteRequest;
+use App\Http\Requests\CdnUpdateRequest;
 use DB;
 use Hiero7\Enums\InternalError;
 use Hiero7\Models\Cdn;
 use Hiero7\Models\Domain;
 use Hiero7\Services\CdnService;
+use Hiero7\Traits\OperationLogTrait;
 use Illuminate\Http\Request;
 
 class CdnController extends Controller
 {
+    use OperationLogTrait;
+
     protected $cdnService;
 
     /**
@@ -27,6 +30,7 @@ class CdnController extends Controller
     public function __construct(CdnService $cdnService)
     {
         $this->cdnService = $cdnService;
+        $this->setCategory(config('logging.category.cdn'));
     }
 
     /**
@@ -73,9 +77,12 @@ class CdnController extends Controller
             DB::commit();
 
             $cdn->update(['provider_record_id' => $createdDnsProviderRecordResult[0]['data']['record']['id']]);
+
         }
 
         DB::commit();
+
+        $this->setChangeTo($cdn->fresh()->saveLog())->createOperationLog(); // SaveLog
 
         return $this->setStatusCode(200)->response('success', null, $cdn);
 
@@ -90,6 +97,8 @@ class CdnController extends Controller
      */
     public function updateDefault(CdnUpdateRequest $request, Domain $domain, Cdn $cdn)
     {
+        $this->setChangeFrom($cdn->saveLog());
+
         $error = $this->cdnService->changeDefaultToTrue($domain, $cdn, $request->edited_by);
 
         if (!$error) {
@@ -98,6 +107,8 @@ class CdnController extends Controller
                 InternalError::INTERNAL_ERROR
             );
         }
+
+        $this->setChangeTo($cdn->saveLog())->createOperationLog();
         return $this->response('', null, $cdn);
     }
 
@@ -110,6 +121,7 @@ class CdnController extends Controller
      */
     public function updateCname(CdnUpdateRequest $request, Domain $domain, Cdn $cdn)
     {
+        $this->setChangeFrom($cdn->saveLog());
         DB::beginTransaction();
 
         $this->cdnService->modifyCNAME($request);
@@ -126,6 +138,8 @@ class CdnController extends Controller
 
         DB::commit();
 
+        $this->setChangeTo($cdn->saveLog())->createOperationLog();
+
         return $this->setStatusCode(200)->response('success', null, $cdn);
     }
 
@@ -139,6 +153,8 @@ class CdnController extends Controller
     public function destroy(CdnDeleteRequest $request, Domain $domain, Cdn $cdn)
     {
         event(new CdnWasDelete($cdn));
+
+        $this->setChangeFrom($cdn->saveLog())->createOperationLog();
 
         return $this->setStatusCode(200)->response('success', null, []);
     }

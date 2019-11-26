@@ -4,6 +4,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.8.1] - 2019-11-25
+### Fixed
+- create cdn_provider for insert
+
+## [0.8.0] - 2019-11-25
+### Added
+- 批次新增取得結果 API
+- 儲存 Log method
+
+### Upate
+- 更新 OperationLogTrait
+- Log save for new format 
+
 ## [0.7.0] - 2019-11-08
 ### Added
 - 查詢 Job Process 進度

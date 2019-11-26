@@ -36,6 +36,12 @@ BACKUP_AT=03:00 (沒設定 Backup 時間的 user_group 們其備份時間 - Just
 
 #### Note
 
-leodock_backend gateway IP :
+1. leodock_backend gateway IP :
 
 請去 leodock .env 找尋 network 底下的 gateway
+
+2. S3 Error: The difference between the request time and the current time is too large
+```
+# 校正時間
+sudo ntpdate ntp.ubuntu.com
+```

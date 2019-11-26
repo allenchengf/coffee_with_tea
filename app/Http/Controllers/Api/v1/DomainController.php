@@ -23,6 +23,8 @@ class DomainController extends Controller
         $this->domainService = $domainService;
 
         $this->status = (env('APP_ENV') !== 'testing') ?? false;
+
+        $this->setCategory(config('logging.category.domain'));
     }
 
     /**
@@ -114,9 +116,10 @@ class DomainController extends Controller
 
         if (!$errorCode = $this->domainService->checkUniqueCname($request->cname)) {
             $domain = $domain->create($request->all());
+
+            $this->setChangeTo($domain->saveLog())->createOperationLog();
         }
 
-        $this->createEsLog($this->getJWTPayload()['sub'], "Domain", "create", "domain");
         return $this->setStatusCode($errorCode ? 400 : 200)->response(
             '',
             $errorCode ? $errorCode : null,
@@ -127,19 +130,23 @@ class DomainController extends Controller
 
     public function editDomain(Request $request, Domain $domain)
     {
+        $this->setChangeFrom($domain->saveLog());
+
         $this->modifyName($request);
 
         $domain->update($request->only('name', 'label', 'edited_by'));
 
         $domain->cdns;
 
-        $this->createEsLog($this->getJWTPayload()['sub'], "Domain", "update", "domain");
+        $this->setChangeTo($domain->saveLog())->createOperationLog();
 
         return $this->response('', null, $domain);
     }
 
     public function destroy(Domain $domain)
     {
+        $this->setChangeFrom($domain->saveLog());
+
         $domain_name = $domain->name;
 
         //有 DomainGroup 並且 不能是 Group 內唯一的 Domain
@@ -153,16 +160,20 @@ class DomainController extends Controller
                 event(new CdnWasDelete($cdnModel, 1));
             }
         }
+
         $domain->delete();
-        $this->createEsLog($this->getJWTPayload()['sub'], "Domain", "delete", "domain");
+
+        $this->createOperationLog();
 
         return $this->response('', '', compact('domain_name'));
     }
 
     private function modifyName(Request $request)
     {
-        $request->merge([
-            'name' => strtolower($request->get('name')),
-        ]);
+        if ($request->has('name')) {
+            $request->merge([
+                'name' => strtolower($request->get('name')),
+            ]);
+        }
     }
 }
