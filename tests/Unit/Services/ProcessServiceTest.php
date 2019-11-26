@@ -110,10 +110,10 @@ class ProcessServiceTest extends TestCase
         $response = $this->service->getBatchResult($request, $this->ugId);
 
         $this->assertArrayHasKey('success',$response);
-        $this->assertCount(2,$response['success']);
+        $this->assertCount(2,$response['success']['domain']);
 
         $this->assertArrayHasKey('failure',$response);
-        $this->assertCount(3,$response['failure']);
+        $this->assertCount(3,$response['failure']['domain']);
     }
 
     /**
@@ -137,19 +137,19 @@ class ProcessServiceTest extends TestCase
         $response = $this->service->getBatchResult($request, $this->ugId);
 
         $this->assertArrayHasKey('success',$response);
-        $this->assertCount(2,$response['success']);
+        $this->assertCount(2,$response['success']['domain']);
 
         $this->assertArrayHasKey('failure',$response);
-        $this->assertCount(3,$response['failure']);
+        $this->assertCount(3,$response['failure']['domain']);
 
         //GetBatchResult 第二次
         $response1 = $this->service->getBatchResult($request, $this->ugId);
 
         $this->assertArrayHasKey('success',$response1);
-        $this->assertCount(0,$response1['success']);
+        $this->assertCount(0,$response1['success']['domain']);
 
         $this->assertArrayHasKey('failure',$response1);
-        $this->assertCount(0,$response1['failure']);
+        $this->assertCount(0,$response1['failure']['domain']);
 
     }
 
