@@ -65,21 +65,26 @@ trait OperationLogTrait
             'platform' => $this->getPlatform(),
             'category' => $category ?? $this->getCategory(),
             'change_type' => $this->getChangeType(),
-            'changed_from' => $this->getChangeFrom(),
-            'changed_to' => $this->getChangeTo(),
+            'changed_from' => json_encode($this->getChangeFrom()),
+            'changed_to' => json_encode($this->getChangeTo()),
             'message' => $message,
             'ip' => Request::ip(),
             'method' => $this->getRequestMethod(),
             'url' => Request::url(),
-            'input' => Request::except(['password', 'password_confirmation', 'edited_by', 'old', 'new']),
+            'input' => json_encode(Request::except(['password', 'password_confirmation', 'edited_by', 'old', 'new'])),
         ];
 
         $this->curlWithUri(self::getOperationLogURL(), '/log/platform/iRouteCDN', $body, 'post');
     }
 
-    public function getEsLog($platform, $category)
+    public function getEsLog()
     {
-        return $this->curlWithUri(self::getOperationLogURL(), "/log/platform/$platform/category/$category", [], 'get');
+        return $this->curlWithUri(self::getOperationLogURL(), "/log/platform/iRouteCDN", ['user_group_id' => $this->getJWTUserGroupId()], 'get');
+    }
+
+    public function getEsLogByCategory(string $category)
+    {
+        return $this->curlWithUri(self::getOperationLogURL(), "/log/platform/iRouteCDN/category/$category", ['user_group_id' => $this->getJWTUserGroupId()], 'get');
     }
 
     public function getEsLogByQuery($query)

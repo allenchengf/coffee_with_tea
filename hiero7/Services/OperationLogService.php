@@ -1,8 +1,6 @@
 <?php
 
-
 namespace Hiero7\Services;
-
 
 use Hiero7\Traits\OperationLogTrait;
 
@@ -24,14 +22,14 @@ class OperationLogService
         $this->userModuleService = $userModuleService;
     }
 
-
-    public function get($request)
+    public function get()
     {
-        $user = $this->checkUserType($request);
+        return $this->getEsLog();
+    }
 
-        $query = $this->formatQuery($user['data']['user_group_id']);
-
-        return $this->getEsLogByQuery($query);
+    public function show(string $category)
+    {
+        return $this->getEsLogByCategory($category);
     }
 
     public function checkUserType($request)
@@ -39,30 +37,29 @@ class OperationLogService
         return $this->userModuleService->getSelf($request);
     }
 
-
     private function formatQuery($userGroup)
     {
         if ($userGroup == self::GROUP_HIERO7) {
             return [
-                "from"=> 0,
-                "size"=> env('OPERATION_LOG_SIZE'),
+                "from" => 0,
+                "size" => env('OPERATION_LOG_SIZE'),
                 "query" => [
                     "bool" => [
                         "must" => ["match" => ["type" => $this->getPlatform()]],
-                    ]
-                ]
+                    ],
+                ],
             ];
         }
 
         return [
-            "from"=> 0,
-            "size"=> env('OPERATION_LOG_SIZE'),
+            "from" => 0,
+            "size" => env('OPERATION_LOG_SIZE'),
             "query" => [
                 "bool" => [
-                    "must"   => ["match" => ["user_group" => $userGroup]],
-                    "filter" => ["match" => ["type" => $this->getPlatform()]]
-                ]
-            ]
+                    "must" => ["match" => ["user_group" => $userGroup]],
+                    "filter" => ["match" => ["type" => $this->getPlatform()]],
+                ],
+            ],
         ];
 
     }
