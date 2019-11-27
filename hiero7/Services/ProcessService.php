@@ -52,8 +52,8 @@ class ProcessService
 
         list($success,$failure) = $this->format($error);
 
-        $result = ['success'=> collect($success)->collapse(),
-                    'failure' => collect($failure)->collapse()
+        $result = ['success'=> $success,
+                    'failure' => $failure
                     ];
 
         $this->deleteRedisRecord($connect);
@@ -103,19 +103,22 @@ class ProcessService
      */
     private function formatArray(Collection $data)
     {
-        $success = $failure = [];
+        $domainSuccess = $domainFailure = [];
 
         foreach($data as $array){
             if(!empty($array->success->domain)){
-                $success[]= $array->success->domain;
+                $domainSuccess[]= $array->success->domain;
             }
 
             if(!empty($array->failure->domain)){
-                $failure[]= $array->failure->domain;
+                $domainFailure[]= $array->failure->domain;
             }
         }
 
-        return [$success,$failure];
+        $success = ['domain' => collect($domainSuccess)->collapse()];
+        $failure = ['domain' => collect($domainFailure)->collapse()];
+
+        return [ $success, $failure];
     }
 
     private function getQueueName(array $request, $ugId)
