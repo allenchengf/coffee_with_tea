@@ -27,20 +27,6 @@ trait OperationLogTrait
             ->$method();
     }
 
-    //createEsLog has not been testing,so there may be bugs
-    public function createEsLog(int $targetUser, $category, $behavior, $item)
-    {
-        if (env('APP_ENV') === 'testing') {
-            return true;
-        }
-
-        $targetUser = $this->getTargetUser($targetUser);
-
-        $data = $this->formatBehavior($this->getLoginUser(), $targetUser, $category, $behavior, $item);
-
-        $this->curlWithUri(self::getOperationLogURL(), '/log/platform', $data, 'post');
-    }
-
     /**
      * 新增操作 Log
      *
@@ -90,59 +76,6 @@ trait OperationLogTrait
     public function getEsLogByQuery($query)
     {
         return $this->curlWithUri(self::getOperationLogURL(), "/log/platform/query", $query, 'post');
-    }
-
-    private function formatBehavior($operator, $targetUser, $category, $behavior, $item)
-    {
-        $message = '';
-
-        $operatorData = $operator->data;
-
-        if ($this->checkOperatorNTargetUserIsTheSame($operator, $targetUser)) {
-            $message = "{$operatorData->name} ({$operatorData->email}) {$behavior} {$item}.";
-
-        } else {
-            $message = "{$operatorData->name} ({$operatorData->email}) {$behavior} {$targetUser->name}'s ({$targetUser->email}) {$item}.";
-        }
-
-        $body = [
-            "uid" => $operatorData->uid,
-            "userGroup" => $operatorData->user_group_id,
-            "platform" => $this->getPlatform(),
-            "category" => $category,
-            "message" => $message,
-        ];
-
-        return $body;
-    }
-
-    public function getLoginUser()
-    {
-        return $this->curlWithUri(self::getUserModuleDomain(),
-            '/users/self',
-            [
-                'uid' => $this->getJWTUserId(),
-                'ugid' => $this->getJWTUserGroupId(),
-            ],
-            'get',
-            false);
-    }
-
-    private function getTargetUser($uid)
-    {
-        return $this->curlWithUri(self::getUserModuleDomain(),
-            "/users/$uid/profile",
-            [
-                'uid' => $uid,
-            ],
-            'get', false);
-    }
-
-    private function checkOperatorNTargetUserIsTheSame($operator, $targetUser)
-    {
-        $targetUserData = $targetUser->data;
-        $operatorData = $operator->data;
-        return $operatorData->uid == $targetUserData->uid ? true : false;
     }
 
     protected function getMappingChangeType()
@@ -264,16 +197,6 @@ trait OperationLogTrait
     private static function getOperationLogURL(): string
     {
         return env('OPERATION_LOG_URL');
-    }
-
-    /**
-     * 取得 User module API URL
-     *
-     * @return string
-     */
-    private static function getUserModuleDomain(): string
-    {
-        return env('USER_MODULE');
     }
 
     /**

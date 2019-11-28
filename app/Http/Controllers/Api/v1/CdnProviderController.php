@@ -214,7 +214,6 @@ class CdnProviderController extends Controller
 
         if ($cdnProvider->status) {
             $defaultInfo = $this->cdnProviderService->cdnDefaultInfo($cdnProvider);
-            $this->createEsLog($this->getJWTPayload()['sub'], "CDN", "check", "CDN Provider");
         }
 
         $defaultInfo['be_used'] = $cdnProvider->domains->keyBy('name')->keys();
