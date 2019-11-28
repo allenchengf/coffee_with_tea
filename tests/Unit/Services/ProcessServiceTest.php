@@ -67,8 +67,6 @@ class ProcessServiceTest extends TestCase
         
         $response = $this->service->index($request, $this->ugId);
 
-        // dd($response, $this->redis->get($this->queueName));
-
         $this->assertEquals($response['done'], $this->count);
         $this->assertEquals($response['process'], 0);
         $this->assertEquals($response['all'], $response['done']);

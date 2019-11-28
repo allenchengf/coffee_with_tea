@@ -126,7 +126,10 @@ class BatchService{
         $queueName = 'batchCreateDomainAndCdn'.$user['uuid'].$ugId;
 
         //連 Redis 的 2 dataBase
-        $redis = Redis::connection('jobs');
+        $redisJobs = Redis::connection('jobs');
+
+        //檢查是否有原本的資料
+        $this->checkProcessRecord($queueName,$redisJobs);
 
         // 批次新增 domain & cdn 迴圈， $count 記錄總共有幾筆
         $count = 0;
@@ -151,9 +154,28 @@ class BatchService{
         }
 
         // 記錄總共有幾筆
-        $redis->set($queueName,$count);
+        $redisJobs->set($queueName,$count);
 
         return ;
+    }
+
+    /**
+     * 檢查原本在 Redis 有沒有記錄，有的話就刪掉。之後會塞新的進去。
+     *
+     * @param [String] $queueName
+     * @param [type] $redisJobs
+     * @return void
+     */
+    private function checkProcessRecord(String $queueName,$redisJobs)
+    {
+        $redisRecord = Redis::connection('record');
+
+        if($redisRecord->exists($queueName))
+        {
+            $redisRecord->del($queueName);
+            $redisJobs->del($queueName);
+        }
+
     }
 
     public function storeDomain($domain, $user)
