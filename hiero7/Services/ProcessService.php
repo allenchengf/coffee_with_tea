@@ -56,7 +56,7 @@ class ProcessService
     }
 
     /**
-     * 檢查如果每一筆 job 資料都完成的話，就 刪掉 Record 的記錄和 Done 的記錄
+     * 檢查如果每一筆 job 資料都完成的話，就 刪掉 Record 的記錄
      *
      * @param [type] $connect
      * @return void
@@ -68,7 +68,6 @@ class ProcessService
         if($process == 0)
         {
             $connect->del($this->queueName);
-            // $this->redis->del($this->queueName.'done');
             $this->redis->del($this->queueName);
         }
     }

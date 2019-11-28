@@ -128,6 +128,7 @@ class BatchService{
         //連 Redis 的 2 dataBase
         $redisJobs = Redis::connection('jobs');
 
+        //檢查是否有原本的資料
         $this->checkProcessRecord($queueName,$redisJobs);
 
         // 批次新增 domain & cdn 迴圈， $count 記錄總共有幾筆
