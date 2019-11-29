@@ -38,7 +38,7 @@ class OperationLogService
         return $this->getEsLogByQuery($query);
     }
 
-    private function formatQuery(array $searchList = [], $user_group_id = null, int $from = null, int $size = null)
+    private function formatQuery(array $searchList = [], int $user_group_id = null, int $from = null, int $size = null)
     {
         $match = [
             [
