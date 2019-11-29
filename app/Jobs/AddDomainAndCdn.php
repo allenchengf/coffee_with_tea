@@ -103,7 +103,9 @@ class AddDomainAndCdn implements ShouldQueue
             $success[] = ['name' => $domainResult['name'], 'cdn' => $cdnSuccess];
             //接 Domain 通過但 cdn 可能會有錯誤的。若 domain 有錯誤就不會進此回圈
             if(!empty($cdnError)){
-                $failure[] = ['name' => $domainResult['name'], 'cdn' => $cdnError];
+                $failure[] = ['name' => $domainResult['name'],
+                                'errorCode' => null,
+                                'message' => null , 'cdn' => $cdnError];
             }
         }
 
