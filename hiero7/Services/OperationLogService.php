@@ -7,8 +7,13 @@ use Hiero7\Traits\OperationLogTrait;
 
 class OperationLogService
 {
-    use OperationLogTrait;
-    use JwtPayloadTrait;
+    use OperationLogTrait, JwtPayloadTrait {
+        OperationLogTrait::getJWTToken insteadof JwtPayloadTrait;
+        OperationLogTrait::getJWTPayload insteadof JwtPayloadTrait;
+        OperationLogTrait::getJWTUserId insteadof JwtPayloadTrait;
+        OperationLogTrait::getJWTUserGroupId insteadof JwtPayloadTrait;
+        OperationLogTrait::getJWTUuid insteadof JwtPayloadTrait;
+    }
 
     const GROUP_HIERO7 = 1;
 
