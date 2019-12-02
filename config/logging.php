@@ -79,6 +79,7 @@ return [
     ],
 
     'category' => [
+        'user' => 'User',
         'domain' => 'Domain',
         'cdn_provider' => 'CDN Provider',
         'cdn' => 'CDN',
