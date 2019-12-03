@@ -24,26 +24,30 @@ class OperationLogService
      *
      * @param $userModuleService
      */
-    public function __construct(UserModuleService $userModuleService)
+    function __construct(UserModuleService $userModuleService)
     {
         $this->userModuleService = $userModuleService;
     }
 
-    public function get()
+    function get()
     {
         $query = $this->formatQuery();
+        $output = $this->getEsLogByQuery($query);
 
-        return $this->getEsLogByQuery($query);
+        return $output->data;
     }
 
-    public function show(string $category)
+    function show(string $category)
     {
         $query = $this->formatQuery(compact('category'));
 
-        return $this->getEsLogByQuery($query);
+        $output = $this->getEsLogByQuery($query);
+
+        return $output->data;
+
     }
 
-    private function formatQuery(array $searchList = [], int $user_group_id = null, int $from = null, int $size = null)
+    function formatQuery(array $searchList = [], int $user_group_id = null, int $from = null, int $size = null)
     {
         $match = [
             [

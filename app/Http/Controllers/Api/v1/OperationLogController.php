@@ -22,12 +22,16 @@ class OperationLogController extends Controller
 
     public function index()
     {
-        return $this->operationLogService->get();
+        $data = $this->operationLogService->get();
+
+        return $this->response('', null, $data);
     }
 
     public function show($category)
     {
-        return $this->operationLogService->show($category);
+        $data = $this->operationLogService->show($category);
+
+        return $this->response('', null, $data);
     }
 
     public function categoryList()
