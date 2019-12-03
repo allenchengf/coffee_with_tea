@@ -42,14 +42,13 @@ class AddDomainAndCdn implements ShouldQueue
     {   
         $domainError = $success = $failure = [];
         // 新增或查詢已存在 domain
-        list($domainResult, $domain_id, $errorMessage) = app('Hiero7\Services\BatchService')->storeDomain($this->domain, $this->user);
+        list($domainResult, $domain_id, $errorMessage, $errorCode) = app('Hiero7\Services\BatchService')->storeDomain($this->domain, $this->user);
 
-        if (! is_null($errorMessage) || ! isset($domainResult["cdns"]) || empty($domainResult["cdns"])) {
-            
+        if (! is_null($errorCode)||! is_null($errorMessage) || ! isset($domainResult["cdns"]) || empty($domainResult["cdns"])) {
             $domainError = [
                 'name' => $domainResult["name"],
-                'errorCode' => ! is_null($errorMessage)?110:111,
-                'message' => !is_null($errorMessage)?$errorMessage:'This domain has been stored with no cdns.',
+                'errorCode' => !is_null($errorCode)? $errorCode:111,
+                'message' => !is_null($errorCode)?InputError::getDescription($errorCode):'This domain has been stored with no cdns.',
                 'cdn' => []
             ];
             

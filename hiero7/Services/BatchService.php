@@ -45,14 +45,13 @@ class BatchService{
         foreach ($domains as $domain) {
             $domainError = [];
             // 新增或查詢已存在 domain
-            list($domain, $domain_id, $errorMessage) = $this->storeDomain($domain, $user);
+            list($domain, $domain_id, $errorMessage, $errorCode) = $this->storeDomain($domain, $user);
 
-            if (! is_null($errorMessage) || ! isset($domain["cdns"]) || empty($domain["cdns"])) {
-                
+            if (! is_null($errorCode)||! is_null($errorMessage) || ! isset($domain["cdns"]) || empty($domain["cdns"])) {
                 $domainError = [
                     'name' => $domain["name"],
-                    'errorCode' => ! is_null($errorMessage)?110:111,
-                    'message' => !is_null($errorMessage)?$errorMessage:'This domain has been stored with no cdns.',
+                    'errorCode' => !is_null($errorCode)? $errorCode:111,
+                    'message' => !is_null($errorCode)?InputError::getDescription($errorCode):'This domain has been stored with no cdns.',
                     'cdn' => []
                 ];
                 
@@ -181,7 +180,7 @@ class BatchService{
     public function storeDomain($domain, $user)
     {
         $domain_id = null;
-        $errorMessage = null;
+        $errorMessage = $errorCode = null;
 
         $domain["name"] = $this->checkDomainFormate($domain['name']);
 
@@ -189,7 +188,8 @@ class BatchService{
             $domainValidate = $this->validateDomain($domain["name"]);
             // 判斷 domain 有沒有各式錯誤
             if(!$domainValidate){
-                throw new Exception(InputError::getDescription(InputError::DOMAIN_FORMATE_IS_INVALID));
+                $errorCode = InputError::DOMAIN_FORMATE_IS_INVALID;
+                throw new Exception();
             }
 
             // domain.cname 為 domain.name 去 . 後再補尾綴 `.user_group_id`
@@ -209,13 +209,16 @@ class BatchService{
             if (! is_null($result)) {
                 $domain_id = $result->id;
                 // 判斷 domain 有沒有 Group
-                $result->domainGroup->isEmpty() ? null : $errorMessage = 'Domain already has Group.';
-            } else {
+                $result->domainGroup->isEmpty() ? 
+                $errorCode = InputError::DOMAIN_ALREADY_EXISTED : $errorMessage = InputError::DOMAIN_ALREADY_HAS_GROUP;
+            }
+
+            if (!$errorCode){
                 $errorMessage = $e->getMessage();
             }
 
         }
-        return [$domain, $domain_id, $errorMessage];
+        return [$domain, $domain_id, $errorMessage, $errorCode];
     }
 
     public function storeCdn($domain, $domain_id, $cdn, $user, $isFirstCdn)
