@@ -65,17 +65,17 @@ trait OperationLogTrait
 
     public function getEsLog()
     {
-        return $this->curlWithUri(self::getOperationLogURL(), "/log/platform/iRouteCDN", ['user_group_id' => $this->getJWTUserGroupId()], 'get');
+        return $this->curlWithUri(self::getOperationLogURL(), "/log/platform/iRouteCDN", ['user_group_id' => $this->getJWTUserGroupId()], 'get', false);
     }
 
     public function getEsLogByCategory(string $category)
     {
-        return $this->curlWithUri(self::getOperationLogURL(), "/log/platform/iRouteCDN/category/$category", ['user_group_id' => $this->getJWTUserGroupId()], 'get');
+        return $this->curlWithUri(self::getOperationLogURL(), "/log/platform/iRouteCDN/category/$category", ['user_group_id' => $this->getJWTUserGroupId()], 'get', false);
     }
 
     public function getEsLogByQuery(array $query)
     {
-        return $this->curlWithUri(self::getOperationLogURL(), "/log/platform/iRouteCDN/query", $query, 'post');
+        return $this->curlWithUri(self::getOperationLogURL(), "/log/platform/iRouteCDN/query", $query, 'post', false);
     }
 
     protected function getMappingChangeType()
