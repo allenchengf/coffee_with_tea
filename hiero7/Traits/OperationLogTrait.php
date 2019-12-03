@@ -73,9 +73,9 @@ trait OperationLogTrait
         return $this->curlWithUri(self::getOperationLogURL(), "/log/platform/iRouteCDN/category/$category", ['user_group_id' => $this->getJWTUserGroupId()], 'get');
     }
 
-    public function getEsLogByQuery($query)
+    public function getEsLogByQuery(array $query)
     {
-        return $this->curlWithUri(self::getOperationLogURL(), "/log/platform/query", $query, 'post');
+        return $this->curlWithUri(self::getOperationLogURL(), "/log/platform/iRouteCDN/query", $query, 'post');
     }
 
     protected function getMappingChangeType()
