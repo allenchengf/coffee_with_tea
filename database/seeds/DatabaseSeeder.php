@@ -18,5 +18,9 @@ class DatabaseSeeder extends Seeder
         $this->call(NetworkTableSeeder::class);
         $this->call(LocationNetworkTableSeeder::class);
         $this->call(ScanPlatformTableSeeder::class);
+        $this->call(PermissionSeeder::class);
+        $this->call(ApisTableSeeder::class);
+        $this->call(ApiPermissionMappingTableSeeder::class);
+        $this->call(RolePermissionMappingSeeder::class);
     }
 }
