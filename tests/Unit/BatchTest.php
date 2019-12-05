@@ -73,11 +73,11 @@ class BatchTest extends TestCase
         $this->assertEquals(count($result), 2);
 
         $this->assertArrayHasKey('success', $result);
-        $this->assertEquals($result['success']['domain'], []); 
+        $this->assertEquals($result['success']['domain'][0]['name'], 'hello2.com');
+        $this->assertEquals($result['success']['domain'][0]['cdn'], []); 
 
         $this->assertArrayHasKey('failure', $result);
-        $this->assertEquals($result['failure']['domain'][0]['name'], 'hello2.com');        
-        $this->assertEquals($result['failure']['domain'][0]['cdn'], []); 
+        $this->assertEquals($result['failure']['domain'], []);        
     }
 
     public function testBatchAddDomainSuccessAndAddCdnFail()

@@ -111,10 +111,33 @@ class ProcessService
             }
         }
 
-        $success = ['domain' => collect($domainSuccess)->collapse()];
-        $failure = ['domain' => collect($domainFailure)->collapse()];
+        $domainSuccess = $this->removeEmpty(collect($domainSuccess)->collapse());
+        $domainFailure = $this->removeEmpty(collect($domainFailure)->collapse());
+
+        $success = ['domain' => $domainSuccess];
+        $failure = ['domain' => $domainFailure];
 
         return [ $success, $failure];
+    }
+
+    /**
+     * 移除空的
+     *
+     * @param Collection $data
+     * @return void
+     */
+    private function removeEmpty(Collection $data)
+    {
+        $result = [];
+
+        foreach($data as $array){
+            if(!empty($array)){
+                $result[] = $array;
+            }
+        }
+
+        return $result;
+
     }
 
     private function getQueueName(array $request, $ugId)
