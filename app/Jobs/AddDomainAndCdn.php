@@ -18,18 +18,17 @@ class AddDomainAndCdn implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public $tries = 1;
-    public $domain, $user, $cdnProviders, $batchService, $queueName ,$redis;
+    public $domain, $user, $batchService, $queueName ,$redis;
     
     /**
      * Create a new job instance.
      *
      * @return void
      */
-    public function __construct(array $domain, array $user, Collection $cdnProviders, string $queueName)
+    public function __construct(array $domain, array $user, string $queueName)
     {
         $this->domain = $domain;
         $this->user = $user;
-        $this->cdnProviders = $cdnProviders;
         $this->queueName = $queueName;
         $this->redis = Redis::connection('record');
     }
@@ -40,79 +39,59 @@ class AddDomainAndCdn implements ShouldQueue
      * @return void
      */
     public function handle()
-    {   
-        $domainError = $success = $failure = [];
+    {
+        $domainError = $cdnSuccess = $cdnError = $success = $failure =[];
         // 新增或查詢已存在 domain
         list($domainResult, $domain_id, $errorMessage, $errorCode) = app('Hiero7\Services\BatchService')->storeDomain($this->domain, $this->user);
 
-        if (! is_null($errorCode)||! is_null($errorMessage) || ! isset($domainResult["cdns"]) || empty($domainResult["cdns"])) {
+        if (! is_null($errorCode)||! is_null($errorMessage)) {
             $domainError = [
                 'name' => $domainResult["name"],
-                'errorCode' => !is_null($errorCode)? $errorCode:111,
-                'message' => !is_null($errorCode)?InputError::getDescription($errorCode):'This domain has been stored with no cdns.',
+                'errorCode' => $errorCode,
+                'message' => InputError::getDescription($errorCode),
+                // 目前不接 domain 沒有給 cdn 的 error 所以先註解起來摟～
+                // 'errorCode' => !is_null($errorCode)? $errorCode:111,
+                // 'message' => !is_null($errorCode)?InputError::getDescription($errorCode):'This domain has been stored with no cdns.',
                 'cdn' => []
             ];
-            
-            $failure[] = $domainError; //記錄失敗
+
         }
-
-        if(empty($domainError)){
-
-            // 查詢 cdns.domain_id 是否存在 ? 不存在才打 POD，代表 POD 的 default 尚未存在
-            $cdns = app('Hiero7\Repositories\CdnRepository')->indexByWhere(['domain_id' => $domain_id]);
-            $isFirstCdn = count($cdns) == 0 ? true : false;
-
-            $cdnSuccess = $cdnError = [];
-            // 批次新增 cdn 迴圈
-            foreach ($domainResult["cdns"] as $cdn) {
-                $cdn["cname"] = strtolower($cdn["cname"]);
-
-                // 此次 $cdn['name'] 換 cdn_providers.id、ttl欄位
-                $this->cdnProviders->each(function ($v) use (&$cdn) {
-                    if (strcasecmp($v['name'], $cdn["name"]) == 0) { // cdn_providers.name 不區分大小寫相同
-                        $cdn["cdn_provider_id"] = $v['id'];
-                        $cdn["ttl"] = $v['ttl'];
-                        $cdn["status"] = $v['status'] == 'active' ? true : false;
-                        return false; // break;
-                    }
-                });
-
-                // 若此 $cdn['name'] 不匹配 cdn_providers.name
-                if(! isset($cdn["cdn_provider_id"])) {
-                    $cdnError[] = ['name' => $cdn["name"],
-                                    'errorCode' => 112,
-                                    'message' => 'This cdn_providers.name ' . $cdn["name"]. ' doesn\'t exist.'];
-                    
-                    continue;
+        
+        if(!empty($domainError)){
+            //有 Domain error
+            //針對已經存在的domain 還是要處理之後的 cdn
+            if($errorCode == 4046 && isset($domainResult['cdns'])){
+                list($cdnSuccess, $cdnError) = app('Hiero7\Services\BatchService')->handelCdn($this->user, $domain_id, $domainResult);
+                
+                if(!empty($cdnSuccess)){
+                    $success[] = ['name' => $domainResult['name'], 'cdn' => $cdnSuccess];
                 }
-
-                // 新增 cdn
-                list($isFirstCdn, $errorMessage) = app('Hiero7\Services\BatchService')->storeCdn($domainResult, $domain_id, $cdn, $this->user, $isFirstCdn);
-                if (! is_null($errorMessage)) {
-
-                    $cdnError[] = ['name' => $cdn["name"],
-                                    'errorCode' => 113,
-                                    'message' => $errorMessage];
-                    
-                    continue;
-                }
-
-                $cdnSuccess[] = ['name' => $cdn["name"]]; 
             }
 
+            $domainError['cdn'] = $cdnError;
+            $failure[] = $domainError;
+
+        }else{
+            //無 Domain error
+            //處理之後的 cdn
+            if(isset($domainResult['cdns'])){
+                list($cdnSuccess, $cdnError) = app('Hiero7\Services\BatchService')->handelCdn($this->user, $domain_id, $domainResult);
+                
+                if(!empty($cdnError)){
+                    //有 Cdn error
+                    $failure[] = ['name' => $domainResult['name'],
+                    'errorCode' => null,
+                    'message' => null ,  'cdn' => $cdnError];
+                }
+            }
+            //無 Cdn error
             $success[] = ['name' => $domainResult['name'], 'cdn' => $cdnSuccess];
-            //接 Domain 通過但 cdn 可能會有錯誤的。若 domain 有錯誤就不會進此回圈
-            if(!empty($cdnError)){
-                $failure[] = ['name' => $domainResult['name'],
-                                'errorCode' => null,
-                                'message' => null , 'cdn' => $cdnError];
-            }
+            
         }
 
-        // 到時候要接結果留的
         $array = ['success' => ['domain' => $success],
-                    'failure' => ['domain' =>  $failure]
-                ];
+                    'failure' => ['domain' =>  $failure],
+                    ];
 
         //塞入處理結果在 Redis
         $this->redis->lpush($this->queueName,json_encode($array));
