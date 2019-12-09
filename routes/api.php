@@ -112,6 +112,8 @@ Route::group(['middleware' => ['api'], 'namespace' => 'Api\v1', 'prefix' => 'v1'
 
     Route::group(['prefix' => 'operation_log'], function () {
         Route::get('', 'OperationLogController@index')->name('operation_log.index');
+        Route::get('category/{category}', 'OperationLogController@show')->name('operation_log.show');
+        Route::get('category-list', 'OperationLogController@categoryList')->name('operation_log.category.list');
     });
 
 

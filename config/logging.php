@@ -79,10 +79,11 @@ return [
     ],
 
     'category' => [
+        'user' => 'User',
         'domain' => 'Domain',
         'cdn_provider' => 'CDN Provider',
         'cdn' => 'CDN',
-        'domain_group' => 'Domain group',
+        'domain_group' => 'Domain Group',
         'iroutecdn' => 'iRouteCDN',
         'network' => 'Network',
     ],
