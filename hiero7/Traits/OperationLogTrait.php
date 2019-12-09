@@ -54,7 +54,7 @@ trait OperationLogTrait
             'changed_from' => json_encode($this->getChangeFrom()),
             'changed_to' => json_encode($this->getChangeTo()),
             'message' => $message,
-            'ip' => Request::ip(),
+            'ip' => $this->getClientIp(),
             'method' => $this->getRequestMethod(),
             'url' => Request::url(),
             'input' => json_encode(Request::except(['password', 'password_confirmation', 'edited_by', 'old', 'new'])),
@@ -182,6 +182,19 @@ trait OperationLogTrait
     private function getChangeType()
     {
         return $this->changeType;
+    }
+
+    private function getClientIp()
+    {
+        $header = Request::header();
+
+        $ip = isset($header['x-forwarded-for']) ? $header['x-forwarded-for'][0] : null;
+
+        $ip = (!$ip && isset($header['x-real-ip'])) ? $header['x-real-ip'][0] : $ip;
+
+        $ip = $ip ?? Request::ip();
+
+        return $ip;
     }
 
     private function getRequestMethod()
