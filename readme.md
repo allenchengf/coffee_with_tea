@@ -45,3 +45,9 @@ BACKUP_AT=03:00 (沒設定 Backup 時間的 user_group 們其備份時間 - Just
 # 校正時間
 sudo ntpdate ntp.ubuntu.com
 ```
+
+3. phpunit
+```bash
+# 測試覆蓋率
+phpunit --coverage-html coverage
+```
