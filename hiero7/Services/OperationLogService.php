@@ -1,14 +1,19 @@
 <?php
 
-
 namespace Hiero7\Services;
 
-
+use Hiero7\Traits\JwtPayloadTrait;
 use Hiero7\Traits\OperationLogTrait;
 
 class OperationLogService
 {
-    use OperationLogTrait;
+    use OperationLogTrait, JwtPayloadTrait {
+        OperationLogTrait::getJWTToken insteadof JwtPayloadTrait;
+        OperationLogTrait::getJWTPayload insteadof JwtPayloadTrait;
+        OperationLogTrait::getJWTUserId insteadof JwtPayloadTrait;
+        OperationLogTrait::getJWTUserGroupId insteadof JwtPayloadTrait;
+        OperationLogTrait::getJWTUuid insteadof JwtPayloadTrait;
+    }
 
     const GROUP_HIERO7 = 1;
 
@@ -19,51 +24,59 @@ class OperationLogService
      *
      * @param $userModuleService
      */
-    public function __construct(UserModuleService $userModuleService)
+    function __construct(UserModuleService $userModuleService)
     {
         $this->userModuleService = $userModuleService;
     }
 
-
-    public function get($request)
+    function get()
     {
-        $user = $this->checkUserType($request);
+        $query = $this->formatQuery();
+        $output = $this->getEsLogByQuery($query);
 
-        $query = $this->formatQuery($user['data']['user_group_id']);
-
-        return $this->getEsLogByQuery($query);
+        return $output->data;
     }
 
-    public function checkUserType($request)
+    function show(string $category)
     {
-        return $this->userModuleService->getSelf($request);
+        $query = $this->formatQuery(compact('category'));
+
+        $output = $this->getEsLogByQuery($query);
+
+        return $output->data;
+
     }
 
-
-    private function formatQuery($userGroup)
+    function formatQuery(array $searchList = [], int $user_group_id = null, int $from = null, int $size = null)
     {
-        if ($userGroup == self::GROUP_HIERO7) {
-            return [
-                "from"=> 0,
-                "size"=> env('OPERATION_LOG_SIZE'),
-                "query" => [
-                    "bool" => [
-                        "must" => ["match" => ["type" => $this->getPlatform()]],
-                    ]
-                ]
+        $match = [
+            [
+                "match" => [
+                    "type" => $this->getPlatform(),
+                ],
+            ], [
+                "match" => [
+                    "user_group" => $user_group_id ?? $this->getJWTUserGroupId(),
+                ],
+            ],
+        ];
+
+        foreach ($searchList as $key => $value) {
+            $match[] = [
+                "match" => [
+                    $key => $value,
+                ],
             ];
         }
 
         return [
-            "from"=> 0,
-            "size"=> env('OPERATION_LOG_SIZE'),
+            "from" => $from ?? 0,
+            "size" => $size ?? env('OPERATION_LOG_SIZE'),
             "query" => [
                 "bool" => [
-                    "must"   => ["match" => ["user_group" => $userGroup]],
-                    "filter" => ["match" => ["type" => $this->getPlatform()]]
-                ]
-            ]
+                    "must" => $match,
+                ],
+            ],
         ];
-
     }
 }
