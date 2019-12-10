@@ -42,6 +42,10 @@ class PermissionSeeder extends Seeder
         ->updateOrInsert(
             ['name' => 'Config Backup', 'created_at' => $now],
             ['id' => 7]
+        )
+        ->updateOrInsert(
+            ['name' => 'Users', 'created_at' => $now],
+            ['id' => 8]
         );
     }
 }

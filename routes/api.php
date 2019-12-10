@@ -1,5 +1,6 @@
 <?php
-Route::group(['middleware' => ['api', 'check.role.permission'], 'namespace' => 'Api\v1', 'prefix' => 'v1'], function () {
+// , 'check.role.permission'
+Route::group(['middleware' => ['api'], 'namespace' => 'Api\v1', 'prefix' => 'v1'], function () {
 
     Route::group(['prefix' => 'domains'], function () {
 
@@ -139,10 +140,11 @@ Route::group(['middleware' => ['api', 'check.role.permission'], 'namespace' => '
         Route::get('result', 'ProcessController@getBatchResult')->name('process.getBatchResult');
     });
 
-    Route::group(['middleware' => ['auth.user.module'], 'prefix' => 'role_permission_mapping'], function () {
-        Route::get('', 'RolePermissionMappingController@indexByRoleId')->name('role_permission_mapping.indexByRoleId');
-        Route::post('', 'RolePermissionMappingController@upsert')->name('role_permission_mapping.upsert');
-        Route::delete('', 'RolePermissionMappingController@destroy')->name('role_permission_mapping.destroy');
+    Route::group(['middleware' => ['auth.user.module'], 'prefix' => 'roles'], function () {
+        Route::get('self', 'RolePermissionMappingController@indexSelf')->name('role_permission_mapping.indexSelf');
+        Route::get('{roleId}/permissions', 'index@index')->name('role_permission_mapping.index');
+        Route::post('{roleId}/permissions', 'RolePermissionMappingController@upsert')->name('role_permission_mapping.upsert');
+        Route::delete('{roleId}/permissions', 'RolePermissionMappingController@destroy')->name('role_permission_mapping.destroy');
     });
 
     Route::group(['prefix' => 'permissions'], function () {

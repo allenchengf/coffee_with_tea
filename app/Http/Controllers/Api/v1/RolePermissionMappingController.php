@@ -24,7 +24,7 @@ class RolePermissionMappingController extends Controller
         // $this->setCategory(config('logging.category.cdn_provider'));
     }
 
-    public function indexByRoleId()
+    public function indexSelf()
     {
         $rolePermissionMappings = $this->getByRoleId();
         return $this->response("Success", null, $rolePermissionMappings);
@@ -38,7 +38,7 @@ class RolePermissionMappingController extends Controller
 
         // table 撈
         $permissions = $this->permissionRepository->index();
-        $rolePermissionMappings = $this->rolePermissionMappingRepository->indexByRoleId($role_id);
+        $rolePermissionMappings = $this->rolePermissionMappingRepository->indexSelf($role_id);
 
         // 前端給
         $inputPermissions = collect($request->only('permissions')['permissions']);
@@ -78,7 +78,7 @@ class RolePermissionMappingController extends Controller
     public function getByRoleId()
     {
         $role_id = 1;//$this->getJWTPayload()['role_id'];
-        $rolePermissionMappings = $this->rolePermissionMappingRepository->indexByRoleId($role_id);
+        $rolePermissionMappings = $this->rolePermissionMappingRepository->indexSelf($role_id);
         $permissions = $this->permissionRepository->index();
 
         $rolePermissionMappings->each(function ($rpm, $iRpm) use (&$permissions, &$rolePermissionMappings) {

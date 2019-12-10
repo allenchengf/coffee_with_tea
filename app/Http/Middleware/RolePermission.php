@@ -43,12 +43,13 @@ class RolePermission
 
         // 直接給過: ugid = 1
         $jwtPayload = $this->getJWTPayload();
-        $role_id = 1; // $jwtPayload['role_id'];
         $user_group_id = $jwtPayload['user_group_id'];
         if ($user_group_id == 1) {
             return $next($request);
         }
 
+        // 檢查 API 使用權限
+        $role_id = 1; // $jwtPayload['role_id'];
         $selfPermissions = DB::table('permissions')
                             ->where('rpm.role_id', $role_id)
                             ->leftjoin('role_permission_mapping as rpm', 'permissions.id', '=', 'rpm.permission_id')
@@ -58,7 +59,7 @@ class RolePermission
                             ->get();
 
         if (! $selfPermissions || $selfPermissions->isEmpty()) {
-            // 尚未設定權限，請聯絡客戶自身主管
+            // 未曾設定權限，請聯絡客戶自身主管
             return $this->response(PermissionError::PERMISSION_DENIED);
         }
 
@@ -67,13 +68,13 @@ class RolePermission
 
             $isActionAllowed = $actions[$crud];
             $isPathMatch = preg_match('/^'. $row->path_regex .'$/', $path);
-            if( $isActionAllowed === 1 && $isPathMatch === 1) {
+            if( $isActionAllowed === 1 && $row->method == $method && $isPathMatch === 1) {
                 // 確認授權，給過
                 return $next($request);
             }
         }
 
-        // 無授權該使用者之 API
+        // 無授權該使用者此 API
         return $this->response(PermissionError::YOU_DONT_HAVE_PERMISSION);
     }
 

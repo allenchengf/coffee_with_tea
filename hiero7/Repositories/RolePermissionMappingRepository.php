@@ -18,7 +18,7 @@ class RolePermissionMappingRepository
         return $this->rolePermissionMapping->all();
     }
 
-    public function indexByRoleId($role_id)
+    public function indexSelf($role_id)
     {
         $data = $this->rolePermissionMapping->where('role_id', $role_id)->get();
         $data->each(function ($item, $i) use (&$data) {
