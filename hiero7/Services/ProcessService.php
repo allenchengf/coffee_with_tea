@@ -23,12 +23,6 @@ class ProcessService
         $process = $this->jobs->where('queue', $this->queueName)->count();
         $done = ($all - $process) < 0 ? 0 : $all - $process ;
 
-        if($process == 0)
-        {
-            $this->redis->del($this->queueName);
-            $this->redis->set($this->queueName.'done', 1);
-        }
-
         $result = ['all' => $all,
                     'process' => $process,
                     'done' => $done
@@ -52,8 +46,8 @@ class ProcessService
 
         list($success,$failure) = $this->format($error);
 
-        $result = ['success'=> collect($success)->collapse(),
-                    'failure' => collect($failure)->collapse()
+        $result = ['success'=> $success,
+                    'failure' => $failure
                     ];
 
         $this->deleteRedisRecord($connect);
@@ -62,17 +56,19 @@ class ProcessService
     }
 
     /**
-     * 檢查如果每一筆 job 資料都完成的話，就 刪掉 Record 的記錄和 Done 的記錄
+     * 檢查如果每一筆 job 資料都完成的話，就 刪掉 Record 的記錄
      *
      * @param [type] $connect
      * @return void
      */
     private function deleteRedisRecord($connect)
     {
-        if($this->redis->get($this->queueName.'done'))
+        $process = $this->jobs->where('queue', $this->queueName)->count();
+        
+        if($process == 0)
         {
             $connect->del($this->queueName);
-            $this->redis->del($this->queueName.'done');
+            $this->redis->del($this->queueName);
         }
     }
 
@@ -103,19 +99,45 @@ class ProcessService
      */
     private function formatArray(Collection $data)
     {
-        $success = $failure = [];
+        $domainSuccess = $domainFailure = [];
 
         foreach($data as $array){
             if(!empty($array->success->domain)){
-                $success[]= $array->success->domain;
+                $domainSuccess[]= $array->success->domain;
             }
 
             if(!empty($array->failure->domain)){
-                $failure[]= $array->failure->domain;
+                $domainFailure[]= $array->failure->domain;
             }
         }
 
-        return [$success,$failure];
+        $domainSuccess = $this->removeEmpty(collect($domainSuccess)->collapse());
+        $domainFailure = $this->removeEmpty(collect($domainFailure)->collapse());
+
+        $success = ['domain' => $domainSuccess];
+        $failure = ['domain' => $domainFailure];
+
+        return [ $success, $failure];
+    }
+
+    /**
+     * 移除空的
+     *
+     * @param Collection $data
+     * @return void
+     */
+    private function removeEmpty(Collection $data)
+    {
+        $result = [];
+
+        foreach($data as $array){
+            if(!empty($array)){
+                $result[] = $array;
+            }
+        }
+
+        return $result;
+
     }
 
     private function getQueueName(array $request, $ugId)

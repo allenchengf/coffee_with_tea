@@ -18,38 +18,38 @@ class BatchGroupService{
 
     public function store($domains,$domainGroup, $user)
     {
-        $success = $failure = [];
+        $doaminSuccess = $domainFailure = [];
 
         foreach($domains as $domain){
 
             list($domain, $domainId, $errorCode)  = $this->checkDomain($domain,$domainGroup, $user);
 
             if ($errorCode) {
-                $failure[] = ['name' => $domain["name"],
-                                'errorCode' => $errorCode,
-                                'message' => InputError::getDescription($errorCode)]; // checkDomain 沒有過就不下去執行
+                $domainFailure[] = ['name' => $domain["name"],
+                                    'errorCode' => (int)$errorCode,
+                                    'message' => InputError::getDescription($errorCode)]; // checkDomain 沒有過就不下去執行
                 continue;
             }
 
             $changeCdnResult = $this->domainGroupService->changeCdnDefault($domainGroup, $domainId, $user['uuid']);
 
             if(!$changeCdnResult){
-                $failure[] = ['name' => $domain["name"],
-                            'errorCode' => 5001,
-                            'message' => 'Internal change CDN service error',
-                            // 'message' => 'Internal service error'
-                            ];
+                $domainFailure[] = ['name' => $domain["name"],
+                                    'errorCode' => 5001,
+                                    'message' => 'Internal change CDN service error',
+                                    // 'message' => 'Internal service error'
+                                    ];
                 continue;
             }
 
             $changeIrouteResult = $this->domainGroupService->changeIrouteSetting($domainGroup, $domainId);
 
             if(!$changeIrouteResult){
-                $failure[]  = ['name' => $domain["name"],
-                            'errorCode' => 5001,
-                            'message' => 'Internal change iRoute service error', 
-                            // 'message' => 'Internal service error'
-                            ];
+                $domainFailure[]  = ['name' => $domain["name"],
+                                    'errorCode' => 5001,
+                                    'message' => 'Internal change iRoute service error', 
+                                    // 'message' => 'Internal service error'
+                                    ];
                 continue;
             }
 
@@ -58,11 +58,11 @@ class BatchGroupService{
                 'domain_group_id' => $domainGroup->id
             ]);
             
-            $success[] = $domain["name"];
+            $doaminSuccess[] = ['name'=> $domain["name"]];
         }
 
-        $result = ['success' => $success,
-                    'failure' => $failure
+        $result = ['success' => ['domain'=> $doaminSuccess],
+                    'failure' => ['domain'=> $domainFailure]
                     ];
             
         return $result;
