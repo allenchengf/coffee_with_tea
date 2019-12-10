@@ -36,80 +36,73 @@ class BatchService{
         $this->cdnProviderRepository = $cdnProviderRepository;
     }
 
+    /**
+     * 和 job 裡面的邏輯一樣，這邊方便 重構 和 debug
+     * 
+     * 情境一： 新增 domain 和 cdn 
+     *         成功 =>  只有 domain 成功 success 會有 domain name。兩個都成功 success 會有 domain name 和 cdn name
+     *         失敗 =>  只有 domain 失敗，邏輯就不處理 cdn， failure 只會有 domain 的 errorCode 。
+     *                  但 domain 如果是已經存在了，邏輯會處理 cdn， failure 會有 domain 的 errorCode。 
+     * 
+     * 情境二： 新增 domain 無 cdn ，此情境目前沒有接。但有把它註解起來。
+     *
+     * @param [type] $domains
+     * @param [type] $user
+     * @return void
+     */
     public function store($domains, $user)
     {
-        $success = $failure  = [];
-        // 取此權限全部 cdn_providers
-        $myCdnProviders = collect($this->cdnProviderRepository->getCdnProvider($user["user_group_id"])->toArray());
+        $success = $failure = [];
+
         // 批次新增 domain 迴圈
         foreach ($domains as $domain) {
-            $domainError = [];
+            $domainError = $cdnSuccess = $cdnError =[];
             // 新增或查詢已存在 domain
-            list($domain, $domain_id, $errorMessage) = $this->storeDomain($domain, $user);
+            list($domain, $domain_id, $errorMessage, $errorCode) = $this->storeDomain($domain, $user);
 
-            if (! is_null($errorMessage) || ! isset($domain["cdns"]) || empty($domain["cdns"])) {
-                
+            if (! is_null($errorCode)||! is_null($errorMessage)) {
                 $domainError = [
                     'name' => $domain["name"],
-                    'errorCode' => ! is_null($errorMessage)?110:111,
-                    'message' => !is_null($errorMessage)?$errorMessage:'This domain has been stored with no cdns.',
+                    'errorCode' => $errorCode,
+                    'message' => InputError::getDescription($errorCode),
+                    // 目前不接 domain 沒有給 cdn 的 error 所以先註解起來摟～
+                    // 'errorCode' => !is_null($errorCode)? $errorCode:111,
+                    // 'message' => !is_null($errorCode)?InputError::getDescription($errorCode):'This domain has been stored with no cdns.',
                     'cdn' => []
-                ];
+                ];                
                 
+                if($errorCode != 4046){
+                    $failure[] = $domainError;
+                    continue;
+                }
+
+            }
+
+            //會有 已經存在的 domain 處理之後的 cdn
+            if(isset($domain['cdns'])){
+                //處理 Cdn 的 新增 刪除
+                list($cdnSuccess, $cdnError) = $this->handelCdn($user, $domain_id, $domain);
+            }
+
+            
+            if(!empty($domainError)){
+                //有 Domain error
+                $domainError['cdn'] = $cdnError;
                 $failure[] = $domainError;
+            }else{
+                //無 Domain error
+                if(!empty($cdnError)){
+                    //有 Cdn error
+                    $failure[] = ['name' => $domain['name'],
+                    'errorCode' => null,
+                    'message' => null ,  'cdn' => $cdnError];
+                }
+                //無 Cdn error
+                $success[] = ['name' => $domain['name'], 'cdn' => $cdnSuccess];
                 
-                continue;
-            }
-
-            // 查詢 cdns.domain_id 是否存在 ? 不存在才打 POD，代表 POD 的 default 尚未存在
-            $cdns = $this->cdnRepository->indexByWhere(['domain_id' => $domain_id]);
-            $isFirstCdn = count($cdns) == 0 ? true : false;
-
-            $cdnSuccess = $cdnError = [];
-            // 批次新增 cdn 迴圈
-            foreach ($domain["cdns"] as $cdn) {
-
-                // 此次 $cdn['name'] 換 cdn_providers.id、ttl欄位
-                $myCdnProviders->each(function ($v) use (&$cdn) {
-                    if (strcasecmp($v['name'], $cdn["name"]) == 0) { // cdn_providers.name 不區分大小寫相同
-                        $cdn["cdn_provider_id"] = $v['id'];
-                        $cdn["ttl"] = $v['ttl'];
-                        $cdn["status"] = $v['status'] == 'active' ? true : false;
-                        return false; // break;
-                    }
-                });
-
-                // 若此 $cdn['name'] 不匹配 cdn_providers.name
-                if(! isset($cdn["cdn_provider_id"])) {
-                    $cdnError[] = ['name' => $cdn["name"],
-                                    'errorCode' => 112,
-                                    'message' => 'This cdn_providers.name ' . $cdn["name"]. ' doesn\'t exist.'];
-                    
-                    continue;
-                }
-
-                // 新增 cdn
-                list($isFirstCdn, $errorMessage) = $this->storeCdn($domain, $domain_id, $cdn, $user, $isFirstCdn);
-                if (! is_null($errorMessage)) {
-
-                    $cdnError[] = ['name' => $cdn["name"],
-                                    'errorCode' => 113,
-                                    'message' => $errorMessage];
-                    
-                    continue;
-                }
-
-                $cdnSuccess[] = ['name' => $cdn["name"]]; 
-            }
-
-            $success[] = ['name' => $domain['name'], 'cdn' => $cdnSuccess];
-            //接 Domain 通過但 cdn 可能會有錯誤的。因為 domain 有錯誤上面就 continue 掉了歐！
-            if(!empty($cdnError)){
-                $failure[] = ['name' => $domain['name'], 'cdn' => $cdnError];
             }
 
         }
-
 
         $result = ['success' => ['domain' => $success],
                     'failure' => ['domain' =>  $failure],
@@ -118,22 +111,79 @@ class BatchService{
         return $result;
     }
 
-    public function process($domains, $user, $ugId)
+    /**
+     * 負責處理 Batch 的 Cdn 部分
+     *
+     * @param [type] $user
+     * @param [type] $domain_id
+     * @param [type] $domain
+     * @return void
+     */
+    public function handelCdn($user, $domain_id, $domain)
     {
         // 取此權限全部 cdn_providers
         $myCdnProviders = collect($this->cdnProviderRepository->getCdnProvider($user["user_group_id"])->toArray());
+        
+        // 查詢 cdns.domain_id 是否存在 ? 不存在才打 POD，代表 POD 的 default 尚未存在
+        $cdns = $this->cdnRepository->indexByWhere(['domain_id' => $domain_id]);
+        $isFirstCdn = count($cdns) == 0 ? true : false;
 
+        $cdnSuccess = $cdnError = [];
+        // 批次新增 cdn 迴圈
+        foreach ($domain["cdns"] as $cdn) {
+
+            // 此次 $cdn['name'] 換 cdn_providers.id、ttl欄位
+            $myCdnProviders->each(function ($v) use (&$cdn) {
+                if (strcasecmp($v['name'], $cdn["name"]) == 0) { // cdn_providers.name 不區分大小寫相同
+                    $cdn["cdn_provider_id"] = $v['id'];
+                    $cdn["ttl"] = $v['ttl'];
+                    $cdn["status"] = $v['status'] == 'active' ? true : false;
+                    return false; // break;
+                }
+            });
+
+            // 若此 $cdn['name'] 不匹配 cdn_providers.name
+            if(! isset($cdn["cdn_provider_id"])) {
+                $cdnError[] = ['name' => $cdn["name"],
+                                'errorCode' => 112,
+                                'message' => 'This cdn_providers.name ' . $cdn["name"]. ' doesn\'t exist.'];
+                
+                continue;
+            }
+
+            // 新增 cdn
+            list($isFirstCdn, $errorMessage) = $this->storeCdn($domain, $domain_id, $cdn, $user, $isFirstCdn);
+            if (! is_null($errorMessage)) {
+
+                $cdnError[] = ['name' => $cdn["name"],
+                                'errorCode' => 113,
+                                'message' => $errorMessage];
+                
+                continue;
+            }
+
+            $cdnSuccess[] = ['name' => $cdn["name"]]; 
+        }
+
+        return [$cdnSuccess, $cdnError];
+    }
+
+    public function process($domains, $user, $ugId)
+    {
         $queueName = 'batchCreateDomainAndCdn'.$user['uuid'].$ugId;
 
         //連 Redis 的 2 dataBase
-        $redis = Redis::connection('jobs');
+        $redisJobs = Redis::connection('jobs');
+
+        //檢查是否有原本的資料
+        $this->checkProcessRecord($queueName,$redisJobs);
 
         // 批次新增 domain & cdn 迴圈， $count 記錄總共有幾筆
         $count = 0;
         foreach ($domains as $domain) {
             $count++;
             //把原邏輯 搬去 job 
-            $job = (new AddDomainAndCdn($domain,$user,$myCdnProviders,$queueName))
+            $job = (new AddDomainAndCdn($domain,$user,$queueName))
             ->onConnection('database')
             ->onQueue($queueName);
 
@@ -151,15 +201,34 @@ class BatchService{
         }
 
         // 記錄總共有幾筆
-        $redis->set($queueName,$count);
+        $redisJobs->set($queueName,$count);
 
         return ;
+    }
+
+    /**
+     * 檢查原本在 Redis 有沒有記錄，有的話就刪掉。之後會塞新的進去。
+     *
+     * @param [String] $queueName
+     * @param [type] $redisJobs
+     * @return void
+     */
+    private function checkProcessRecord(String $queueName,$redisJobs)
+    {
+        $redisRecord = Redis::connection('record');
+
+        if($redisRecord->exists($queueName))
+        {
+            $redisRecord->del($queueName);
+            $redisJobs->del($queueName);
+        }
+
     }
 
     public function storeDomain($domain, $user)
     {
         $domain_id = null;
-        $errorMessage = null;
+        $errorMessage = $errorCode = null;
 
         $domain["name"] = $this->checkDomainFormate($domain['name']);
 
@@ -167,7 +236,8 @@ class BatchService{
             $domainValidate = $this->validateDomain($domain["name"]);
             // 判斷 domain 有沒有各式錯誤
             if(!$domainValidate){
-                throw new Exception(InputError::getDescription(InputError::DOMAIN_FORMATE_IS_INVALID));
+                $errorCode = InputError::DOMAIN_FORMATE_IS_INVALID;
+                throw new Exception();
             }
 
             // domain.cname 為 domain.name 去 . 後再補尾綴 `.user_group_id`
@@ -187,13 +257,17 @@ class BatchService{
             if (! is_null($result)) {
                 $domain_id = $result->id;
                 // 判斷 domain 有沒有 Group
-                $result->domainGroup->isEmpty() ? null : $errorMessage = 'Domain already has Group.';
-            } else {
+                $result->domainGroup->isEmpty() ? 
+                $errorCode = InputError::DOMAIN_ALREADY_EXISTED : $errorMessage = InputError::DOMAIN_ALREADY_HAS_GROUP;
+            }
+
+            if (!$errorCode){ //還不知道會有什麼
+                $errorCode = InputError::BATCH_DOMAIN_ERROR;
                 $errorMessage = $e->getMessage();
             }
 
         }
-        return [$domain, $domain_id, $errorMessage];
+        return [$domain, $domain_id, $errorMessage, $errorCode];
     }
 
     public function storeCdn($domain, $domain_id, $cdn, $user, $isFirstCdn)

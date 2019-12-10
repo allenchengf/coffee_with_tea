@@ -69,8 +69,8 @@ class BatchGroupTest extends TestCase
 
         $this->assertArrayHasKey('success', $result);
         $this->assertArrayHasKey('failure', $result);
-        $this->assertEquals("Domain Already Has Group.",$result['failure'][0]['message']);
-        $this->assertEquals('The Domain Is Undefined.',$result['failure'][2]['message']);
-        $this->assertCount(4, $result['failure']);
+        $this->assertEquals("Domain Already Has Group.",$result['failure']['domain'][0]['message']);
+        $this->assertEquals('The Domain Is Undefined.',$result['failure']['domain'][2]['message']);
+        $this->assertCount(4, $result['failure']['domain']);
     }
 }
