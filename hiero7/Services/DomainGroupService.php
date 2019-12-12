@@ -263,8 +263,11 @@ class DomainGroupService
 
         // 處理 有設定的
         foreach ($originIrouteSetting as $iRouteSetting) {
+            //調整 單一線路
             $response = $this->locationDnsSettingService->decideAction($iRouteSetting->cdn_provider_id, $targetDomain, $iRouteSetting->location);
-            
+            //處理 Domain 的 Cdn 的 其他 iRoute 設定
+            $this->locationDnsSettingService->handelTargetDomainsIrouteSetting($iRouteSetting->cdn_provider_id, $targetDomain, $iRouteSetting->location);
+
             // 'differentGroup' 代表 目標 Domain 裡 沒有屬於 預期 cdnProviderId 的 CDN
             // false 是打 pod 問題。 
             if (is_string($response)){
