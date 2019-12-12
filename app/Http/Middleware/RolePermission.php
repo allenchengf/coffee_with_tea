@@ -11,6 +11,58 @@ class RolePermission
 {
     use JwtPayloadTrait;
 
+    // postman > sidebar: X
+    public $passApis = [
+        [ // GET Get Domain In Dns Data
+            'method' => 'GET',
+            'path_regex' => 'domains\/[0-9]+\/check',
+        ],
+        [ // GET Get Domain All In Dns Data
+            'method' => 'GET',
+            'path_regex' => 'domains\/check',
+        ],
+        [ // GET Check Domain Diff Sync Data
+            'method' => 'GET',
+            'path_regex' => 'domains\/check-diff',
+        ],
+        [ // POST Sync Domain Data To DNS
+            'method' => 'POST',
+            'path_regex' => 'domains\/sync',
+        ],
+        [ // GET get continent list
+            'method' => 'GET',
+            'path_regex' => 'continents',
+        ],
+        [ // GET get country list
+            'method' => 'GET',
+            'path_regex' => 'countries',
+        ],
+        [ // GET get scheme list
+            'method' => 'GET',
+            'path_regex' => 'schemes',
+        ],
+        [ // POST create scheme
+            'method' => 'POST',
+            'path_regex' => 'schemes',
+        ],
+        [ // PUT edit scheme
+            'method' => 'PUT',
+            'path_regex' => 'schemes\/[0-9]+',
+        ],
+        [ // DELETE delete scheme
+            'method' => 'DELETE',
+            'path_regex' => 'schemes\/[0-9]+',
+        ],
+        [ // GET Get Self Role Permission
+            'method' => 'GET',
+            'path_regex' => 'roles\/self',
+        ],
+        [ // DELETE Delete Role Permission By Role ID
+            'method' => 'DELETE',
+            'path_regex' => 'roles\/[0-9]+\/permissions',
+        ],
+    ];
+
     /**
      * Handle an incoming request.
      *
@@ -39,6 +91,14 @@ class RolePermission
                 break;
             default: // HEAD or OPTIONS
                 return $next($request);
+        }
+
+        // 直接給過: 給後端用的 API，無 Sidebar
+        foreach ($this->passApis as $row) {
+            $isPathMatch = preg_match('/^'. $row['path_regex'] .'$/', $path);
+            if( $row['method'] == $method && $isPathMatch === 1) {
+                return $next($request);
+            }
         }
 
         // 直接給過: ugid = 1

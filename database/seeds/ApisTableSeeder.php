@@ -15,6 +15,12 @@ class ApisTableSeeder extends Seeder
         $now = \Carbon\Carbon::now();
 
 /*
+ * =====================
+ * 第 一 批 start
+ * =====================
+*/
+
+/*
  * =======
  * Domain
  * =======
@@ -56,7 +62,7 @@ class ApisTableSeeder extends Seeder
  * CDN
  * =======
 */
-        // GET Domain
+        // GET Get All
         // sidebar: Domains
         ->updateOrInsert(
             ['method' => 'GET', 'path_regex' => 'domains\/[0-9]+\/cdn', 'created_at' => $now],
@@ -107,7 +113,7 @@ class ApisTableSeeder extends Seeder
         // GET Get By Group/Domain
         // sidebar: iRoueCDN
         ->updateOrInsert(
-            ['method' => 'GET', 'path_regex' => 'routing-rules/lists', 'created_at' => $now],
+            ['method' => 'GET', 'path_regex' => 'routing-rules\/lists', 'created_at' => $now],
             ['id' => 13]
         )
         // GET Get Group's iRoute
@@ -200,6 +206,12 @@ class ApisTableSeeder extends Seeder
             ['method' => 'DELETE', 'path_regex' => 'groups\/[0-9]+', 'created_at' => $now],
             ['id' => 28]
         )
+
+/*
+* =======
+* Operation Logs
+* =======
+*/
         // GET Get Operation All Logs
         // sidebar: Logs
         ->updateOrInsert(
@@ -209,7 +221,7 @@ class ApisTableSeeder extends Seeder
         // GET Get Operation Logs by Category
         // sidebar: Logs
         ->updateOrInsert(
-            ['method' => 'GET', 'path_regex' => 'operation_log\/category\/Domain', 'created_at' => $now],
+            ['method' => 'GET', 'path_regex' => 'operation_log\/category\/[a-zA-Z]+', 'created_at' => $now],
             ['id' => 30]
         )
         // GET Get Operation Log Category List
@@ -218,6 +230,12 @@ class ApisTableSeeder extends Seeder
             ['method' => 'GET', 'path_regex' => 'operation_log\/category-list', 'created_at' => $now],
             ['id' => 31]
         )
+
+/*
+* =======
+* Config
+* =======
+*/
         // GET get Config
         // sidebar: Tool > Config Backup
         ->updateOrInsert(
@@ -230,13 +248,19 @@ class ApisTableSeeder extends Seeder
             ['method' => 'POST', 'path_regex' => 'config', 'created_at' => $now],
             ['id' => 33]
         )
+
+/*
+* =======
+* Auto Scan
+* =======
+*/
         // PUT 一鍵切換 By Domain
         // sidebar: auto-scan
         ->updateOrInsert(
             ['method' => 'PUT', 'path_regex' => 'scan-platform\/domain\/[0-9]+', 'created_at' => $now],
             ['id' => 34]
         )
-        // PUT 一鍵切換 By Group
+        // PUT 一鍵切換 By Domain Group
         // sidebar: auto-scan
         ->updateOrInsert(
             ['method' => 'PUT', 'path_regex' => 'scan-platform\/domain-group\/[0-9]+', 'created_at' => $now],
@@ -248,6 +272,12 @@ class ApisTableSeeder extends Seeder
             ['method' => 'PUT', 'path_regex' => 'scan-platform\/change-all', 'created_at' => $now],
             ['id' => 36]
         )
+
+/*
+* =======
+* Process
+* =======
+*/
         // GET get Process Result
         // sidebar: Domains
         ->updateOrInsert(
@@ -262,6 +292,185 @@ class ApisTableSeeder extends Seeder
         )
 
 
+/*
+* =======
+* Users
+* =======
+*/
+        // GET Get Permission
+        // sidebar: Users
+        ->updateOrInsert(
+            ['method' => 'GET', 'path_regex' => 'permissions', 'created_at' => $now],
+            ['id' => 39]
+        )
+        // GET Get Role Permission By Role ID
+        // sidebar: Users
+        ->updateOrInsert(
+            ['method' => 'GET', 'path_regex' => 'roles\/[0-9]+\/permissions', 'created_at' => $now],
+            ['id' => 40]
+        )
+        // POST Upsert Role Permission By Role ID
+        // sidebar: Users
+        ->updateOrInsert(
+            ['method' => 'POST', 'path_regex' => 'roles\/[0-9]+\/permissions', 'created_at' => $now],
+            ['id' => 41]
+        )
+
+/*
+* =====================
+* 第 一 批 end
+* =====================
+*/
+
+/*
+ * =====================
+ * 第 二 批 start
+ * =====================
+*/
+        // GET get Config Backup from S3
+        // sidebar: Config
+        ->updateOrInsert(
+            ['method' => 'GET', 'path_regex' => 'config\/s3', 'created_at' => $now],
+            ['id' => 42]
+        )
+        // GET Get Scanned Data (By Platform & CdnProvider)
+        // sidebar: Auto Scan
+        ->updateOrInsert(
+            ['method' => 'GET', 'path_regex' => 'scan-platform\/[0-9]+\/scanned-data', 'created_at' => $now],
+            ['id' => 43]
+        )
+        // GET Get Scanned Data (All)
+        // sidebar: Auto Scan
+        ->updateOrInsert(
+            ['method' => 'GET', 'path_regex' => 'scan-platform\/scanned-data', 'created_at' => $now],
+            ['id' => 44]
+        )
+        // GET Show Self Backup
+        // sidebar: Config Backup
+        ->updateOrInsert(
+            ['method' => 'GET', 'path_regex' => 'backups\/self', 'created_at' => $now],
+            ['id' => 45]
+        )
+        // POST Create Backup
+        // sidebar: Config Backup
+        ->updateOrInsert(
+            ['method' => 'POST', 'path_regex' => 'backups', 'created_at' => $now],
+            ['id' => 46]
+        )
+        // PUT Update Backup
+        // sidebar: Config Backup
+        ->updateOrInsert(
+            ['method' => 'PUT', 'path_regex' => 'backups\/[0-9]+', 'created_at' => $now],
+            ['id' => 47]
+        )
+        // GET Get Users
+        // sidebar: Users
+        ->updateOrInsert(
+            ['method' => 'GET', 'path_regex' => 'users', 'created_at' => $now],
+            ['id' => 48]
+        )
+        // POST Create User
+        // sidebar: Users
+        ->updateOrInsert(
+            ['method' => 'POST', 'path_regex' => 'users', 'created_at' => $now],
+            ['id' => 49]
+        )
+        // PUT User status
+        // sidebar: Users
+        ->updateOrInsert(
+            ['method' => 'PUT', 'path_regex' => 'users\/[0-9]+\/status', 'created_at' => $now],
+            ['id' => 50]
+        )
+        // PUT Update Profile
+        // sidebar: Users
+        ->updateOrInsert(
+            ['method' => 'PUT', 'path_regex' => 'users\/[0-9]+\/profile', 'created_at' => $now],
+            ['id' => 51]
+        )
+        // GET Get CDN Providers
+        // sidebar: CDN Providers
+        ->updateOrInsert(
+            ['method' => 'GET', 'path_regex' => 'cdn_providers', 'created_at' => $now],
+            ['id' => 52]
+        )
+        // POST Create CDN Provider
+        // sidebar: CDN Providers
+        ->updateOrInsert(
+            ['method' => 'POST', 'path_regex' => 'cdn_providers', 'created_at' => $now],
+            ['id' => 53]
+        )
+        // PATCH Edit CDN Provider
+        // sidebar: CDN Providers
+        ->updateOrInsert(
+            ['method' => 'PATCH', 'path_regex' => 'cdn_providers\/[0-9]+', 'created_at' => $now],
+            ['id' => 54]
+        )
+        // PATCH 停止/回復 CDN
+        // sidebar: CDN Providers
+        ->updateOrInsert(
+            ['method' => 'PATCH', 'path_regex' => 'cdn_providers\/[0-9]+\/status', 'created_at' => $now],
+            ['id' => 55]
+        )
+        // DELETE Delete CDN Provider
+        // sidebar: CDN Providers
+        ->updateOrInsert(
+            ['method' => 'DELETE', 'path_regex' => 'cdn_providers\/[0-9]+', 'created_at' => $now],
+            ['id' => 56]
+        )
+        // GET Get Scan Platform
+        // sidebar: Auto Scan
+        ->updateOrInsert(
+            ['method' => 'GET', 'path_regex' => 'scan-platform', 'created_at' => $now],
+            ['id' => 57]
+        )
+        // POST Create Scan Platform
+        // sidebar: Auto Scan
+        ->updateOrInsert(
+            ['method' => 'POST', 'path_regex' => 'scan-platform', 'created_at' => $now],
+            ['id' => 58]
+        )
+        // PATCH Edit Scan Platform
+        // sidebar: Auto Scan
+        ->updateOrInsert(
+            ['method' => 'PATCH', 'path_regex' => 'scan-platform\/[0-9]+', 'created_at' => $now],
+            ['id' => 59]
+        )
+        // DELETE Delete Scan Platform
+        // sidebar: Auto Scan
+        ->updateOrInsert(
+            ['method' => 'DELETE', 'path_regex' => 'scan-platform\/[0-9]+', 'created_at' => $now],
+            ['id' => 60]
+        )
+        // POST Create Scanned Data
+        // sidebar: Auto Scan
+        ->updateOrInsert(
+            ['method' => 'POST', 'path_regex' => 'scan-platform\/[0-9]+\/scanned-data', 'created_at' => $now],
+            ['id' => 61]
+        )
+        // GET Check Default CDN
+        // sidebar: CDN Providers
+        ->updateOrInsert(
+            ['method' => 'GET', 'path_regex' => 'cdn_providers', 'created_at' => $now],
+            ['id' => 62]
+        )
+        // GET Scan CD 時間
+        // sidebar: Auto Scan
+        ->updateOrInsert(
+            ['method' => 'GET', 'path_regex' => 'scan-platform\/lock-time', 'created_at' => $now],
+            ['id' => 63]
+        )
+        // GET Get Domain By Id
+        // sidebar: Domains, Group, iRoueCDN
+        ->updateOrInsert(
+            ['method' => 'GET', 'path_regex' => 'domains\/[0-9]+', 'created_at' => $now],
+            ['id' => 64]
+        )
+
+/*
+* =====================
+* 第 二 批 end
+* =====================
+*/
         ;
     }
 }
