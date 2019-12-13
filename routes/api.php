@@ -142,9 +142,9 @@ Route::group(['middleware' => ['api'], 'namespace' => 'Api\v1', 'prefix' => 'v1'
         Route::get('result', 'ProcessController@getBatchResult')->name('process.getBatchResult');
     });
 
-    Route::group(['middleware' => ['auth.user.module'], 'prefix' => 'roles'], function () {
-        Route::get('self', 'RolePermissionMappingController@indexSelf')->name('role_permission_mapping.indexSelf');
-        Route::get('{roleId}/permissions', 'index@index')->name('role_permission_mapping.index');
+    Route::group(['prefix' => 'roles'], function () {
+        Route::get('self/permissions', 'RolePermissionMappingController@indexSelf')->name('role_permission_mapping.indexSelf');
+        Route::get('{roleId}/permissions', 'RolePermissionMappingController@indexByRoleId')->name('role_permission_mapping.indexByRoleId');
         Route::post('{roleId}/permissions', 'RolePermissionMappingController@upsert')->name('role_permission_mapping.upsert');
         Route::delete('{roleId}/permissions', 'RolePermissionMappingController@destroy')->name('role_permission_mapping.destroy');
     });

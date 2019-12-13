@@ -55,7 +55,7 @@ class RolePermission
         ],
         [ // GET Get Self Role Permission
             'method' => 'GET',
-            'path_regex' => 'roles\/self',
+            'path_regex' => 'roles\/self\/permissions',
         ],
         [ // DELETE Delete Role Permission By Role ID
             'method' => 'DELETE',
@@ -103,10 +103,10 @@ class RolePermission
 
         // 直接給過: ugid = 1
         $jwtPayload = $this->getJWTPayload();
-        $user_group_id = $jwtPayload['user_group_id'];
-        if ($user_group_id == 1) {
-            return $next($request);
-        }
+        // $user_group_id = $jwtPayload['user_group_id'];
+        // if ($user_group_id == 1) {
+        //     return $next($request);
+        // }
 
         // 檢查 API 使用權限
         $role_id = 1; // $jwtPayload['role_id'];

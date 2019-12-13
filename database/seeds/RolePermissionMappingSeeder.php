@@ -14,39 +14,20 @@ class RolePermissionMappingSeeder extends Seeder
     {
         $now = \Carbon\Carbon::now();
 
-        $rolePermissionMapping
-        ->updateOrInsert(
-            ['role_id' => 1, 'permission_id' => 1, 'actions' => '{"read":1,"create":1,"update":1,"delete":1}', 'created_at' => $now],
-            ['id' => 1]
-        )
-        ->updateOrInsert(
-            ['role_id' => 1, 'permission_id' => 2, 'actions' => '{"read":1,"create":1,"update":1,"delete":1}', 'created_at' => $now],
-            ['id' => 2]
-        )
-        ->updateOrInsert(
-            ['role_id' => 1, 'permission_id' => 3, 'actions' => '{"read":1,"create":1,"update":1,"delete":1}', 'created_at' => $now],
-            ['id' => 3]
-        )
-        ->updateOrInsert(
-            ['role_id' => 1, 'permission_id' => 4, 'actions' => '{"read":1,"create":1,"update":1,"delete":1}', 'created_at' => $now],
-            ['id' => 4]
-        )
-        ->updateOrInsert(
-            ['role_id' => 1, 'permission_id' => 5, 'actions' => '{"read":1,"create":1,"update":1,"delete":1}', 'created_at' => $now],
-            ['id' => 5]
-        )
-        ->updateOrInsert(
-            ['role_id' => 1, 'permission_id' => 6, 'actions' => '{"read":1,"create":1,"update":1,"delete":1}', 'created_at' => $now],
-            ['id' => 6]
-        )
-        ->updateOrInsert(
-            ['role_id' => 1, 'permission_id' => 7, 'actions' => '{"read":1,"create":1,"update":1,"delete":1}', 'created_at' => $now],
-            ['id' => 7]
-        )
-        ->updateOrInsert(
-            ['role_id' => 1, 'permission_id' => 8, 'actions' => '{"read":1,"create":1,"update":1,"delete":1}', 'created_at' => $now],
-            ['id' => 8]
-        );
+        $countRoles = 4; // Role 個數
+        $countPermissions = 8; // Sidebar 個數
+        for ($i = 0; $i < $countRoles; $i++) {
+            $role_id = $i + 1;
+            $addInterval = $i * $countPermissions;
 
+            for ($j = 1; $j <= $countPermissions; $j++) {
+                $rolePermissionMapping
+                ->updateOrInsert(
+                    ['role_id' => $role_id, 'permission_id' => $j, 'actions' => '{"read":1,"create":1,"update":1,"delete":1}', 'created_at' => $now],
+                    ['id' => $j + $addInterval]
+                );
+            }
+        }
+        
     }
 }
