@@ -11,7 +11,7 @@ class RolePermission
 {
     use JwtPayloadTrait;
 
-    // postman > sidebar: X
+    // postman > sidebar: X。後端模組串接用、或其他原因，不做 Role Permission 檢測之 APIs
     public $passApis = [
         [ // GET Get Domain In Dns Data
             'method' => 'GET',
@@ -103,13 +103,13 @@ class RolePermission
 
         // 直接給過: ugid = 1
         $jwtPayload = $this->getJWTPayload();
-        // $user_group_id = $jwtPayload['user_group_id'];
-        // if ($user_group_id == 1) {
-        //     return $next($request);
-        // }
+        $user_group_id = $jwtPayload['user_group_id'];
+        if ($user_group_id == 1) {
+            return $next($request);
+        }
 
         // 檢查 API 使用權限
-        $role_id = 1; // $jwtPayload['role_id'];
+        $role_id = $jwtPayload['role_id'];
         $selfPermissions = DB::table('permissions')
                             ->where('rpm.role_id', $role_id)
                             ->leftjoin('role_permission_mapping as rpm', 'permissions.id', '=', 'rpm.permission_id')

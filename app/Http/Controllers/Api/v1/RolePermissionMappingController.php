@@ -3,8 +3,8 @@
 namespace App\Http\Controllers\Api\v1;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
 use App\Http\Requests\RolePermissionMappingRequest;
+use Hiero7\Services\UserModuleService;
 use Hiero7\Repositories\{RolePermissionMappingRepository, PermissionRepository};
 use Hiero7\Models\RolePermissionMapping;
 use Hiero7\Traits\JwtPayloadTrait;
@@ -16,33 +16,35 @@ class RolePermissionMappingController extends Controller
 
     public function __construct(
         RolePermissionMappingRepository $rolePermissionMappingRepository,
-        PermissionRepository $permissionRepository
+        PermissionRepository $permissionRepository,
+        UserModuleService $userModuleService
     )
     {
         $this->rolePermissionMappingRepository = $rolePermissionMappingRepository;
         $this->permissionRepository = $permissionRepository;
-        // $this->setCategory(config('logging.category.cdn_provider'));
+        $this->userModuleService = $userModuleService;
     }
 
     public function indexSelf()
     {
         $jwtPayload = $this->getJWTPayload();
-        $roleId = 1;//$this->getJWTPayload()['role_id'];
+        $roleId = $jwtPayload['role_id'];
         $rolePermissionMappings = $this->getByRoleId($roleId);
         return $this->response("Success", null, $rolePermissionMappings);
     }
 
-    public function indexByRoleId($roleId)
+    public function indexByRoleId(RolePermissionMappingRequest $request, $roleId)
     {
         $jwtPayload = $this->getJWTPayload();
-
-        // curl User Module: $roleId 其 ugid
-        // return 400: ugid 為 null
-        $ugid = 2;
         
-        // return 400: 非上帝視角 且 ugid 經比對不同者。不可修改別 group 的 role
-        if ($jwtPayload['user_group_id'] !== 1 && $jwtPayload['user_group_id'] != $ugid)
-            return $this->setStatusCode(400)->response('', PermissionError::PERMISSION_DENIED, []);
+        // return 400: 不可觀看別 group 的 role，除非上帝視角 ugid: 1
+        if ($jwtPayload['user_group_id'] !== 1) {
+            // curl User Module: 其 $roleId 之 ugid
+            $ugid = $this->userModuleService->getUgidByRoleId($request, $roleId)['data']['user_group_id'];
+            if ($jwtPayload['user_group_id'] != $ugid) {
+                return $this->setStatusCode(400)->response('', PermissionError::PERMISSION_DENIED, []);
+            }
+        }
 
         $rolePermissionMappings = $this->getByRoleId($roleId);
         return $this->response("Success", null, $rolePermissionMappings);
@@ -53,13 +55,14 @@ class RolePermissionMappingController extends Controller
         $jwtPayload = $this->getJWTPayload();
         $edited_by = $jwtPayload['uuid'];
 
-        // curl User Module: $roleId 其 ugid
-        // return 400: ugid 為 null
-        $ugid = 2;
-        
-        // return 400: 非上帝視角 且 ugid 經比對不同者。不可修改別 group 的 role
-        if ($jwtPayload['user_group_id'] !== 1 && $jwtPayload['user_group_id'] != $ugid)
-            return $this->setStatusCode(400)->response('', PermissionError::PERMISSION_DENIED, []);
+        // return 400: 不可增改別 group 的 role，除非上帝視角 ugid: 1
+        if ($jwtPayload['user_group_id'] !== 1) {
+            // curl User Module: 其 $roleId 之 ugid
+            $ugid = $this->userModuleService->getUgidByRoleId($request, $roleId)['data']['user_group_id'];
+            if ($jwtPayload['user_group_id'] != $ugid) {
+                return $this->setStatusCode(400)->response('', PermissionError::PERMISSION_DENIED, []);
+            }
+        }
 
         // table 撈
         $permissions = $this->permissionRepository->index();
@@ -93,17 +96,18 @@ class RolePermissionMappingController extends Controller
         return $this->response('', null, $data);
     }
 
-    public function destroy($roleId)
+    public function destroy(RolePermissionMappingRequest $request, $roleId)
     {
         $jwtPayload = $this->getJWTPayload();
 
-        // curl User Module: $roleId 其 ugid
-        // return 400: ugid 為 null
-        $ugid = 2;
-        
-        // return 400: 非上帝視角 且 ugid 經比對不同者。不可修刪除 group 的 role
-        if ($jwtPayload['user_group_id'] !== 1 && $jwtPayload['user_group_id'] != $ugid)
-            return $this->setStatusCode(400)->response('', PermissionError::PERMISSION_DENIED, []);
+        // return 400: 不可刪除別 group 的 role，除非上帝視角 ugid: 1
+        if ($jwtPayload['user_group_id'] !== 1) {
+            // curl User Module: 其 $roleId 之 ugid
+            $ugid = $this->userModuleService->getUgidByRoleId($request, $roleId)['data']['user_group_id'];
+            if ($jwtPayload['user_group_id'] != $ugid) {
+                return $this->setStatusCode(400)->response('', PermissionError::PERMISSION_DENIED, []);
+            }
+        }
 
         $this->rolePermissionMappingRepository->delete($roleId);
         return $this->response("Success", null, []);
