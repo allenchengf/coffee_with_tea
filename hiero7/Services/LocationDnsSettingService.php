@@ -146,6 +146,16 @@ class LocationDnsSettingService
         return $result;
     }
 
+    /**
+     * 處理 目標 Domain 的特定 CdnProvider 其他 iRoute 線路設定。
+     * 
+     * 刪除 該 CdnProvider 下其他線路設定。
+     *
+     * @param Int $cdnProviderId
+     * @param Domain $domain
+     * @param LocationNetwork $locationNetwork
+     * @return void
+     */
     public function handelTargetDomainsIrouteSetting(Int $cdnProviderId, Domain $domain, LocationNetwork $locationNetwork)
     {
         //使用 目標 Domain 和 預期 cdnProviderId 取得 CDN 的 id

@@ -110,7 +110,9 @@ class DomainGroupService
      */
     public function createDomainToGroup(DomainGroupRequest $request, DomainGroup $domainGroup)
     {
-        $checkDomainCdnSetting = $this->compareDomainCdnSetting($domainGroup, $request->domain_id);
+        $targetDomain = Domain::find($request->domain_id);
+
+        $checkDomainCdnSetting = $this->compareDomainCdnSetting($domainGroup, $targetDomain);
 
         if (!$checkDomainCdnSetting) {
             return false;
@@ -188,14 +190,14 @@ class DomainGroupService
      * @param [type] $targetDomainId
      * @return void
      */
-    public function compareDomainCdnSetting(DomainGroup $domainGroup, $targetDomainId)
+    public function compareDomainCdnSetting(DomainGroup $domainGroup, $targetDomain)
     {
         $controlDomain = $domainGroup->domains;
         // Group 內的 Domain 的 CDN Provider ID
         $controlCdnProvider = $controlDomain[0]->cdns()->get(['cdn_provider_id'])->pluck('cdn_provider_id');
 
         try {
-            $targetCdnProvider = Domain::find($targetDomainId)->cdns()->get(['cdn_provider_id'])->pluck('cdn_provider_id');
+            $targetCdnProvider = $targetDomain->cdns()->get(['cdn_provider_id'])->pluck('cdn_provider_id');
         } catch (\Exception $e) {
             $errorMessage = $e->getMessage();
             $targetCdnProvider = [];
@@ -233,6 +235,8 @@ class DomainGroupService
      * 拿 Group 內的 Domain 為底 做比較
      * 可分兩大類 「Group 內的 Domain 沒有 iRoute 」、「Group 內的 Domain 有 iRoute 」
      * 
+     * 「Group 內的 Domain 沒有 iRoute 」=> 單純刪掉 目標 Domain 的 iRoute 設定
+     *  
      * @param DomainGroup $domainGroup
      * @param integer $domainId
      * @param string $editedBy
