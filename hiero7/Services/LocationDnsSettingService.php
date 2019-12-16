@@ -10,6 +10,7 @@ use Hiero7\Repositories\LocationDnsSettingRepository;
 use Hiero7\Services\DnsProviderService;
 use Hiero7\Traits\DomainHelperTrait;
 use Hiero7\Traits\JwtPayloadTrait;
+use Illuminate\Support\Collection;
 
 class LocationDnsSettingService
 {
@@ -147,7 +148,7 @@ class LocationDnsSettingService
     }
 
     /**
-     * 處理 目標 Domain 的特定 CdnProvider 其他 iRoute 線路設定。
+     * 處理 目標 Domain 的特定 CdnProvider 的其他 iRoute 線路設定。
      * 
      * 刪除 該 CdnProvider 下其他線路設定。
      *
@@ -156,14 +157,27 @@ class LocationDnsSettingService
      * @param LocationNetwork $locationNetwork
      * @return void
      */
-    public function handelTargetDomainsIrouteSetting(Int $cdnProviderId, Domain $domain, LocationNetwork $locationNetwork)
+    public function handelTargetDomainsIrouteSetting(Int $cdnProviderId, Domain $domain, Collection $locationNetworkCollection)
     {
         //使用 目標 Domain 和 預期 cdnProviderId 取得 CDN 的 id
         $cdnModel = $this->getTargetCdn($cdnProviderId, $domain);
 
-        $ExtraSetting = $cdnModel->locationDnsSetting->filter(function ($item) use ($locationNetwork){
-            return $item->location_networks_id != $locationNetwork->id;
+        if($locationNetworkCollection->isEmpty()){
+                    return false;
+                }
+
+        // 如果有多個 locationSetting，就要比完之後繼續比
+        $ExtraSetting = $cdnModel->locationDnsSetting->filter(function ($item) use ($locationNetworkCollection){
+            return $item->location_networks_id != $locationNetworkCollection->first()->location_networks_id;
         });
+
+        if($locationNetworkCollection->count() > 1){
+            foreach($locationNetworkCollection as $locationNetwork){
+                $ExtraSetting = $ExtraSetting->filter(function ($item) use ($locationNetwork){
+                    return $item->location_networks_id != $locationNetwork->location_networks_id;
+                });
+            }
+        }
 
         $ExtraSetting->each(function ($locationSetting){
             $this->destroy($locationSetting);
