@@ -122,6 +122,10 @@ class DomainGroupController extends Controller
             return $this->setStatusCode(400)->response($this->message, InputError::DOMAIN_ALREADY_EXIST_GROUP, []);
         }
 
+        if(!$targetDomain = Domain::find($request->domain_id)){
+            return $this->setStatusCode(400)->response($this->message, InputError::DOMAIN_NOT_EXIST, []);
+        }
+
         $result = $this->domainGroupService->createDomainToGroup($request, $domainGroup);
 
         if ($result == false) {

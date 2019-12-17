@@ -6,6 +6,7 @@ use Hiero7\Models\DomainGroupMapping;
 use Hiero7\Repositories\DomainRepository;
 use Hiero7\Enums\InputError;
 use Exception;
+use Hiero7\Models\Domain;
 
 
 class BatchGroupService{
@@ -18,7 +19,7 @@ class BatchGroupService{
 
     public function store($domains,$domainGroup, $user)
     {
-        $doaminSuccess = $domainFailure = [];
+        $domainSuccess = $domainFailure = [];
 
         foreach($domains as $domain){
 
@@ -58,16 +59,27 @@ class BatchGroupService{
                 'domain_group_id' => $domainGroup->id
             ]);
             
-            $doaminSuccess[] = ['name'=> $domain["name"]];
+            $domainSuccess[] = ['name'=> $domain["name"]];
         }
 
-        $result = ['success' => ['domain'=> $doaminSuccess],
+        $result = ['success' => ['domain'=> $domainSuccess],
                     'failure' => ['domain'=> $domainFailure]
                     ];
             
         return $result;
     }
 
+    /**
+     *  檢查 Domain 是否合格
+     * 
+     * 條件一: 
+     * 條件二:
+     *
+     * @param [type] $domain
+     * @param [type] $domainGroup
+     * @param [type] $user
+     * @return void
+     */
     public function checkDomain($domain,$domainGroup, $user)
     {
         $domainId = null;
@@ -88,7 +100,12 @@ class BatchGroupService{
                 throw new Exception(InputError::DOMAIN_ALREADY_EXIST_GROUP);
             }
             
-            $checkDomainCdnSetting = $this->domainGroupService->compareDomainCdnSetting($domainGroup, $domainId);
+            $targetDomain = Domain::find($domainId);
+            if(!$targetDomain){
+                return $this->setStatusCode(400)->response($this->message, InputError::DOMAIN_NOT_EXIST, []);
+            }
+
+            $checkDomainCdnSetting = $this->domainGroupService->compareDomainCdnSetting($domainGroup, $targetDomain);
             if(!$checkDomainCdnSetting){
                 throw new Exception(InputError::DOMAIN_CDNPROVIDER_DIFFERENT_WITH_GROUPS);
             }
