@@ -52,6 +52,12 @@ abstract class TestCase extends BaseTestCase
         return $this;
     }
 
+    public function addRoleIdforPayload(int $id = 1)
+    {
+        $this->jwtPayload['role_id'] = $id;
+        return $this;
+    }
+
     protected function initMock($class)
     {
         $mock = \Mockery::mock($class);

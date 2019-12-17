@@ -97,6 +97,25 @@ class UserModuleService
     }
 
     /**
+     * Get Role By id
+     *
+     * @param $request
+     * @param integer $roleId
+     * @return array
+     */
+    public function getUgidByRoleId($request, int $roleId): array
+    {
+        $response = Curl::to($this->user_module_API . "/role/$roleId")
+            ->withHeaders(['Authorization: ' . $request->header('Authorization')])
+            ->asJson(true)
+            ->get();
+
+        $this->userModuleOutputCheck($response);
+
+        return $response;
+    }
+
+    /**
      * Notifications By Users function
      *
      * @param $request
