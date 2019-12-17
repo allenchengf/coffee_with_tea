@@ -4,23 +4,21 @@ namespace App\Http\Middleware;
 
 use Closure;
 use Hiero7\Enums\PermissionError;
+use Hiero7\Traits\JwtPayloadTrait;
 use Tymon\JWTAuth\Exceptions\JWTException;
 use Tymon\JWTAuth\Exceptions\TokenExpiredException;
 use Tymon\JWTAuth\Exceptions\TokenInvalidException;
-use Tymon\JWTAuth\Facades\JWTAuth;
 
 class TokenCheck
 {
+    use JwtPayloadTrait;
+
     public function handle($request, Closure $next)
     {
-
         try {
-            $token = JWTAuth::getToken();
-            $payload = JWTAuth::getPayload($token)->toArray();
 
-            $request->merge([
-                'edited_by' => $payload['uuid'],
-            ]);
+            $request->merge(['edited_by' => $this->getJWTUuid()]);
+
             return $next($request);
         } catch (TokenExpiredException $e) {
 
