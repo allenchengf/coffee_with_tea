@@ -451,7 +451,7 @@ class ApisTableSeeder extends Seeder
         // sidebar: CDN Providers
         ->updateOrCreate(
             ['id' => 62],
-            ['method' => 'GET', 'path_regex' => 'cdn_providers', 'created_at' => $now]
+            ['method' => 'GET', 'path_regex' => 'cdn_providers\/[0-9]+\/check', 'created_at' => $now]
         )
         // GET Scan CD 時間
         // sidebar: Auto Scan
