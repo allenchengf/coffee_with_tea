@@ -120,7 +120,7 @@ class RolePermission
 
         if (! $selfPermissions || $selfPermissions->isEmpty()) {
             // 未曾設定權限，請聯絡客戶自身主管
-            return $this->response(PermissionError::PERMISSION_DENIED);
+            return $this->response(PermissionError::ROLE_PERMISSION_DENIED);
         }
 
         foreach ($selfPermissions->toArray() as $row) {
@@ -135,7 +135,7 @@ class RolePermission
         }
 
         // 無授權該使用者此 API
-        return $this->response(PermissionError::YOU_DONT_HAVE_PERMISSION);
+        return $this->response(PermissionError::YOU_DONT_HAVE_ROLE_PERMISSION);
     }
 
     public function response($errorCode)

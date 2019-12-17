@@ -42,7 +42,7 @@ class RolePermissionMappingController extends Controller
             // curl User Module: 其 $roleId 之 ugid
             $ugid = $this->userModuleService->getUgidByRoleId($request, $roleId)['data']['user_group_id'];
             if ($jwtPayload['user_group_id'] != $ugid) {
-                return $this->setStatusCode(400)->response('', PermissionError::PERMISSION_DENIED, []);
+                return $this->setStatusCode(400)->response('', PermissionError::ROLE_PERMISSION_DENIED, []);
             }
         }
 
@@ -60,7 +60,7 @@ class RolePermissionMappingController extends Controller
             // curl User Module: 其 $roleId 之 ugid
             $ugid = $this->userModuleService->getUgidByRoleId($request, $roleId)['data']['user_group_id'];
             if ($jwtPayload['user_group_id'] != $ugid) {
-                return $this->setStatusCode(400)->response('', PermissionError::PERMISSION_DENIED, []);
+                return $this->setStatusCode(400)->response('', PermissionError::ROLE_PERMISSION_DENIED, []);
             }
         }
 
@@ -105,7 +105,7 @@ class RolePermissionMappingController extends Controller
             // curl User Module: 其 $roleId 之 ugid
             $ugid = $this->userModuleService->getUgidByRoleId($request, $roleId)['data']['user_group_id'];
             if ($jwtPayload['user_group_id'] != $ugid) {
-                return $this->setStatusCode(400)->response('', PermissionError::PERMISSION_DENIED, []);
+                return $this->setStatusCode(400)->response('', PermissionError::ROLE_PERMISSION_DENIED, []);
             }
         }
 
