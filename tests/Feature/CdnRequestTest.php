@@ -7,6 +7,7 @@ use App\Http\Middleware\DomainPermission;
 use App\Http\Middleware\TokenCheck;
 use App\Http\Middleware\CheckForImportConfig;
 use App\Http\Middleware\CheckDnsPod;
+use App\Http\Middleware\RolePermission;
 use Hiero7\Models\Cdn;
 use Hiero7\Models\CdnProvider;
 use Hiero7\Models\Domain;
@@ -31,7 +32,8 @@ class CdnRequestTest extends TestCase
 
         $this->withoutMiddleware([AuthUserModule::class, TokenCheck::class, 
                                     DomainPermission::class, CheckForImportConfig::class,
-                                    CheckDnsPod::class
+                                    CheckDnsPod::class,
+                                    RolePermission::class
                                 ]);
 
         $this->seed('DomainTableSeeder');
