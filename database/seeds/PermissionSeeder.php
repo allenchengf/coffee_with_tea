@@ -17,35 +17,35 @@ class PermissionSeeder extends Seeder
         $permission
         ->updateOrCreate(
             ['id' => 1],
-            ['name' => 'CDN Providers', 'created_at' => $now],
+            ['name' => 'CDN Providers', 'created_at' => $now]
         )
         ->updateOrCreate(
             ['id' => 2],
-            ['name' => 'Domains', 'created_at' => $now],
+            ['name' => 'Domains', 'created_at' => $now]
         )
         ->updateOrCreate(
             ['id' => 3],
-            ['name' => 'Grouping', 'created_at' => $now],
+            ['name' => 'Grouping', 'created_at' => $now]
         )
         ->updateOrCreate(
             ['id' => 4],
-            ['name' => 'iRouteCDN', 'created_at' => $now],
+            ['name' => 'iRouteCDN', 'created_at' => $now]
         )
         ->updateOrCreate(
             ['id' => 5],
-            ['name' => 'Logs', 'created_at' => $now],
+            ['name' => 'Logs', 'created_at' => $now]
         )
         ->updateOrCreate(
             ['id' => 6],
-            ['name' => 'Auto Scan', 'created_at' => $now],
+            ['name' => 'Auto Scan', 'created_at' => $now]
         )
         ->updateOrCreate(
             ['id' => 7],
-            ['name' => 'Config Backup', 'created_at' => $now],
+            ['name' => 'Config Backup', 'created_at' => $now]
         )
         ->updateOrCreate(
             ['id' => 8],
-            ['name' => 'Users', 'created_at' => $now],
+            ['name' => 'Users', 'created_at' => $now]
         );
     }
 }
