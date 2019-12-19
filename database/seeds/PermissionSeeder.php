@@ -15,37 +15,37 @@ class PermissionSeeder extends Seeder
         $now = \Carbon\Carbon::now();
 
         $permission
-        ->updateOrInsert(
-            ['name' => 'CDN Providers', 'created_at' => $now],
-            ['id' => 1]
+        ->updateOrCreate(
+            ['id' => 1],
+            ['name' => 'CDN Providers', 'created_at' => $now]
         )
-        ->updateOrInsert(
-            ['name' => 'Domains', 'created_at' => $now],
-            ['id' => 2]
+        ->updateOrCreate(
+            ['id' => 2],
+            ['name' => 'Domains', 'created_at' => $now]
         )
-        ->updateOrInsert(
-            ['name' => 'Grouping', 'created_at' => $now],
-            ['id' => 3]
+        ->updateOrCreate(
+            ['id' => 3],
+            ['name' => 'Grouping', 'created_at' => $now]
         )
-        ->updateOrInsert(
-            ['name' => 'iRouteCDN', 'created_at' => $now],
-            ['id' => 4]
+        ->updateOrCreate(
+            ['id' => 4],
+            ['name' => 'iRouteCDN', 'created_at' => $now]
         )
-        ->updateOrInsert(
-            ['name' => 'Logs', 'created_at' => $now],
-            ['id' => 5]
+        ->updateOrCreate(
+            ['id' => 5],
+            ['name' => 'Logs', 'created_at' => $now]
         )
-        ->updateOrInsert(
-            ['name' => 'Auto Scan', 'created_at' => $now],
-            ['id' => 6]
+        ->updateOrCreate(
+            ['id' => 6],
+            ['name' => 'Auto Scan', 'created_at' => $now]
         )
-        ->updateOrInsert(
-            ['name' => 'Config Backup', 'created_at' => $now],
-            ['id' => 7]
+        ->updateOrCreate(
+            ['id' => 7],
+            ['name' => 'Config Backup', 'created_at' => $now]
         )
-        ->updateOrInsert(
-            ['name' => 'Users', 'created_at' => $now],
-            ['id' => 8]
+        ->updateOrCreate(
+            ['id' => 8],
+            ['name' => 'Users', 'created_at' => $now]
         );
     }
 }
