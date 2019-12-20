@@ -51,3 +51,12 @@ sudo ntpdate ntp.ubuntu.com
 # 測試覆蓋率
 phpunit --coverage-html coverage
 ```
+
+4. DB Seeder 
+
+### 可重複執行
+```
+php artisan db:seed --class=ApiPermissionMappingTableSeeder
+php artisan db:seed --class=ApisTableSeeder
+php artisan db:seed --class=PermissionSeeder
+```
