@@ -15,14 +15,14 @@ class NetworkTableSeeder extends Seeder
             [
                 'id' => 1,
                 'scheme_id' => 1,
-                'name' => '国内',
+                'name' => '境内',
                 'created_at' => \Carbon\Carbon::now(),
                 'updated_at' => \Carbon\Carbon::now()
             ],
             [
                 'id' => 2,
                 'scheme_id' => 1,
-                'name' => '国外',
+                'name' => '境外',
                 'created_at' => \Carbon\Carbon::now(),
                 'updated_at' => \Carbon\Carbon::now()
             ],

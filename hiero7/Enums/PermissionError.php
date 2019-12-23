@@ -22,6 +22,8 @@ class PermissionError extends Enum
     const THIS_GROUP_ID_NOT_MATCH = 3010;
     const YOUR_GROUP_IS_IMPORTING_CONFIG = 3011;
     const PLEASE_WAIT_SCAN = 3012;
+    const ROLE_PERMISSION_DENIED = 3013;
+    const YOU_DONT_HAVE_ROLE_PERMISSION = 3014;
 
     /**
      * @var array
@@ -40,5 +42,7 @@ class PermissionError extends Enum
         self::THIS_GROUP_ID_NOT_MATCH => "This group id does not match the operation permissions.",
         self::YOUR_GROUP_IS_IMPORTING_CONFIG => 'Your group is importing config.',
         self::PLEASE_WAIT_SCAN => 'Please wait for a while to scan.',
+        self::ROLE_PERMISSION_DENIED => "Role Permission Denied.",
+        self::YOU_DONT_HAVE_ROLE_PERMISSION => "You Don't Have Role Permission.",
     ];
 }
