@@ -63,7 +63,7 @@ class CdnControllerTest extends TestCase
 
     private function login()
     {
-        $this->addUuidforPayload()->addUserGroupId(random_int(1, 5))->setJwtTokenPayload(random_int(1, 5),
+        $this->addUuidforPayload()->addUserGroupId(1)->addRoleIdforPayload(1)->setJwtTokenPayload(1,
             $this->jwtPayload);
     }
 
@@ -164,7 +164,7 @@ class CdnControllerTest extends TestCase
         $this->setUri($cdn->domain_id);
 
         $this->patch($this->getUri() . "/$cdn->id/default", ['default' => 1])
-            ->assertStatus(409);
+            ->assertStatus(409); 
 
         Event::assertDispatched(CdnWasEdited::class);
     }

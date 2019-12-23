@@ -57,6 +57,8 @@ class InputError extends Enum
     const DOMAIN_CDNPROVIDER_DIFFERENT_WITH_GROUPS = 4045;
     const DOMAIN_ALREADY_EXISTED = 4046;
     const BATCH_DOMAIN_ERROR = 4047;
+    const DOMAIN_NOT_EXIST = 4048;
+    const INPUT_PERMISSIONS_NOT_MATCH = 4049;
 
     
     /**
@@ -110,7 +112,9 @@ class InputError extends Enum
         self::DOMAIN_IS_UNDEFINED => "The domain is undefined.",
         self::DOMAIN_CDNPROVIDER_DIFFERENT_WITH_GROUPS => "Domain's Cdn Provider are different with Group's.",
         self::DOMAIN_ALREADY_EXISTED => "Domain already existed.",
-        self::BATCH_DOMAIN_ERROR => "Batch handel domain error."
+        self::BATCH_DOMAIN_ERROR => "Batch handel domain error.",
+        self::DOMAIN_NOT_EXIST => "Domain not exist.",
+        self::INPUT_PERMISSIONS_NOT_MATCH => "Permissions ID Not Exists"
 
     ];
 }
