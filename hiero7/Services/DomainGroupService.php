@@ -110,7 +110,9 @@ class DomainGroupService
      */
     public function createDomainToGroup(DomainGroupRequest $request, DomainGroup $domainGroup)
     {
-        $checkDomainCdnSetting = $this->compareDomainCdnSetting($domainGroup, $request->domain_id);
+        $targetDomain = Domain::find($request->domain_id);
+
+        $checkDomainCdnSetting = $this->compareDomainCdnSetting($domainGroup, $targetDomain);
 
         if (!$checkDomainCdnSetting) {
             return false;
@@ -188,14 +190,14 @@ class DomainGroupService
      * @param [type] $targetDomainId
      * @return void
      */
-    public function compareDomainCdnSetting(DomainGroup $domainGroup, $targetDomainId)
+    public function compareDomainCdnSetting(DomainGroup $domainGroup, $targetDomain)
     {
         $controlDomain = $domainGroup->domains;
         // Group 內的 Domain 的 CDN Provider ID
         $controlCdnProvider = $controlDomain[0]->cdns()->get(['cdn_provider_id'])->pluck('cdn_provider_id');
 
         try {
-            $targetCdnProvider = Domain::find($targetDomainId)->cdns()->get(['cdn_provider_id'])->pluck('cdn_provider_id');
+            $targetCdnProvider = $targetDomain->cdns()->get(['cdn_provider_id'])->pluck('cdn_provider_id');
         } catch (\Exception $e) {
             $errorMessage = $e->getMessage();
             $targetCdnProvider = [];
@@ -233,6 +235,8 @@ class DomainGroupService
      * 拿 Group 內的 Domain 為底 做比較
      * 可分兩大類 「Group 內的 Domain 沒有 iRoute 」、「Group 內的 Domain 有 iRoute 」
      * 
+     * 「Group 內的 Domain 沒有 iRoute 」=> 單純刪掉 目標 Domain 的 iRoute 設定
+     *  
      * @param DomainGroup $domainGroup
      * @param integer $domainId
      * @param string $editedBy
@@ -240,15 +244,15 @@ class DomainGroupService
      */
     public function changeIrouteSetting(DomainGroup $domainGroup, int $domainId)
     {
-        //取 Group 內的第一個 domain 下的 cdn
+        //取 Group 內的第一個 domain 下的 all cdn 設定
         $originCdnSetting = $domainGroup->domains->get(0)->cdns;
         // 取該 cdn 下的所有 iRoute 設定，拿到 有設定的(originIrouteSetting) 和 沒有設定的 CDN (nonSettingCdn)
-        list($originIrouteSetting,$nonSettingCdn) = $this->getLocationSetting($originCdnSetting);
+        list($originIrouteSetting, $hasSettingCdn, $nonSettingCdn) = $this->getLocationSetting($originCdnSetting);
 
         $targetDomain = Domain::find($domainId);
 
-        // Group 內的 Domain 沒有 iRoute
-        if (empty($originIrouteSetting)) {
+        //情境一： Group 內的 Domain 沒有 iRoute
+        if (($originIrouteSetting)->isEmpty()) {
             
             // 刪除 targetDomain 的 iRoute 設定
             empty($this->destroyTargetIrouteSetting($targetDomain)) ? 
@@ -259,12 +263,13 @@ class DomainGroupService
 
         $errors = []; 
 
-        // Group 內的 Domain 有 iRoute
+        //情境二： Group 內的 Domain 有 iRoute
 
-        // 處理 有設定的
+        // 針對 Group 內的 Domain 處理 有設定的 iRouteSetting
         foreach ($originIrouteSetting as $iRouteSetting) {
+            //調整 單一線路
             $response = $this->locationDnsSettingService->decideAction($iRouteSetting->cdn_provider_id, $targetDomain, $iRouteSetting->location);
-            
+
             // 'differentGroup' 代表 目標 Domain 裡 沒有屬於 預期 cdnProviderId 的 CDN
             // false 是打 pod 問題。 
             if (is_string($response)){
@@ -272,6 +277,14 @@ class DomainGroupService
             }else{
                 $response ? true : $errors[$iRouteSetting->id] = $response;
             }
+        }
+
+        // 處理 Group 內有設定的 cdnProvider
+        foreach($hasSettingCdn as $cdnProviderId){
+            //取得 被調整好的 locationSetting
+            $iRouteSetting = $this->getCdnProviderIrouteSetting($cdnProviderId, $originIrouteSetting);
+            //處理 Domain 的 Cdn 的 其他 iRoute 設定
+            $this->locationDnsSettingService->handelTargetDomainsIrouteSetting($cdnProviderId, $targetDomain, $iRouteSetting);
         }
 
         //用 Group 內 沒有 iRoute 設定 的 CDN，檢查 目標 Domain 有沒有設定 
@@ -398,24 +411,33 @@ class DomainGroupService
      */
     private function getLocationSetting(Collection $cdnSetting)
     {
-        $nonSettingCdn = $targetIrouteSetting = [];
+        $nonSettingCdn = $hasSettingCdn = $targetIrouteSetting = [];
 
         foreach ($cdnSetting as $cdns) {
             $originLocationDnsSetting = collect($cdns->locationDnsSetting);
             //檢查該 cdn 是否有存在 locationDnsSetting table
             if ($originLocationDnsSetting->isEmpty()) {
-                $nonSettingCdnProviderId = $cdns->cdn_provider_id;
-                array_push($nonSettingCdn, $nonSettingCdnProviderId);
+                $nonSettingCdn[] = $cdns->cdn_provider_id;
                 continue;
             }
-
             //如果有存在 locationDnsSetting table，就要一個一個看。
-            $targetIrouteSetting = $originLocationDnsSetting->each(function ($item, $key) use ($cdns){
+            $targetIrouteSetting[] = $originLocationDnsSetting->each(function ($item, $key) use ($cdns){
                 $item->cdn_provider_id = $cdns->cdn_provider_id;
             });
+
+            $hasSettingCdn[] = $cdns->cdn_provider_id;
         }
 
-        return [$targetIrouteSetting, $nonSettingCdn];
+        return [collect($targetIrouteSetting)->collapse(), $hasSettingCdn, $nonSettingCdn];
+    }
+
+    private function getCdnProviderIrouteSetting($cdnProviderId ,$originIrouteSetting)
+    {
+        $hasSettingiRoute = $originIrouteSetting->filter(function ($item) use($cdnProviderId){
+            return $item->cdn_provider_id == $cdnProviderId;
+        });
+
+        return $hasSettingiRoute;
     }
 
     /**

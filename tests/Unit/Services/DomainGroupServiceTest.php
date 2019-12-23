@@ -52,6 +52,7 @@ class DomainGroupServiceTest extends TestCase
         $this->locationDnsSettingService->shouldReceive('updateSetting')->withAnyArgs()->andReturn(true);
         $this->locationDnsSettingService->shouldReceive('createSetting')->withAnyArgs()->andReturn(true);
         $this->locationDnsSettingService->shouldReceive('destroy')->withAnyArgs()->andReturn(true);
+        $this->locationDnsSettingService->shouldReceive('handelTargetDomainsIrouteSetting')->withAnyArgs()->andReturn(true);
 
     }
 
