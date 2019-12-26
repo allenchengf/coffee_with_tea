@@ -11,4 +11,9 @@ class DomainPin extends Model
     protected $fillable = ['user_group_id', 'name', 'edited_by'];
     public $timestamps = true;
     protected $hidden = ['created_at', 'updated_at'];
+
+    public static function getName(int $ugid)
+    {
+        return self::where('user_group_id', $ugid)->pluck('name')->first();
+    }
 }
