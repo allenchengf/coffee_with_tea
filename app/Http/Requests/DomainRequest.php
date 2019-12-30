@@ -47,12 +47,6 @@ class DomainRequest extends FormRequest
                 break;
             case ($routeName === "$prefix.edit"):
                 return [
-                    'name' => [
-                        'nullable',
-                        'string',
-                        new DomainValidationRule,
-                        Rule::unique('domains')->ignore($this->domain->id),
-                    ],
                     'label' => 'nullable|string',
                 ];
                 break;

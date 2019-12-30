@@ -34,7 +34,7 @@ class DomainService
 
     public function cnameFormat(Request $request, int $ugid)
     {
-        $cname = $request->get('cname') ?? $request->get('name');
+        $cname = $request->get('name');
 
         return $this->formatDomainCname($cname, $ugid);
     }
