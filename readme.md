@@ -56,7 +56,8 @@ phpunit --coverage-html coverage
 
 ### 可重複執行
 ```
-php artisan db:seed --class=ApiPermissionMappingTableSeeder
 php artisan db:seed --class=ApisTableSeeder
 php artisan db:seed --class=PermissionSeeder
+php artisan db:seed --class=ApiPermissionMappingTableSeeder
+php artisan db:seed --class=DomainPinSeeder
 ```
