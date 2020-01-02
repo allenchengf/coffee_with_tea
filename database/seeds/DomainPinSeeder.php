@@ -31,7 +31,7 @@ class DomainPinSeeder extends Seeder
             [
                 'id' => 4,
                 'user_group_id' => 4,
-                'name' => 'cst',
+                'name' => 'dns',
             ],
         ];
 
