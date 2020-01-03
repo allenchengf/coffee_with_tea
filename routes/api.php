@@ -42,6 +42,14 @@ Route::group(['middleware' => ['api', 'check.role.permission'], 'namespace' => '
     });
 
     Route::group(['middleware' => ['internal.group']], function () {
+
+        Route::group(['prefix' => 'domain-pin'], function () {
+            Route::get('', 'DomainPinController@index');
+            Route::get('{domainPin}', 'DomainPinController@show');
+            Route::post('', 'DomainPinController@store');
+            Route::delete('{domainPin}', 'DomainPinController@destroy');
+        });
+
         Route::group(['prefix' => 'lines'], function () {
             Route::get('', 'LineController@index')->name('lines.index');
             Route::post('', 'LineController@create')->name('lines.create');

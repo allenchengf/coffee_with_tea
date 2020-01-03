@@ -22,5 +22,6 @@ class DatabaseSeeder extends Seeder
         $this->call(ApisTableSeeder::class);
         $this->call(ApiPermissionMappingTableSeeder::class);
         $this->call(RolePermissionMappingSeeder::class);
+        $this->call(DomainPinSeeder::class);
     }
 }

@@ -252,10 +252,7 @@ class DomainTest extends TestCase
         $domain = $this->domain->find($domain_id);
 
         $inputData = [
-            'domain' => $domain_id,
-            'name' => 'rd.test99.com',
-            'cname' => 'rd.test99.com',
-            'label' => 'LeoLabel',
+            'label' => 'LeoLabel123',
         ];
 
         $request = new Request;
@@ -269,7 +266,7 @@ class DomainTest extends TestCase
         $this->assertEquals(200, $response->status());
 
         $data = json_decode($response->getContent(), true);
-        $this->assertEquals($inputData['name'], $data['data']['name']);
+        $this->assertEquals($inputData['label'], $data['data']['label']);
     }
 
     /**
