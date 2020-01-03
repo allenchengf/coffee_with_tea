@@ -83,7 +83,10 @@ class RolePermission
             case ('POST'):
                 $crud = 'create';
                 break;
-            case ('PUT'||'PATCH'):
+            case ('PUT'):
+                $crud = 'update';
+                break;
+            case ('PATCH'):
                 $crud = 'update';
                 break;
             case ('DELETE'):
