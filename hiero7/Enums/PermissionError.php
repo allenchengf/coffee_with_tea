@@ -24,6 +24,7 @@ class PermissionError extends Enum
     const PLEASE_WAIT_SCAN = 3012;
     const ROLE_PERMISSION_DENIED = 3013;
     const YOU_DONT_HAVE_ROLE_PERMISSION = 3014;
+    const PLEASE_PASS_PERMISSION_ID = 3015;
 
     /**
      * @var array
@@ -44,5 +45,6 @@ class PermissionError extends Enum
         self::PLEASE_WAIT_SCAN => 'Please wait for a while to scan.',
         self::ROLE_PERMISSION_DENIED => "Role Permission Denied.",
         self::YOU_DONT_HAVE_ROLE_PERMISSION => "You Don't Have Role Permission.",
+        self::PLEASE_PASS_PERMISSION_ID => "Please Pass Permission ID.",
     ];
 }
