@@ -68,10 +68,10 @@ class DomainTest extends TestRequest
         $this->request->setName('domain.edit');
         $this->rules = $this->request->rules();
 
-        $this->assertTrue($this->validateField('name', null));
-        $this->assertTrue($this->validateField('name', $this->domain->name));
-        $this->assertTrue($this->validateField('name', 'leo.com'));
-        $this->assertFalse($this->validateField('name', str_random(10)));
+        // $this->assertTrue($this->validateField('name', null));
+        // $this->assertTrue($this->validateField('name', $this->domain->name));
+        // $this->assertTrue($this->validateField('name', 'leo.com'));
+        // $this->assertFalse($this->validateField('name', str_random(10)));
 
         // $this->assertTrue($this->validateField('cname', null));
         // $this->assertTrue($this->validateField('cname', $this->domain->cname));

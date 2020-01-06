@@ -2,6 +2,8 @@
 
 namespace Hiero7\Traits;
 
+use Hiero7\Models\DomainPin;
+
 trait DomainHelperTrait
 {
     /**
@@ -40,6 +42,8 @@ trait DomainHelperTrait
             $cname = preg_replace("/[[:punct:]]/i", '', $cname);
         }
 
-        return strtolower($cname . '.' . $ugid);
+        $pin = DomainPin::getName($ugid);
+
+        return strtolower($cname . '.' . $pin);
     }
 }

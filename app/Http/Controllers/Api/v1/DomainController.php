@@ -134,7 +134,7 @@ class DomainController extends Controller
 
         $this->modifyName($request);
 
-        $domain->update($request->only('name', 'label', 'edited_by'));
+        $domain->update($request->only('label', 'edited_by'));
 
         $domain->cdns;
 
