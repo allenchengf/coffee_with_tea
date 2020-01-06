@@ -83,7 +83,7 @@ class RolePermissionTest extends TestCase
         foreach ($this->apis as $row) {
             $request = new Request([], [], [], [], [], ['REQUEST_URI' => $this->pathPrefix . $row->path_regex]);
             $request->setMethod($row->method);
-            $request->headers->set('permission_id', $row->permission_id);
+            $request->headers->set('permission-id', $row->permission_id);
 
             $response = $this->middleware->handle($request, function () {});
             $this->assertEquals($response, null);
@@ -107,7 +107,7 @@ class RolePermissionTest extends TestCase
         foreach ($this->apis as $row) {
             $request = new Request([], [], [], [], [], ['REQUEST_URI' => $this->pathPrefix . $row->path_regex]);
             $request->setMethod($row->method);
-            $request->headers->set('permission_id', $row->permission_id);
+            $request->headers->set('permission-id', $row->permission_id);
 
             $response = $this->middleware->handle($request, function () {});
 
@@ -162,7 +162,7 @@ class RolePermissionTest extends TestCase
         foreach ($this->apis as $row) {
             $request = new Request([], [], [], [], [], ['REQUEST_URI' => $this->pathPrefix . $row->path_regex]);
             $request->setMethod($row->method);
-            $request->headers->set('permission_id', $row->permission_id + 999);
+            $request->headers->set('permission-id', $row->permission_id + 999);
 
             $response = $this->middleware->handle($request, function () {});
 
@@ -190,7 +190,7 @@ class RolePermissionTest extends TestCase
         foreach ($this->apis as $row) {
             $request = new Request([], [], [], [], [], ['REQUEST_URI' => $this->pathPrefix . $row->path_regex]);
             $request->setMethod($row->method);
-            $request->headers->set('permission_id', $row->permission_id);
+            $request->headers->set('permission-id', $row->permission_id);
 
             $response = $this->fakeMiddleware->handle($request, function () {});
 
