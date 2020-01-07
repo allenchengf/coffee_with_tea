@@ -34,6 +34,12 @@ S3_BUCKET_NAME_CONFIG_BACKUP= (S3 Bucket 名稱，目前為 Config Backup 用 - 
 BACKUP_AT=03:00 (沒設定 Backup 時間的 user_group 們其備份時間 - Justin)
 ```
 
+## 部署確認
+1. 重置 supversor
+```
+supervisorctl restart iroutecdn:*
+```
+
 #### Note
 
 1. leodock_backend gateway IP :
