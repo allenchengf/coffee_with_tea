@@ -112,7 +112,7 @@ class RolePermission
         }
 
         // 檢查前端是否給定 permission_id
-        $permission_id = $request->header('permission_id');
+        $permission_id = $request->header('permission-id');
         if (is_null($permission_id)) {
             return $this->response(PermissionError::PLEASE_PASS_PERMISSION_ID);
         }
