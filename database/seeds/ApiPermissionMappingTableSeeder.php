@@ -495,6 +495,45 @@ class ApiPermissionMappingTableSeeder extends Seeder
 * =====================
 */
 
+
+
+/*
+ * =====================
+ * 第 三 批 start
+ * 2020-01-07
+ * =====================
+*/
+        // GET Get CDN Providers
+        // sidebar: CDN Providers
+        ->updateOrCreate(
+            ['id' => 71],
+            ['permission_id' => 2, 'api_id' => 52, 'created_at' => $now]
+        )
+        ->updateOrCreate(
+            ['id' => 72],
+            ['permission_id' => 3, 'api_id' => 52, 'created_at' => $now]
+        )
+        ->updateOrCreate(
+            ['id' => 73],
+            ['permission_id' => 4, 'api_id' => 52, 'created_at' => $now]
+        )
+        ->updateOrCreate(
+            ['id' => 74],
+            ['permission_id' => 6, 'api_id' => 52, 'created_at' => $now]
+        )
+        // GET Get Group's Domains
+        // sidebar: Grouping
+        ->updateOrCreate(
+            ['id' => 75],
+            ['permission_id' => 4, 'api_id' => 20, 'created_at' => $now]
+        )
+
+/*
+* =====================
+* 第 三 批 end
+* =====================
+*/
+
         ;
     }
 }
