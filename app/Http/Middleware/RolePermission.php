@@ -111,16 +111,15 @@ class RolePermission
             return $next($request);
         }
 
+        // 檢查前端是否給定 permission_id
+        $permission_id = $request->header('permission-id');
+        if (is_null($permission_id)) {
+            return $this->response(PermissionError::PLEASE_PASS_PERMISSION_ID);
+        }
+
         // 檢查 API 使用權限
         $role_id = $jwtPayload['role_id'];
-        $selfPermissions = DB::table('permissions')
-                            ->where('rpm.role_id', $role_id)
-                            ->leftjoin('role_permission_mapping as rpm', 'permissions.id', '=', 'rpm.permission_id')
-                            ->leftjoin('api_permission_mapping as apm', 'permissions.id', '=', 'apm.permission_id')
-                            ->leftjoin('apis as a', 'apm.api_id', '=', 'a.id')
-                            ->select('a.method', 'a.path_regex', 'rpm.actions')
-                            ->get();
-
+        $selfPermissions = $this->getPermissionsByRoleId($role_id, $permission_id);
         if (! $selfPermissions || $selfPermissions->isEmpty()) {
             // 未曾設定權限，請聯絡客戶自身主管
             return $this->response(PermissionError::ROLE_PERMISSION_DENIED);
@@ -139,6 +138,18 @@ class RolePermission
 
         // 無授權該使用者此 API
         return $this->response(PermissionError::YOU_DONT_HAVE_ROLE_PERMISSION);
+    }
+
+    public function getPermissionsByRoleId($role_id, $permission_id)
+    {
+        return DB::table('permissions')
+                    ->where('rpm.role_id', $role_id)
+                    ->where('permissions.id', $permission_id)
+                    ->leftjoin('role_permission_mapping as rpm', 'permissions.id', '=', 'rpm.permission_id')
+                    ->leftjoin('api_permission_mapping as apm', 'permissions.id', '=', 'apm.permission_id')
+                    ->leftjoin('apis as a', 'apm.api_id', '=', 'a.id')
+                    ->select('a.method', 'a.path_regex', 'rpm.actions')
+                    ->get();
     }
 
     public function response($errorCode)

@@ -22,9 +22,9 @@ class RolePermissionMappingSeeder extends Seeder
 
             for ($j = 1; $j <= $countPermissions; $j++) {
                 $rolePermissionMapping
-                ->updateOrInsert(
-                    ['role_id' => $role_id, 'permission_id' => $j, 'actions' => '{"read":1,"create":1,"update":1,"delete":1}', 'created_at' => $now],
-                    ['id' => $j + $addInterval]
+                ->updateOrCreate(
+                    ['id' => $j + $addInterval],
+                    ['role_id' => $role_id, 'permission_id' => $j, 'actions' => '{"read":1,"create":1,"update":1,"delete":1}', 'created_at' => $now]
                 );
             }
         }
