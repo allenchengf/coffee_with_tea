@@ -20,7 +20,7 @@ class ProcessService
         $this->getQueueName($request, $ugId);
 
         $all = (int) $this->redis->get($this->queueName);
-        $process = $this->jobs->where('queue', $this->queueName)->count();
+        $process = $this->jobs->where('queue','like', "{$this->queueName}%")->count();
         $done = ($all - $process) < 0 ? 0 : $all - $process ;
 
         $result = ['all' => $all,
@@ -63,7 +63,7 @@ class ProcessService
      */
     private function deleteRedisRecord($connect)
     {
-        $process = $this->jobs->where('queue', $this->queueName)->count();
+        $process = $this->jobs->where('queue','like', "{$this->queueName}%")->count();
         
         if($process == 0)
         {
