@@ -241,4 +241,16 @@ class CdnProviderController extends Controller
 
         return $this->setStatusCode($errorCode ? 400 : 200)->response('', $errorCode);
     }
+
+    /**
+     * @param \Hiero7\Models\CdnProvider $cdnProvider
+     *
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function detailedInfo(CdnProvider $cdnProvider)
+    {
+        $result = $cdnProvider::select(['name', 'status'])->withCount('domains')->where('user_group_id',$this->getJWTPayload()['user_group_id'])->get();
+
+        return $this->setStatusCode($result ? 200 : 400)->response('', '',$result);
+    }
 }

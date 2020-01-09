@@ -82,6 +82,7 @@ Route::group(['middleware' => ['api', 'check.role.permission'], 'namespace' => '
         Route::patch('{cdn_provider}/scannable', 'CdnProviderController@changeScannable')->name('cdn_providers.scannable');
         Route::get('{cdn_provider}/check', 'CdnProviderController@checkDefault')->name('cdn_providers.check');
         Route::delete('{cdn_provider}', 'CdnProviderController@destroy')->name('cdn_providers.destroy')->middleware('check.dnspod');
+        Route::get('detailed-info', 'CdnProviderController@detailedInfo')->name('cdn_providers.detailedInfo');
     });
 
     Route::group(['prefix' => 'groups'], function () {
