@@ -12,7 +12,7 @@ class RolePermission
     use JwtPayloadTrait;
 
     // postman > sidebar: X。後端模組串接用、或其他原因，不做 Role Permission 檢測之 APIs
-    public $passApis = [
+    public $noSidebarPassApis = [
         [ // GET Get Domain In Dns Data
             'method' => 'GET',
             'path_regex' => 'domains\/[0-9]+\/check',
@@ -63,6 +63,26 @@ class RolePermission
         ],
     ];
 
+    // Dashboard APIs 直接給過:
+    public $dashboardPassApis = [
+        [ // GET Get CDN Providers
+            'method' => 'GET',
+            'path_regex' => 'cdn_providers',
+        ],
+        [ // GET Get Group
+            'method' => 'GET',
+            'path_regex' => 'groups',
+        ],
+        [ // Get Domain (pagination)
+            'method' => 'GET',
+            'path_regex' => 'domains',
+        ],
+        [ // GET Get Operation Logs by Category
+            'method' => 'GET',
+            'path_regex' => 'operation_log\/category\/[a-zA-Z]+',
+        ],
+    ];
+
     /**
      * Handle an incoming request.
      *
@@ -97,7 +117,7 @@ class RolePermission
         }
 
         // 直接給過: 給後端用的 API，無 Sidebar
-        foreach ($this->passApis as $row) {
+        foreach ($this->noSidebarPassApis as $row) {
             $isPathMatch = preg_match('/^'. $row['path_regex'] .'$/', $path);
             if( $row['method'] == $method && $isPathMatch === 1) {
                 return $next($request);
@@ -115,6 +135,16 @@ class RolePermission
         $permission_id = $request->header('permission-id');
         if (is_null($permission_id)) {
             return $this->response(PermissionError::PLEASE_PASS_PERMISSION_ID);
+        }
+
+        // 直接給過: Dashboard (permission_id: 9) APIs
+        if ($permission_id == 9) {
+            foreach ($this->dashboardPassApis as $row) {
+                $isPathMatch = preg_match('/^'. $row['path_regex'] .'$/', $path);
+                if( $row['method'] == $method && $isPathMatch === 1) {
+                    return $next($request);
+                }
+            }
         }
 
         // 檢查 API 使用權限

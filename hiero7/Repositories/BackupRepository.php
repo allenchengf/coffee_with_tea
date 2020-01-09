@@ -33,6 +33,9 @@ class BackupRepository
     public function showByUgid()
     {
         $backup = $this->backup->where('user_group_id', $this->getJWTUserGroupId())->first();
+        if (is_null($backup))
+            return [];
+
         $backup['backedup_at'] = substr($backup['backedup_at'], 0, 5);
         
         return $backup;

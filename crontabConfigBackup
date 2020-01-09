@@ -1,1 +1,1 @@
-* * * * * /usr/local/bin/php /var/www/html/coffee_with_tea/artisan schedule:run >> /dev/null 2>&1
+* * * * * /usr/local/bin/php /var/www/html/coffee_with_tea/artisan schedule:run >> /var/www/html/coffee_with_tea/storage/logs/laravel.log 2>&1
