@@ -81,6 +81,10 @@ class RolePermission
             'method' => 'GET',
             'path_regex' => 'operation_log\/category\/[a-zA-Z]+',
         ],
+        [ // GET detailed info
+            'method' => 'GET',
+            'path_regex' => 'cdn_providers\/detailed-info',
+        ],
     ];
 
     /**
