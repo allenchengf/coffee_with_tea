@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\v1;
 use App\Http\Controllers\Controller;
 use Hiero7\Services\OperationLogService;
 use Hiero7\Traits\OperationLogTrait;
+use Illuminate\Http\Request;
 
 class OperationLogController extends Controller
 {
@@ -27,9 +28,13 @@ class OperationLogController extends Controller
         return $this->response('', null, $data);
     }
 
-    public function show($category)
+    public function show(Request $request, $category)
     {
-        $data = $this->operationLogService->show($category);
+        $page = $request->get('current_page', 1);
+
+        $pageCount = $request->get('per_page', 3000);
+
+        $data = $this->operationLogService->show($category, $page, $pageCount);
 
         return $this->response('', null, $data);
     }
