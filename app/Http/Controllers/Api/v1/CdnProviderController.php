@@ -13,6 +13,7 @@ use Hiero7\Models\CdnProvider;
 use Hiero7\Services\CdnProviderService;
 use Hiero7\Traits\OperationLogTrait;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Database\Eloquent\Builder;
 
 /**
  * Class CdnProviderController
@@ -249,8 +250,12 @@ class CdnProviderController extends Controller
      */
     public function detailedInfo(CdnProvider $cdnProvider)
     {
-        $result = $cdnProvider::select(['name', 'status'])->withCount('domains')->where('user_group_id',$this->getJWTPayload()['user_group_id'])->get();
+        $result = $cdnProvider::select(['name', 'status'])->withCount([
+            'domains as default_domains_count' => function (Builder $query) {
+                $query->where('default', '=', 1);
+            }
+        ])->where('user_group_id', $this->getJWTPayload()['user_group_id'])->get();
 
-        return $this->setStatusCode($result ? 200 : 400)->response('', '',$result);
+        return $this->setStatusCode($result ? 200 : 400)->response('', '', $result);
     }
 }
