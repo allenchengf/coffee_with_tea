@@ -82,6 +82,7 @@ Route::group(['middleware' => ['api', 'check.role.permission'], 'namespace' => '
         Route::patch('{cdn_provider}/scannable', 'CdnProviderController@changeScannable')->name('cdn_providers.scannable');
         Route::get('{cdn_provider}/check', 'CdnProviderController@checkDefault')->name('cdn_providers.check');
         Route::delete('{cdn_provider}', 'CdnProviderController@destroy')->name('cdn_providers.destroy')->middleware('check.dnspod');
+        Route::get('detailed-info', 'CdnProviderController@detailedInfo')->name('cdn_providers.detailedInfo');
     });
 
     Route::group(['prefix' => 'groups'], function () {
@@ -109,6 +110,7 @@ Route::group(['middleware' => ['api', 'check.role.permission'], 'namespace' => '
         Route::get('', 'ConfigController@index')->name('config.index');
 
         Route::get('s3', 'ConfigController@indexBackupFromS3')->name('config.indexBackup');
+        Route::get('s3/{key}', 'ConfigController@showBackupFromS3')->name('config.showBackup');
         Route::post('', 'ConfigController@import')->name('config.import')->middleware('check.dnspod');
     });
 

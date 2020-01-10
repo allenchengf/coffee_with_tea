@@ -67,3 +67,15 @@ php artisan db:seed --class=PermissionSeeder
 php artisan db:seed --class=ApiPermissionMappingTableSeeder
 php artisan db:seed --class=DomainPinSeeder
 ```
+
+5. 排程
+
+於容器內觸發 config backup 排程，指令記錄於 ./crontabConfigBackup。
+```
+crontab -e
+```
+
+若排程無執行，則指令開啟 cron：
+```
+service cron start
+```

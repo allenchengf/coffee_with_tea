@@ -137,7 +137,7 @@ class ConfigController extends Controller
         ];
     }
     
-    public function indexBackupFromS3(Request $request, Domain $domain, CdnProvider $cdnProvider, DomainGroup $domainGroup)
+    public function indexBackupFromS3(Request $request)
     {
         $data = [];
         $s3BucketDomain = '';
@@ -167,15 +167,55 @@ class ConfigController extends Controller
         // 取 s3 files
         if (isset($s3Objects['Contents']))
             collect($s3Objects['Contents'])->each(function ($object) use (&$data, &$s3BucketDomain) {
+                $matches = [];
+                preg_match('/_([0-9]+)/', $object['Key'], $matches);
                 $data[] = [
-                    'url' => $s3BucketDomain . '/' . $object['Key'],
+                    'key' => $matches[1],
                     'created_at' => date('Y-m-d H:i:s', $object['LastModified']->getTimestamp()),
                 ];
             });
         
-        // files 時間排序 ASC
-        $data = collect($data)->sortBy('created_at')->values();
+        // files 時間排序 Desc
+        $data = collect($data)->sortByDesc('created_at')->values();
         
+        return $this->response('', null, $data);
+    }
+    
+    public function showBackupFromS3(Request $request, $key)
+    {
+        // ugid
+        $userGroupId = $this->getUgid($request);
+
+        // 檔名與路徑
+        $fileName = $userGroupId . '_' . $key . '.json';
+        $filePath = storage_path('app') . '/' . $fileName;
+
+        // 建立 s3 channel
+        $s3 = AWS::createClient('s3');
+        
+        // 來去 s3 找找
+        $s3Objects = $s3->listObjects([
+            'Bucket' => env('S3_BUCKET_NAME_CONFIG_BACKUP', 'iroutecdn-config-backup'),
+            'Prefix' => $fileName,
+        ]);
+        
+        // err: S3 Bucket 檔案不存在
+        if (! isset($s3Objects['Contents']))
+            return $this->setStatusCode(400)->response('', InternalError::NO_S3_FILES_FROM_UIGD, []);
+        
+        // 取 s3 檔案暫存本地
+        $s3Objects = $s3->getObject([
+            'Bucket' => env('S3_BUCKET_NAME_CONFIG_BACKUP', 'iroutecdn-config-backup'),
+            'Key'    => $fileName,
+            'SaveAs' => $filePath
+        ]);
+
+        // 讀取本地檔案內容
+        $data = json_decode(Storage::disk('local')->get($fileName), true);
+
+        // 本地刪掉檔案
+        Storage::disk('local')->delete($fileName);
+
         return $this->response('', null, $data);
     }
 
