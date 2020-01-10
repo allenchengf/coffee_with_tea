@@ -23,6 +23,9 @@ class BackupController extends Controller
     public function show(Request $request)
     {
         $result = $this->backupRepository->showByUgid();
+        if (! $result)
+            return $this->setStatusCode(400)->response('', InputError::GROUP_NOT_EXIST_BACKUPS, []);
+
         return $this->response('', null, $result);
     }
 

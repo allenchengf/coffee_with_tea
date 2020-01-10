@@ -342,7 +342,7 @@ class ApiPermissionMappingTableSeeder extends Seeder
  * =====================
 */
 
-        // GET get Config Backup from S3
+        // GET get list from S3
         // sidebar: Config
         ->updateOrCreate(
             ['id' => 46],
@@ -492,6 +492,63 @@ class ApiPermissionMappingTableSeeder extends Seeder
 /*
 * =====================
 * 第 二 批 end
+* =====================
+*/
+
+
+
+/*
+ * =====================
+ * 第 三 批 start
+ * 2020-01-07
+ * =====================
+*/
+        // GET Get CDN Providers
+        // sidebar: CDN Providers
+        ->updateOrCreate(
+            ['id' => 71],
+            ['permission_id' => 2, 'api_id' => 52, 'created_at' => $now]
+        )
+        ->updateOrCreate(
+            ['id' => 72],
+            ['permission_id' => 3, 'api_id' => 52, 'created_at' => $now]
+        )
+        ->updateOrCreate(
+            ['id' => 73],
+            ['permission_id' => 4, 'api_id' => 52, 'created_at' => $now]
+        )
+        ->updateOrCreate(
+            ['id' => 74],
+            ['permission_id' => 6, 'api_id' => 52, 'created_at' => $now]
+        )
+        // GET Get Group's Domains
+        // sidebar: Grouping
+        ->updateOrCreate(
+            ['id' => 75],
+            ['permission_id' => 4, 'api_id' => 20, 'created_at' => $now]
+        )
+        // GET show one from S3
+        // sidebar: Config
+        ->updateOrCreate(
+            ['id' => 76],
+            ['permission_id' => 7, 'api_id' => 65, 'created_at' => $now]
+        )
+        // POST create Config
+        // sidebar: Config
+        ->updateOrCreate(
+            ['id' => 77],
+            ['permission_id' => 7, 'api_id' => 66, 'created_at' => $now]
+        )
+        // PUT restore Config
+        // sidebar: Config
+        ->updateOrCreate(
+            ['id' => 78],
+            ['permission_id' => 7, 'api_id' => 67, 'created_at' => $now]
+        )
+
+/*
+* =====================
+* 第 三 批 end
 * =====================
 */
 
