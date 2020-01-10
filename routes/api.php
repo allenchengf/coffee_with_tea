@@ -109,6 +109,7 @@ Route::group(['middleware' => ['api', 'check.role.permission'], 'namespace' => '
         Route::get('', 'ConfigController@index')->name('config.index');
 
         Route::get('s3', 'ConfigController@indexBackupFromS3')->name('config.indexBackup');
+        Route::get('s3/{key}', 'ConfigController@showBackupFromS3')->name('config.showBackup');
         Route::post('', 'ConfigController@import')->name('config.import')->middleware('check.dnspod');
     });
 
