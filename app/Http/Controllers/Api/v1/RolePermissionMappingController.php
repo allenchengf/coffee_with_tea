@@ -118,14 +118,27 @@ class RolePermissionMappingController extends Controller
         $rolePermissionMappings = $this->rolePermissionMappingRepository->indexSelf($roleId);
         $permissions = $this->permissionRepository->index();
 
-        $rolePermissionMappings->each(function ($rpm, $iRpm) use (&$permissions, &$rolePermissionMappings) {
-            $permissions->each(function ($p, $iP) use (&$rpm, &$iRpm, &$rolePermissionMappings) {
+        $permissions->each(function ($p, $iP) use (&$roleId, &$rolePermissionMappings) {
+            $rolePermissionMappings->each(function ($rpm, $iRpm) use (&$p, &$rolePermissionMappings) {
                 if ($rolePermissionMappings[$iRpm]['permission_id'] == $p['id'] ) {
                     $rolePermissionMappings[$iRpm]['permission'] = $p;
                     return false;
                 }
             });
+
+            // 補假ㄉ Dashboard (permission_id: 9)
+            if ($p['id'] == 9) {
+                $rolePermissionMappings->push([
+                    'id' => null,
+                    'role_id' => $roleId,
+                    'permission_id' => $p['id'],
+                    'actions' => ["read" => 1,"create" => 0,"update" => 0,"delete" => 0],
+                    'edited_by' => null,
+                    'permission' => $p,
+                ]);
+            }
         });
+
         return $rolePermissionMappings;
     }
 }

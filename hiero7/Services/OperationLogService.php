@@ -37,17 +37,18 @@ class OperationLogService
         return $output->data;
     }
 
-    function show(string $category)
+    function show(string $category, int $page = 1, int $pageCount = 3000)
     {
-        $query = $this->formatQuery(compact('category'));
+        $from = ($page - 1) * $pageCount;
+
+        $query = $this->formatQuery(compact('category'), $from, $pageCount);
 
         $output = $this->getEsLogByQuery($query);
 
         return $output->data;
-
     }
 
-    function formatQuery(array $searchList = [], int $user_group_id = null, int $from = null, int $size = null)
+    function formatQuery(array $searchList = [], int $from = 0, int $size = null)
     {
         $match = [
             [
@@ -56,7 +57,7 @@ class OperationLogService
                 ],
             ], [
                 "match" => [
-                    "user_group" => $user_group_id ?? $this->getJWTUserGroupId(),
+                    "user_group" => $this->getJWTUserGroupId(),
                 ],
             ],
         ];
@@ -70,11 +71,18 @@ class OperationLogService
         }
 
         return [
-            "from" => $from ?? 0,
+            "from" => $from,
             "size" => $size ?? env('OPERATION_LOG_SIZE'),
             "query" => [
                 "bool" => [
                     "must" => $match,
+                ],
+            ],
+            "sort" => [
+                [
+                    "time.keyword" => [
+                        "order" => "desc",
+                    ],
                 ],
             ],
         ];

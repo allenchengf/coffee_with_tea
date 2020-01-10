@@ -83,7 +83,7 @@ return [
         'domain' => 'Domain',
         'cdn_provider' => 'CDN Provider',
         'cdn' => 'CDN',
-        'domain_group' => 'Domain Group',
+        'domain_group' => 'Group',
         'iroutecdn' => 'iRouteCDN',
         'network' => 'Network',
     ],
