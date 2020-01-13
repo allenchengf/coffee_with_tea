@@ -361,7 +361,7 @@ class ApisTableSeeder extends Seeder
         // sidebar: Config Backup
         ->updateOrCreate(
             ['id' => 47],
-            ['method' => 'PUT', 'path_regex' => 'backups\/[0-9]+', 'created_at' => $now]
+            ['method' => 'PUT', 'path_regex' => 'backups', 'created_at' => $now]
         )
         // GET Get Users
         // sidebar: Users
