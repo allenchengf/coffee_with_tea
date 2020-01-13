@@ -24,7 +24,13 @@ class BackupController extends Controller
     {
         $result = $this->backupRepository->showByUgid();
         if (! $result)
-            return $this->setStatusCode(400)->response('', InputError::GROUP_NOT_EXIST_BACKUPS, []);
+            return $this->response('', null, [
+                "id" => null,
+                "user_group_id" => $this->getJWTUserGroupId(),
+                "backedup_at" => env('BACKUP_AT', '03:00'),
+                "created_at" => null,
+                "updated_at" => null
+            ]);
 
         return $this->response('', null, $result);
     }
