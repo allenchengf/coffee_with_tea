@@ -8,6 +8,7 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Artisan;
+use Illuminate\Support\Facades\Log;
 
 
 class CallWorker implements ShouldQueue
@@ -34,15 +35,23 @@ class CallWorker implements ShouldQueue
      */
     public function handle()
     {
+        try{
             Artisan::call('queue:work', [ 'connection' => 'database',
             '--queue' => $this->queueName , '--once' => true
             ]);
 
+            Log::info('[CallWorker] queueName:'. $this->queueName .'Artisan call done.');
+
+        }catch (Exception $e){
+            $this->failed($e);
+        }
+
         return;
     }
 
-    public function failed(Exception $exception = null)
+    public function failed($exception = null)
     {
-        
+        Log::info('[CallWorker] Error: ' . $exception);
+        $this->delete();
     }
 }

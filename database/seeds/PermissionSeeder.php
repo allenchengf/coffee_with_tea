@@ -46,6 +46,10 @@ class PermissionSeeder extends Seeder
         ->updateOrCreate(
             ['id' => 8],
             ['name' => 'Users', 'created_at' => $now]
+        )
+        ->updateOrCreate(
+            ['id' => 9],
+            ['name' => 'Dashboard', 'created_at' => $now]
         );
     }
 }

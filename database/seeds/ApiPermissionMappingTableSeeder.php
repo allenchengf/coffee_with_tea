@@ -342,7 +342,7 @@ class ApiPermissionMappingTableSeeder extends Seeder
  * =====================
 */
 
-        // GET get Config Backup from S3
+        // GET get list from S3
         // sidebar: Config
         ->updateOrCreate(
             ['id' => 46],
@@ -526,6 +526,24 @@ class ApiPermissionMappingTableSeeder extends Seeder
         ->updateOrCreate(
             ['id' => 75],
             ['permission_id' => 4, 'api_id' => 20, 'created_at' => $now]
+        )
+        // GET show one from S3
+        // sidebar: Config
+        ->updateOrCreate(
+            ['id' => 76],
+            ['permission_id' => 7, 'api_id' => 65, 'created_at' => $now]
+        )
+        // POST create Config
+        // sidebar: Config
+        ->updateOrCreate(
+            ['id' => 77],
+            ['permission_id' => 7, 'api_id' => 66, 'created_at' => $now]
+        )
+        // PUT restore Config
+        // sidebar: Config
+        ->updateOrCreate(
+            ['id' => 78],
+            ['permission_id' => 7, 'api_id' => 67, 'created_at' => $now]
         )
 
 /*

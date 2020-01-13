@@ -327,7 +327,7 @@ class ApisTableSeeder extends Seeder
  * 第 二 批 start
  * =====================
 */
-        // GET get Config Backup from S3
+        // GET get list from S3
         // sidebar: Config
         ->updateOrCreate(
             ['id' => 42],
@@ -464,6 +464,24 @@ class ApisTableSeeder extends Seeder
         ->updateOrCreate(
             ['id' => 64],
             ['method' => 'GET', 'path_regex' => 'domains\/[0-9]+', 'created_at' => $now]
+        )
+        // GET show one from S3
+        // sidebar: Config
+        ->updateOrCreate(
+            ['id' => 65],
+            ['method' => 'GET', 'path_regex' => 'config\/s3\/[0-9]+', 'created_at' => $now]
+        )
+        // POST create Config
+        // sidebar: Config
+        ->updateOrCreate(
+            ['id' => 66],
+            ['method' => 'POST', 'path_regex' => 'config\/s3', 'created_at' => $now]
+        )
+        // PUT restore Config
+        // sidebar: Config
+        ->updateOrCreate(
+            ['id' => 67],
+            ['method' => 'PUT', 'path_regex' => 'config\/s3\/[0-9]+', 'created_at' => $now]
         )
 
 /*
