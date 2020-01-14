@@ -133,7 +133,7 @@ class LineController extends Controller
             return true;
         }
         $response = $dnsProviderService->syncRecordToDnsPod([
-            'delele' => json_encode($deleteData),
+            'delete' => json_encode($deleteData),
         ]);
 
         if ($response && !$response['errorCode']) {
