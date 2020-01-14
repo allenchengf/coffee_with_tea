@@ -118,8 +118,7 @@ Route::group(['middleware' => ['api', 'check.role.permission'], 'namespace' => '
 
     Route::group(['prefix' => 'backups'], function () {
         Route::get('self', 'BackupController@show')->name('backups.show');
-        Route::post('', 'BackupController@create')->name('backups.create');
-        Route::put('', 'BackupController@update')->name('backups.update');
+        Route::put('', 'BackupController@upsert')->name('backups.upsert');
     });
 
     Route::group(['prefix' => 'operation_log'], function () {

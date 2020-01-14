@@ -253,53 +253,12 @@ class ConfigController extends Controller
         return compact('domains','cdnProviders','domainGroups');
     }
 
-    public function import(Request $request,Domain $domain,CdnProvider $cdnProvider,DomainGroup $domainGroup)
-    {     
-        $userGroupId = $this->getUgid($request);
+    public function import(Request $request)
+    {
+        $res = $this->import2($request);
+        if (is_numeric($res) && $res !== true)
+            return $this->setStatusCode(400)->response('', $res, []);
 
-        Cache::put("Config_userGroupId$userGroupId" , true , env('CONFIG_WAIT_TIME'));        
-        DB::beginTransaction();
-
-        $this->deleteLocationDnsSetting($domain,$cdnProvider,$userGroupId);
-        $domain->where('user_group_id',$userGroupId)->delete();
-        $cdnProvider->where('user_group_id',$userGroupId)->delete();
-        $domainGroup->where('user_group_id',$userGroupId)->delete();
-
-        $importData = $this->formateDataAndCheckCdn($request);
-
-        if(isset($importData['errorData'])){
-            DB::rollback();
-            Cache::forget("Config_userGroupId$userGroupId");
-            return $this->setStatusCode(400)->response('',InputError::WRONG_PARAMETER_ERROR,$importData);
-        }
-
-        $checkDomainResult = $this->configService->checkDomainFormate($importData);
-
-        //不符合格式 return false 並 rollback
-        if(isset($checkDomainResult['errorData'])){
-            DB::rollback();
-            Cache::forget("Config_userGroupId$userGroupId");
-            return $this->setStatusCode(400)->response('',InputError::WRONG_PARAMETER_ERROR,$checkDomainResult);
-        }
-
-        //新增 Domain
-        $this->configService->insert($importData['domains'],$domain, $userGroupId);
-        //新增 cdnProvider
-        $this->configService->insert($importData['cdnProviders'], $cdnProvider, $userGroupId);
-        //新增 cdns
-        $this->configService->insert($importData['cdns'],new Cdn, $userGroupId);
-        //新增 LocationDns 
-        $this->configService->insert($importData['locationDnsSetting'],new LocationDnsSetting, $userGroupId);
-        //新增 DomainGroup
-        $this->configService->insert($importData['domainGroups'], $domainGroup, $userGroupId);
-        //新增 DomainGroupMapping
-        $this->configService->insert($importData['domainGroupsMapping'], new DomainGroupMapping, $userGroupId);
-
-        DB::commit();
-        
-        $this->callSync($domain, $userGroupId);
-
-        Cache::forget("Config_userGroupId$userGroupId");
         return $this->response("Success", null,'');
     }
 
@@ -314,14 +273,19 @@ class ConfigController extends Controller
         $request['cdnProviders'] = $data['cdnProviders'];
         $request['domainGroups'] = $data['domainGroups'];
 
-        $res = $this->importFromS3($request);
+        $res = $this->import2($request);
         if (is_numeric($res) && $res !== true)
             return $this->setStatusCode(400)->response('', $res, []);
 
-        return $this->response('', null, '');
+        return $this->response("Success", null,'');
     }
 
-    public function importFromS3(Request $request)
+    // 原著: Yuan
+    // 修改: Justin
+    // [修改為重複使用，修改處]
+    // 1. function 參數僅 (Request $request)
+    // 2. return (數字) InputError::XXX
+    public function import2(Request $request)
     {
         $userGroupId = $this->getUgid($request);
 
@@ -491,5 +455,4 @@ class ConfigController extends Controller
         
         return $locationDnsSettings->all();
     }
-
 }
