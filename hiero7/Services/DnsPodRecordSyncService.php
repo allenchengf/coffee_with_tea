@@ -13,7 +13,7 @@ use Illuminate\Database\Eloquent\Collection;
 
 class DnsPodRecordSyncService
 {
-    protected $dnsProviderService, $domainRepository, $domainName, $cdnProvider, $cdns;
+    protected $defaultLine, $dnsProviderService, $domainRepository, $domainName, $cdnProvider, $cdns;
 
     private $domainArray = [], $cdnsArray = [], $locationNetworkLine = [];
 
@@ -21,6 +21,8 @@ class DnsPodRecordSyncService
 
     public function __construct(DnsProviderService $dnsProviderService, DomainRepository $domainRepository)
     {
+        $this->defaultLine = "默认";
+
         $this->dnsProviderService = $dnsProviderService;
 
         $this->domainRepository = $domainRepository;
@@ -56,7 +58,7 @@ class DnsPodRecordSyncService
         $differentRecord = $this->getDifferentRecords($domain);
 
         if (isset($differentRecord['create'])) {
-            $this->syncRecord($differentRecord['create'], $differentRecord['different'], $differentRecord['delele']);
+            $this->syncRecord($differentRecord['create'], $differentRecord['different'], $differentRecord['delete']);
         }
 
         return $this->getDifferent($this->record, $this->domainName);
@@ -82,7 +84,12 @@ class DnsPodRecordSyncService
 
             $this->syncDnsProviderRecordId($record, $response['data']['match']);
 
-            return $response['data'];
+            return array_merge([
+                'differentCount' => count($response['data']['different']),
+                'createCount'    => count($response['data']['create']),
+                'deleteCount'    => count($response['data']['delete']),
+                'matchCount'     => count($response['data']['match']),
+            ], $response['data']);
         }
 
         return ['error' => true];
@@ -103,9 +110,9 @@ class DnsPodRecordSyncService
         }
 
         $data = [
-            'create' => json_encode($createData),
+            'create'    => json_encode($createData),
             'different' => json_encode($diffData),
-            'delele' => json_encode($deleteData),
+            'delete'    => json_encode($deleteData),
         ];
 
         return $this->dnsProviderService->syncRecordToDnsPod($data);
@@ -180,13 +187,13 @@ class DnsPodRecordSyncService
             $cdnProvider = $this->cdnProvider[$cdnDefault->cdn_provider_id];
 
             $record = [
-                'id' => (int)$cdnDefault->provider_record_id,
-                'ttl' => (int)$cdnProvider['ttl'],
-                'value' => $cdnDefault->cname,
-                'enabled' => (bool)$cdnProvider['status'],
-                'name' => $this->domainName,
-                'line' => "默认",
-                'type' => "CNAME",
+                'id'      => (int) $cdnDefault->provider_record_id,
+                'ttl'     => (int) $cdnProvider['ttl'],
+                'value'   => $cdnDefault->cname,
+                'enabled' => (bool) $cdnProvider['status'],
+                'name'    => $this->domainName,
+                'line'    => $this->defaultLine,
+                'type'    => "CNAME",
             ];
 
             $this->record[] = $record;
@@ -214,13 +221,13 @@ class DnsPodRecordSyncService
             $cdnProvider = $this->cdnProvider[$cdn['cdn_provider_id']];
 
             $data = [
-                'id' => (int)$value->provider_record_id,
-                'ttl' => (int)$cdnProvider['ttl'],
-                'value' => $cdn['cname'],
-                'enabled' => (bool)$cdnProvider['status'],
-                'name' => $this->domainName,
-                'line' => $line,
-                'type' => "CNAME",
+                'id'      => (int) $value->provider_record_id,
+                'ttl'     => (int) $cdnProvider['ttl'],
+                'value'   => $cdn['cname'],
+                'enabled' => (bool) $cdnProvider['status'],
+                'name'    => $this->domainName,
+                'line'    => $line,
+                'type'    => "CNAME",
             ];
 
             $record[] = $data;
@@ -232,6 +239,13 @@ class DnsPodRecordSyncService
         return $record;
     }
 
+    /**
+     * 將 Match 的 Record_id 寫回 DB
+     *
+     * @param array $soruceRecord
+     * @param array $matchData
+     * @return void
+     */
     private function syncDnsProviderRecordId(array $soruceRecord = [], array $matchData = [])
     {
         $soruceRecord = $this->transferRecord($soruceRecord)->keyBy('hash');
@@ -249,6 +263,7 @@ class DnsPodRecordSyncService
                 return;
             }
 
+            // 同樣的 hash ，但是 id 不相同
             if ($soruceRecord[$key]['id'] != $value['id']) {
                 app()->call([$this, 'updateProviderRecordId'],
                     [
@@ -272,7 +287,7 @@ class DnsPodRecordSyncService
     {
         $domain_id = $this->domainArray[$record["name"]]['id'];
 
-        if ($record["line"] == "默认") {
+        if ($record["line"] == $this->defaultLine) {
 
             $cdn->where('domain_id', $domain_id)
                 ->update(['provider_record_id' => $dnsRecordId]);
@@ -302,6 +317,12 @@ class DnsPodRecordSyncService
         });
     }
 
+    /**
+     * 計算 Record Hash
+     *
+     * @param array $data
+     * @return string
+     */
     private function hashRecord(array $data)
     {
         $data = collect($data)->only('ttl', 'value', 'enabled', 'name', 'line', 'type')->toArray();
