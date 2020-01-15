@@ -108,16 +108,17 @@ Route::group(['middleware' => ['api', 'check.role.permission'], 'namespace' => '
 
     Route::group(['prefix' => 'config'], function () {
         Route::get('', 'ConfigController@index')->name('config.index');
+        Route::post('', 'ConfigController@import')->name('config.import')->middleware('check.dnspod');
 
         Route::get('s3', 'ConfigController@indexBackupFromS3')->name('config.indexBackup');
         Route::get('s3/{key}', 'ConfigController@showBackupFromS3')->name('config.showBackup');
-        Route::post('', 'ConfigController@import')->name('config.import')->middleware('check.dnspod');
+        Route::post('s3', 'ConfigController@storeBackupByUgid')->name('config.storeBackupToS3');
+        Route::put('s3/{key}', 'ConfigController@restoreBackupFromS3')->name('config.restoreBackup');
     });
 
     Route::group(['prefix' => 'backups'], function () {
         Route::get('self', 'BackupController@show')->name('backups.show');
-        Route::post('', 'BackupController@create')->name('backups.create');
-        Route::put('{backup}', 'BackupController@update')->name('backups.update');
+        Route::put('', 'BackupController@upsert')->name('backups.upsert');
     });
 
     Route::group(['prefix' => 'operation_log'], function () {

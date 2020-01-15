@@ -80,6 +80,7 @@ return [
 
     'category' => [
         'user' => 'User',
+        'Profile' => 'Profile',
         'domain' => 'Domain',
         'cdn_provider' => 'CDN Provider',
         'cdn' => 'CDN',
