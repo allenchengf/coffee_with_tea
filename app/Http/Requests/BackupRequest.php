@@ -32,12 +32,7 @@ class BackupRequest extends FormRequest
         $routeName = $this->route()->getName() ?? $prefix;
 
         switch ($routeName) {
-            case ($routeName == "$prefix.create"):
-                return [
-                    "backedup_hour" => ['required','integer','between:0,23'],
-                    "backedup_minute" => ['required','integer','between:0,59'],
-                ];
-            case ($routeName == "$prefix.update"):
+            case ($routeName == "$prefix.upsert"):
                 return [
                     "backedup_hour" => ['required','integer','between:0,23'],
                     "backedup_minute" => ['required','integer','between:0,59'],

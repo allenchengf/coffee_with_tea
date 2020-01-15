@@ -5,15 +5,15 @@ namespace Tests\Unit;
 use App\Http\Controllers\Api\v1\DnsPodRecordSyncController;
 use App\Http\Requests\DnsPodRecordSyncRequest as Request;
 use Hiero7\Models\Cdn;
-use Hiero7\Models\Domain;
 use Hiero7\Models\CdnProvider;
+use Hiero7\Models\Domain;
 use Hiero7\Models\LocationDnsSetting;
+use Hiero7\Repositories\DomainRepository;
+use Hiero7\Services\DnsPodRecordSyncService;
 use Hiero7\Services\DnsProviderService;
 use Illuminate\Foundation\Testing\DatabaseMigrations;
 use Mockery as m;
 use Tests\TestCase;
-use Hiero7\Services\DnsPodRecordSyncService;
-use Hiero7\Repositories\DomainRepository;
 
 class DnsPodRecordSyncTest extends TestCase
 {
@@ -28,13 +28,13 @@ class DnsPodRecordSyncTest extends TestCase
         $this->seed();
         $this->domain = new domain();
         $this->mockDnsProviderService = m::mock(DnsProviderService::class);
-        
-        app()->call([$this,'repository']);
 
-        $this->mockDnsPodRecordSyncService = new DnsPodRecordSyncService($this->mockDnsProviderService,$this->domainRepository);
-        
+        app()->call([$this, 'repository']);
+
+        $this->mockDnsPodRecordSyncService = new DnsPodRecordSyncService($this->mockDnsProviderService, $this->domainRepository);
+
         $this->controller = new DnsPodRecordSyncController($this->mockDnsPodRecordSyncService);
-        
+
         $this->setDomainData();
         $this->setCdnProviderData();
         $this->setCdnData();
@@ -138,12 +138,12 @@ class DnsPodRecordSyncTest extends TestCase
             ], [
                 "id" => 3,
                 "ttl" => 54323,
-            ]
+            ],
         ];
 
         foreach ($data as $key => $value) {
             CdnProvider::find($value['id'])->
-            update(['ttl' => $value['ttl']]);
+                update(['ttl' => $value['ttl']]);
         }
     }
 
@@ -251,6 +251,64 @@ class DnsPodRecordSyncTest extends TestCase
     {
         $this->mockDnsProviderService
             ->shouldReceive('getDiffRecord')
-            ->andReturn(json_decode('{"message":"Success","errorCode":null,"data":{"diff":[{"id":438034966,"ttl":401926,"value":"cloudflare.leo1.com","enabled":true,"name":"leo1com.1","line":"联通","hash":"886f781f55e22b2c8c27877e5ad589c57236b2e6"}],"create":[{"id":438654702,"ttl":401926,"value":"cloudflare.leo1.com","enabled":true,"name":"leo1com.1","line":"国内","hash":"65bbdafe9415a58f1f09ab5ae59da01b6bbdf4ee"}],"delele":[{"id":438755246,"ttl":600,"value":"leo.123.com","enabled":true,"name":"leo1com.1","line":"搜搜","hash":"46e3fe384eafcc452abf6def951a9d93bcb9ff04"}],"match":[{"id":438037897,"ttl":485866,"value":"hiero7.leo1.com","enabled":true,"name":"leo1com.1","line":"默认","hash":"88d0da415a453849ae2e63588eecec7c69f583d2"},{"id":438038957,"ttl":485866,"value":"hiero7.leo1.com","enabled":true,"name":"leo1com.1","line":"国外","hash":"b402d449ee70e25e0ba73374d92b61f8b1c5e504"}]}}',true));
+            ->andReturn([
+                'message' => 'Success',
+                'errorCode' => null,
+                'data' => [
+                    'different' => [
+                        [
+                            'id' => 438034966,
+                            'ttl' => 401926,
+                            'value' => 'cloudflare.leo1.com',
+                            'enabled' => true,
+                            'name' => 'leo1com.1',
+                            'line' => '联通',
+                            'hash' => '886f781f55e22b2c8c27877e5ad589c57236b2e6',
+                        ],
+                    ],
+                    'create' => [
+                        [
+                            'id' => 438654702,
+                            'ttl' => 401926,
+                            'value' => 'cloudflare.leo1.com',
+                            'enabled' => true,
+                            'name' => 'leo1com.1',
+                            'line' => '国内',
+                            'hash' => '65bbdafe9415a58f1f09ab5ae59da01b6bbdf4ee',
+                        ],
+                    ],
+                    'delete' => [
+                        [
+                            'id' => 438755246,
+                            'ttl' => 600,
+                            'value' => 'leo.123.com',
+                            'enabled' => true,
+                            'name' => 'leo1com.1',
+                            'line' => '搜搜',
+                            'hash' => '46e3fe384eafcc452abf6def951a9d93bcb9ff04',
+                        ],
+                    ],
+                    'match' => [
+                        [
+                            'id' => 438037897,
+                            'ttl' => 485866,
+                            'value' => 'hiero7.leo1.com',
+                            'enabled' => true,
+                            'name' => 'leo1com.1',
+                            'line' => '默认',
+                            'hash' => '88d0da415a453849ae2e63588eecec7c69f583d2',
+                        ],
+                        [
+                            'id' => 438038957,
+                            'ttl' => 485866,
+                            'value' => 'hiero7.leo1.com',
+                            'enabled' => true,
+                            'name' => 'leo1com.1',
+                            'line' => '国外',
+                            'hash' => 'b402d449ee70e25e0ba73374d92b61f8b1c5e504',
+                        ],
+                    ],
+                ],
+            ]);
     }
 }

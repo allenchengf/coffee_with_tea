@@ -9,15 +9,17 @@ use Hiero7\Services\{ConfigService, DnsPodRecordSyncService, UserModuleService};
 use Hiero7\Repositories\{BackupRepository, CdnProviderRepository};
 use Illuminate\Support\Collection;
 use Illuminate\Database\Eloquent\Model;
-use Hiero7\Traits\DomainHelperTrait;
+use Hiero7\Traits\{DomainHelperTrait, JwtPayloadTrait};
 use DB;
 use Cache;
 use Storage;
 use AWS;
 use Hiero7\Enums\{InputError, DbError, InternalError};
+
 class ConfigController extends Controller
 {
     use DomainHelperTrait;    
+    use JwtPayloadTrait;
     protected $configService;
 
     public function __construct(
@@ -95,6 +97,19 @@ class ConfigController extends Controller
             ];
         });
         return $this->response('', null, $results);
+
+    }
+
+    public function storeBackupByUgid()
+    {
+        $ugid = $this->getJWTUserGroupId();
+        $nowTimestamp = strtotime('now');
+
+        $data = $this->storeBackupToS3($ugid, $nowTimestamp);
+        if(! isset($data['success']) || $data['success'] == false)
+            return $this->setStatusCode(400)->response('', InternalError::INTERNAL_ERROR, []);
+
+        return $this->response('', null, []);
     }
     
 
@@ -147,13 +162,13 @@ class ConfigController extends Controller
 
         // 建立 s3 channel
         $s3 = AWS::createClient('s3');
-        
+
         // 來去 s3 找找，前綴 prefix 會是 "$ugid_"
         $s3Objects = $s3->listObjects([
             'Bucket' => env('S3_BUCKET_NAME_CONFIG_BACKUP', 'iroutecdn-config-backup'), // 記得設定 s3 lifecycle
             'Prefix' => $userGroupId . '_',
         ]);
-        
+
         // err: S3 Bucket 不存在，或根本沒 ugid 的檔案
         if (! $s3Objects)
             return $this->setStatusCode(400)->response('', InternalError::CHECK_S3_BUCKET_IF_EXISTS, []);
@@ -161,7 +176,7 @@ class ConfigController extends Controller
         // err: S3 callback 異常
         if (! isset($s3Objects['@metadata']) || ! isset($s3Objects['@metadata']['effectiveUri']) || ! isset($s3Objects['Contents']))
             return $this->setStatusCode(400)->response('', InternalError::NO_S3_FILES_FROM_UIGD, []);
-        
+
         // 取 s3 domain
         $s3BucketDomain = explode('/?prefix=', $s3Objects['@metadata']['effectiveUri'])[0];
         // 取 s3 files
@@ -174,14 +189,24 @@ class ConfigController extends Controller
                     'created_at' => date('Y-m-d H:i:s', $object['LastModified']->getTimestamp()),
                 ];
             });
-        
+
         // files 時間排序 Desc
         $data = collect($data)->sortByDesc('created_at')->values();
         
         return $this->response('', null, $data);
     }
-    
+
     public function showBackupFromS3(Request $request, $key)
+    {
+        $data = $this->getBackupFromS3($request, $key);
+        if (is_numeric($data))
+            return $this->setStatusCode(400)->response('', $data, []);
+
+        return $this->response('', null, $data);
+    }
+
+
+    public function getBackupFromS3(Request $request, $key)
     {
         // ugid
         $userGroupId = $this->getUgid($request);
@@ -201,7 +226,7 @@ class ConfigController extends Controller
         
         // err: S3 Bucket 檔案不存在
         if (! isset($s3Objects['Contents']))
-            return $this->setStatusCode(400)->response('', InternalError::NO_S3_FILES_FROM_UIGD, []);
+            return InternalError::NO_S3_FILES_FROM_UIGD;
         
         // 取 s3 檔案暫存本地
         $s3Objects = $s3->getObject([
@@ -216,7 +241,7 @@ class ConfigController extends Controller
         // 本地刪掉檔案
         Storage::disk('local')->delete($fileName);
 
-        return $this->response('', null, $data);
+        return $data;
     }
 
     private function getDataBaseAllSetting(int $userGroupId,Domain $domain, CdnProvider $cdnProvider,DomainGroup $domainGroup)
@@ -228,14 +253,50 @@ class ConfigController extends Controller
         return compact('domains','cdnProviders','domainGroups');
     }
 
-    public function import(Request $request,Domain $domain,CdnProvider $cdnProvider,DomainGroup $domainGroup)
-    {     
+    public function import(Request $request)
+    {
+        $res = $this->import2($request);
+        if (is_numeric($res) && $res !== true)
+            return $this->setStatusCode(400)->response('', $res, []);
+
+        return $this->response("Success", null,'');
+    }
+
+
+    public function restoreBackupFromS3(Request $request, $key)
+    {
+        $data = $this->getBackupFromS3($request, $key);
+        if (is_numeric($data))
+            return $this->setStatusCode(400)->response('', $data, []);
+
+        $request['domains'] = $data['domains'];
+        $request['cdnProviders'] = $data['cdnProviders'];
+        $request['domainGroups'] = $data['domainGroups'];
+
+        $res = $this->import2($request);
+        if (is_numeric($res) && $res !== true)
+            return $this->setStatusCode(400)->response('', $res, []);
+
+        return $this->response("Success", null,'');
+    }
+
+    // 原著: Yuan
+    // 修改: Justin
+    // [修改為重複使用，修改處]
+    // 1. function 參數僅 (Request $request)
+    // 2. return (數字) InputError::XXX
+    public function import2(Request $request)
+    {
         $userGroupId = $this->getUgid($request);
 
-        Cache::put("Config_userGroupId$userGroupId" , true , env('CONFIG_WAIT_TIME'));        
+        Cache::put("Config_userGroupId$userGroupId" , true , env('CONFIG_WAIT_TIME'));
         DB::beginTransaction();
 
+        $domain = new Domain;
+        $cdnProvider = new CdnProvider;
+        $domainGroup = new DomainGroup;
         $this->deleteLocationDnsSetting($domain,$cdnProvider,$userGroupId);
+
         $domain->where('user_group_id',$userGroupId)->delete();
         $cdnProvider->where('user_group_id',$userGroupId)->delete();
         $domainGroup->where('user_group_id',$userGroupId)->delete();
@@ -245,7 +306,7 @@ class ConfigController extends Controller
         if(isset($importData['errorData'])){
             DB::rollback();
             Cache::forget("Config_userGroupId$userGroupId");
-            return $this->setStatusCode(400)->response('',InputError::WRONG_PARAMETER_ERROR,$importData);
+            return InputError::WRONG_PARAMETER_ERROR;
         }
 
         $checkDomainResult = $this->configService->checkDomainFormate($importData);
@@ -254,7 +315,7 @@ class ConfigController extends Controller
         if(isset($checkDomainResult['errorData'])){
             DB::rollback();
             Cache::forget("Config_userGroupId$userGroupId");
-            return $this->setStatusCode(400)->response('',InputError::WRONG_PARAMETER_ERROR,$checkDomainResult);
+            return InputError::WRONG_PARAMETER_ERROR;
         }
 
         //新增 Domain
@@ -263,7 +324,7 @@ class ConfigController extends Controller
         $this->configService->insert($importData['cdnProviders'], $cdnProvider, $userGroupId);
         //新增 cdns
         $this->configService->insert($importData['cdns'],new Cdn, $userGroupId);
-        //新增 LocationDns 
+        //新增 LocationDns
         $this->configService->insert($importData['locationDnsSetting'],new LocationDnsSetting, $userGroupId);
         //新增 DomainGroup
         $this->configService->insert($importData['domainGroups'], $domainGroup, $userGroupId);
@@ -271,11 +332,11 @@ class ConfigController extends Controller
         $this->configService->insert($importData['domainGroupsMapping'], new DomainGroupMapping, $userGroupId);
 
         DB::commit();
-        
+
         $this->callSync($domain, $userGroupId);
 
         Cache::forget("Config_userGroupId$userGroupId");
-        return $this->response("Success", null,'');
+        return true;
     }
 
     private function deleteLocationDnsSetting(Domain $domain, CdnProvider $cdnProvider, int $userGroupId)
@@ -394,5 +455,4 @@ class ConfigController extends Controller
         
         return $locationDnsSettings->all();
     }
-
 }

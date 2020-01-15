@@ -30,6 +30,9 @@ class RolePermissionMappingController extends Controller
         $jwtPayload = $this->getJWTPayload();
         $roleId = $jwtPayload['role_id'];
         $rolePermissionMappings = $this->getByRoleId($roleId);
+        if (! $rolePermissionMappings) {
+            return $this->setStatusCode(400)->response('', PermissionError::YOU_DONT_HAVE_ROLE_PERMISSION, []);
+        }
         return $this->response("Success", null, $rolePermissionMappings);
     }
 
@@ -47,6 +50,10 @@ class RolePermissionMappingController extends Controller
         }
 
         $rolePermissionMappings = $this->getByRoleId($roleId);
+        if (! $rolePermissionMappings) {
+            return $this->setStatusCode(400)->response('', PermissionError::YOU_DONT_HAVE_ROLE_PERMISSION, []);
+        }
+
         return $this->response("Success", null, $rolePermissionMappings);
     }
 
@@ -91,9 +98,12 @@ class RolePermissionMappingController extends Controller
             $this->rolePermissionMappingRepository->update($item, $isExists->id); // 修改
         });
 
-        $data = $this->getByRoleId($roleId);
+        $rolePermissionMappings = $this->getByRoleId($roleId);
+        if (! $rolePermissionMappings) {
+            return $this->setStatusCode(400)->response('', PermissionError::YOU_DONT_HAVE_ROLE_PERMISSION, []);
+        }
 
-        return $this->response('', null, $data);
+        return $this->response('', null, $rolePermissionMappings);
     }
 
     public function destroy(RolePermissionMappingRequest $request, $roleId)
@@ -116,6 +126,10 @@ class RolePermissionMappingController extends Controller
     public function getByRoleId($roleId)
     {
         $rolePermissionMappings = $this->rolePermissionMappingRepository->indexSelf($roleId);
+        if (! $rolePermissionMappings || $rolePermissionMappings->isEmpty()) {
+            return null;
+        }
+
         $permissions = $this->permissionRepository->index();
 
         $permissions->each(function ($p, $iP) use (&$roleId, &$rolePermissionMappings) {
