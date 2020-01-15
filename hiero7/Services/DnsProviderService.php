@@ -178,7 +178,7 @@ class DnsProviderService
      * @param int domain_id 對應域名ID
      * @param json diff 記錄
      * @param json create 記錄
-     * @param json delele 記錄
+     * @param json delete 記錄
      */
     public function syncRecordToDnsPod(array $data = [])
     {

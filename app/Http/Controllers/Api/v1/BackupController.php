@@ -24,7 +24,13 @@ class BackupController extends Controller
     {
         $result = $this->backupRepository->showByUgid();
         if (! $result)
-            return $this->setStatusCode(400)->response('', InputError::GROUP_NOT_EXIST_BACKUPS, []);
+            return $this->response('', null, [
+                "id" => null,
+                "user_group_id" => $this->getJWTUserGroupId(),
+                "backedup_at" => env('BACKUP_AT', '03:00'),
+                "created_at" => null,
+                "updated_at" => null
+            ]);
 
         return $this->response('', null, $result);
     }
@@ -43,19 +49,23 @@ class BackupController extends Controller
         return $this->response('', null, []);
     }
 
-    public function update(BackupRequest $request)
+    public function upsert(BackupRequest $request)
     {
-        $result = $this->backupRepository->showByUgid();
-        if (! $result)
-            return $this->setStatusCode(400)->response('', InputError::GROUP_NOT_EXIST_BACKUPS, []);
-
         $inputs = $this->timePadZeroLeft($request);
-    
-        $conditions = [
-            'user_group_id' => $this->getJWTUserGroupId(),
-        ];
 
-        $update = $this->backupRepository->updateByWhere($inputs, $conditions);
+        $result = $this->backupRepository->showByUgid();
+        if (! $result) {
+            // insert
+            $inputs['user_group_id'] = $this->getJWTUserGroupId();
+            $this->backupRepository->create($inputs);
+        } else {
+            // update
+            $conditions = [
+                'user_group_id' => $this->getJWTUserGroupId(),
+            ];
+
+            $update = $this->backupRepository->updateByWhere($inputs, $conditions);
+        }
 
         return $this->response('', null, []);
     }
