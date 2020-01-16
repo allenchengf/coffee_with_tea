@@ -2,9 +2,9 @@
 
 namespace App\Console\Commands;
 
+use Hiero7\Services\DnsPodRecordSyncService;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
-use Hiero7\Services\DnsPodRecordSyncService;
 
 class SyncDBToDNSPodRecord extends Command
 {
@@ -13,7 +13,7 @@ class SyncDBToDNSPodRecord extends Command
      *
      * @var string
      */
-    protected $signature = 'sync:dnspod-records';
+    protected $signature = 'sync:dnspod-records {--sync-max=10}';
 
     /**
      * The console command description.
@@ -24,7 +24,7 @@ class SyncDBToDNSPodRecord extends Command
 
     protected $dnsPodRecordSyncService;
 
-    protected $differentRecords, $syncCount = 10;
+    protected $differentRecords, $syncMaxLimit = 10;
 
     /**
      * Create a new command instance.
@@ -34,7 +34,6 @@ class SyncDBToDNSPodRecord extends Command
     public function __construct(DnsPodRecordSyncService $dnsPodRecordSyncService)
     {
         $this->dnsPodRecordSyncService = $dnsPodRecordSyncService;
-        $this->syncCount = 10;
         parent::__construct();
     }
 
@@ -45,25 +44,34 @@ class SyncDBToDNSPodRecord extends Command
      */
     public function handle()
     {
+        $this->setSyncMaxLimit();
+
         $this->checkDifferentStatus();
 
         if ($this->confirm('Do You Need Sync Records?')) {
 
             $this->syncRecordsByAction('Create', $this->differentRecords['create']);
+
             $this->syncRecordsByAction('Different', $this->differentRecords['different']);
+
             $this->syncRecordsByAction('Delete', $this->differentRecords['delete']);
         }
 
         $this->info("Sync Records Done !");
     }
 
+    /**
+     * 檢查 DNSPod Records Status
+     *
+     * @return void
+     */
     public function checkDifferentStatus()
     {
         $this->info("Check DB with DNSPod Records Different !");
 
         $this->differentRecords = $this->dnsPodRecordSyncService->getDifferentRecords();
 
-        if (isset($data['error'])) {
+        if (isset($this->differentRecords['error'])) {
             $this->error('DNS Pod Service Error!');
 
             print("\n");
@@ -74,6 +82,11 @@ class SyncDBToDNSPodRecord extends Command
         }
     }
 
+    /**
+     * Show DNSPod Records Status
+     *
+     * @return void
+     */
     private function showDiffernetRecords()
     {
         $this->info("DNS Pod Record different Count : " . $this->differentRecords['differentCount']);
@@ -82,13 +95,20 @@ class SyncDBToDNSPodRecord extends Command
         $this->info("DNS Pod Record Match Count : " . $this->differentRecords['matchCount']);
     }
 
+    /**
+     * Sync Records By Action
+     *
+     * @param string $action [Create|Different|Delete]
+     * @param array $records
+     * @return void
+     */
     private function syncRecordsByAction($action = 'Create', $records = [])
     {
         $total = count($records);
 
         $bar = $this->setProgressBar($total);
 
-        $syncRecords = collect($records)->chunk($this->syncCount);
+        $syncRecords = collect($records)->chunk($this->syncMaxLimit);
 
         $this->info("DNS Pod Record Sync By $action Records");
 
@@ -105,15 +125,23 @@ class SyncDBToDNSPodRecord extends Command
 
         if ($total == $completedCount) {
             $bar->finish();
-        }else{
-
+        } else {
             $this->error("DNS Pod Record Sync By $action Records Only $completedCount !");
         }
 
         print("\n");
     }
 
-    private function syncRecords(array $records = [], string $action)
+    /**
+     * Sync Records 
+     * 
+     * Return Complete Count
+     *
+     * @param array $records
+     * @param string $action
+     * @return integer
+     */
+    private function syncRecords(array $records = [], string $action): int
     {
         $create = ($action == "Create") ? $records : [];
 
@@ -121,28 +149,25 @@ class SyncDBToDNSPodRecord extends Command
 
         $delete = ($action == "Delete") ? $records : [];
 
-        $data = $this->dnsPodRecordSyncService->syncRecord(
+        $syncOutputData = $this->dnsPodRecordSyncService->syncRecord(
             $create,
             $different,
             $delete
         );
 
-        Log::info("[Sync DNSPod Record by $action] " . json_encode($data));
+        Log::info("[Sync DNSPod Record by $action] " . json_encode($syncOutputData));
 
-        if (!isset($data['error'])) {
+        if (!isset($syncOutputData['error'])) {
             switch ($action) {
                 case 'Create':
-                    return count($data['data']['createSync']);
+                    return count($syncOutputData['data']['createSync']);
                     break;
                 case 'Different':
-                    return count($data['data']['diffSync']);
-
+                    return count($syncOutputData['data']['diffSync']);
                     break;
                 case 'Delete':
-
-                    return count($data['data']['deleteSync']);
+                    return count($syncOutputData['data']['deleteSync']);
                     break;
-
                 default:
                     return 0;
                     break;
@@ -152,15 +177,31 @@ class SyncDBToDNSPodRecord extends Command
         return 0;
     }
 
-    private function setProgressBar(int $count = 0)
+    /**
+     * 設定進度條
+     *
+     * @param integer $count
+     * @return void
+     */
+    private function setProgressBar(int $quantity = 0)
     {
-        $bar = $this->output->createProgressBar($count);
+        $bar = $this->output->createProgressBar($quantity);
 
         $bar->setFormat(' %current%/%max% [%bar%] %percent:3s%% %elapsed:6s%');
 
         $bar->setBarWidth(50);
 
         return $bar;
+    }
+
+    /**
+     * 設定每次 Sync Records 最大數量
+     *
+     * @return void
+     */
+    private function setSyncMaxLimit(): void
+    {
+        $this->syncMaxLimit = $this->option('sync-max');
     }
 
     public function getMaxFrequency(...$arrays)
@@ -175,5 +216,4 @@ class SyncDBToDNSPodRecord extends Command
 
         return $max;
     }
-
 }
