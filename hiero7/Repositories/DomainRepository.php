@@ -4,17 +4,18 @@ namespace Hiero7\Repositories;
 
 use Hiero7\Enums\DbError;
 use Hiero7\Models\Domain;
-use Hiero7\Traits\JwtPayloadTrait;
+use Hiero7\Traits\OperationLogTrait;
 
 class DomainRepository
 {
-    use JwtPayloadTrait;
+    use OperationLogTrait;
 
     protected $domain;
 
     public function __construct(Domain $domain)
     {
         $this->domain = $domain;
+        $this->setCategory(config('logging.category.domain'));
     }
 
     public function getAll()
@@ -25,7 +26,7 @@ class DomainRepository
     public function store($info, $user)
     {
         try {
-            return $this->domain::create(
+            $rtn = $this->domain::create(
                 [
                     "user_group_id" => $user["user_group_id"],
                     "name" => $info["name"],
@@ -34,6 +35,10 @@ class DomainRepository
                     "created_at" => \Carbon\Carbon::now(),
                 ]
             );
+
+            $this->setChangeTo($rtn->saveLog())->createOperationLog(); // SaveLog
+
+            return $rtn;
         } catch (\Exception $e) {
             if ($e->getCode() == '23000') {
                 return new \Exception(DbError::getDescription(DbError::DUPLICATE_ENTRY), DbError::DUPLICATE_ENTRY);
