@@ -65,7 +65,6 @@ phpunit --coverage-html coverage
 php artisan db:seed --class=ApisTableSeeder
 php artisan db:seed --class=PermissionSeeder
 php artisan db:seed --class=ApiPermissionMappingTableSeeder
-php artisan db:seed --class=DomainPinSeeder
 ```
 
 5. 排程
