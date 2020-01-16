@@ -5,14 +5,18 @@ use Hiero7\Models\Cdn;
 use Hiero7\Enums\DbError;
 use Hiero7\Enums\InputError;
 use Illuminate\Support\Arr;
+use Hiero7\Traits\OperationLogTrait;
 
 class CdnRepository
 {
+    use OperationLogTrait;
+
     protected $cdn;
 
     public function __construct(Cdn $cdn)
     {
         $this->cdn = $cdn;
+        $this->setCategory(config('logging.category.cdn'));
     }
 
     public function store($info, int $id, $user)
@@ -27,7 +31,9 @@ class CdnRepository
                 "default"            => $info["default"],
                 "created_at"         => \Carbon\Carbon::now(),
             ];
-            return $this->cdn->store($row);
+            $cdnId = $this->cdn->store($row);
+            $this->setChangeTo($this->cdn->fresh()->saveLog())->createOperationLog(); // SaveLog
+            return $cdnId;
         } catch (\Exception $e) {
             if ($e->getCode() == '23000')
                 return new \Exception(DbError::getDescription(DbError::DUPLICATE_ENTRY), DbError::DUPLICATE_ENTRY);  

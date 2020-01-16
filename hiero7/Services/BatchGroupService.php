@@ -7,13 +7,17 @@ use Hiero7\Repositories\DomainRepository;
 use Hiero7\Enums\InputError;
 use Exception;
 use Hiero7\Models\Domain;
+use Hiero7\Traits\OperationLogTrait;
 
 
 class BatchGroupService{
+    use OperationLogTrait;
+
     public function __construct(DomainGroupService $domainGroupService,DomainRepository $domainRepository)
     {
         $this->domainGroupService = $domainGroupService;
         $this->domainRepository = $domainRepository;
+        $this->setCategory(config('logging.category.domain_group'));
         
     }
 
@@ -54,10 +58,12 @@ class BatchGroupService{
                 continue;
             }
 
-            DomainGroupMapping::create([
+            $domainGroupMapping = DomainGroupMapping::create([
                 'domain_id' => $domainId,
                 'domain_group_id' => $domainGroup->id
             ]);
+
+            $this->setChangeTo($domainGroupMapping->saveLog())->createOperationLog();
             
             $domainSuccess[] = ['name'=> $domain["name"]];
         }
