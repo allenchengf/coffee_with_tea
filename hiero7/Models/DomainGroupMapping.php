@@ -21,4 +21,13 @@ class DomainGroupMapping extends Model
     {
         return $this->belongsTo(DomainGroup::class,'domain_group_id');
     }
+
+    public function saveLog()
+    {
+        $logArray = [];
+        $logArray['domain'] = $this->domain()->first()->name;
+        $logArray['domainGroup'] = $this->domainGroup()->first()->name;
+
+        return $logArray;
+    }
 }
