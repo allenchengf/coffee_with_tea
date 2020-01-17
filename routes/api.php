@@ -1,5 +1,5 @@
 <?php
-Route::group(['middleware' => ['api', 'check.role.permission'], 'namespace' => 'Api\v1', 'prefix' => 'v1'], function () {
+Route::group(['middleware' => ['api', 'check.role.permission', 'check.config'], 'namespace' => 'Api\v1', 'prefix' => 'v1'], function () {
 
     Route::group(['prefix' => 'domains'], function () {
 
