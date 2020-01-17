@@ -292,15 +292,6 @@ class ConfigController extends Controller
         Cache::put("Config_userGroupId$userGroupId" , true , env('CONFIG_WAIT_TIME'));
         DB::beginTransaction();
 
-        $domain = new Domain;
-        $cdnProvider = new CdnProvider;
-        $domainGroup = new DomainGroup;
-        $this->deleteLocationDnsSetting($domain,$cdnProvider,$userGroupId);
-
-        $domain->where('user_group_id',$userGroupId)->delete();
-        $cdnProvider->where('user_group_id',$userGroupId)->delete();
-        $domainGroup->where('user_group_id',$userGroupId)->delete();
-
         $importData = $this->formateDataAndCheckCdn($request);
 
         if(isset($importData['errorData'])){
@@ -318,6 +309,22 @@ class ConfigController extends Controller
             return InputError::WRONG_PARAMETER_ERROR;
         }
 
+        $domain = new Domain;
+        $cdnProvider = new CdnProvider;
+        $domainGroup = new DomainGroup;
+
+        $originDomains = $domain->where('user_group_id',$userGroupId)->get();
+        $originCdnProviders = $cdnProvider->where('user_group_id',$userGroupId)->get();
+
+        // 拿到 import 沒有 但 DB 有的 Record id
+        $allRecordId = $this->configService->compareDatabaseNotInImportRecordId($originDomains, $originCdnProviders,$importData['domains'],$importData['cdnProviders']);
+
+        // 刪除各個 table 裡的資料
+        $this->deleteLocationDnsSetting($domain,$cdnProvider,$userGroupId);
+        $this->deleteTableData($originDomains);
+        $this->deleteTableData($originCdnProviders);
+        $domainGroup->where('user_group_id',$userGroupId)->delete();
+
         //新增 Domain
         $this->configService->insert($importData['domains'],$domain, $userGroupId);
         //新增 cdnProvider
@@ -333,10 +340,22 @@ class ConfigController extends Controller
 
         DB::commit();
 
+        // 等 DB 資料都確認後在刪除 Pod 上的資料 
+        $this->configService->deleteDnsPodByRecordId($allRecordId);
         $this->callSync($domain, $userGroupId);
 
         Cache::forget("Config_userGroupId$userGroupId");
         return true;
+    }
+
+    private function deleteTableData($originData)
+    {
+        foreach($originData as $data)
+        {
+            $data->delete();
+        }
+
+        return ;
     }
 
     private function deleteLocationDnsSetting(Domain $domain, CdnProvider $cdnProvider, int $userGroupId)
