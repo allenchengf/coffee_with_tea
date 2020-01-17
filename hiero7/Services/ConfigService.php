@@ -70,6 +70,23 @@ Class ConfigService
         return true;
     }
 
+        /**
+     * 刪除 所有 DnsPod 上面的 Record Id
+     *
+     * @param Collection $needToDeleteRecordIdCollection
+     * @return void
+     */
+    public function deleteDnsPodByRecordId(Collection $needToDeleteRecordIdCollection)
+    {        
+        foreach ($needToDeleteRecordIdCollection as $key => $needToDeleteRecordId) {
+            $deletePodRecord = $this->dnsProviderService->deleteRecord([
+                'record_id' => $needToDeleteRecordId,
+            ]);
+        }
+
+        return true;
+    }
+
     /**
      * 比較 原本在 DataBase 多餘 import 的 並且 刪除  DnsPOD 上的資料 
      * 
@@ -132,23 +149,6 @@ Class ConfigService
         $sameNameCollection = $this->sameName($originData, $importData);
 
         return $this->originDataWithoutSameName($originData,$sameNameCollection);
-    }
-
-    /**
-     * 刪除 所有 DnsPod 上面的 Record Id
-     *
-     * @param Collection $needToDeleteRecordIdCollection
-     * @return void
-     */
-    private function deleteDnsPodByRecordId(Collection $needToDeleteRecordIdCollection)
-    {        
-        foreach ($needToDeleteRecordIdCollection as $key => $needToDeleteRecordId) {
-            $deletePodRecord = $this->dnsProviderService->deleteRecord([
-                'record_id' => $needToDeleteRecordId,
-            ]);
-        }
-
-        return true;
     }
 
     /**
