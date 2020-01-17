@@ -36,7 +36,7 @@ class DomainRepository
                 ]
             );
 
-            $this->setChangeTo($rtn->saveLog())->createOperationLog(); // SaveLog
+            // $this->setChangeTo($rtn->saveLog())->createOperationLog(); // SaveLog
 
             return $rtn;
         } catch (\Exception $e) {
