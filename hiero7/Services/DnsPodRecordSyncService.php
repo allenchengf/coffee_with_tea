@@ -103,7 +103,7 @@ class DnsPodRecordSyncService
      * @param array $deleteData
      * @return array
      */
-    private function syncRecord(array $createData = [], array $diffData = [], array $deleteData = [])
+    public function syncRecord(array $createData = [], array $diffData = [], array $deleteData = [])
     {
         if (count($createData) == 0 && count($diffData) == 0 && count($deleteData) == 0) {
             return [];
