@@ -32,7 +32,7 @@ class CdnRepository
                 "created_at"         => \Carbon\Carbon::now(),
             ];
             $cdnId = $this->cdn->store($row);
-            $this->setChangeTo($this->cdn->fresh()->saveLog())->createOperationLog(); // SaveLog
+            // $this->setChangeTo($this->cdn->fresh()->saveLog())->createOperationLog(); // SaveLog
             return $cdnId;
         } catch (\Exception $e) {
             if ($e->getCode() == '23000')
