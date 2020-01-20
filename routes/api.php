@@ -32,6 +32,7 @@ Route::group(['middleware' => ['api', 'check.role.permission', 'check.config'], 
             });
 
             Route::post('batch', 'BatchController@store')->name('domains.batch')->middleware(['check.dnspod', 'auth.user.module']);
+            Route::post('oldBatch', 'BatchController@oldStore')->name('domains.batch')->middleware(['check.dnspod', 'auth.user.module']);
         });
 
         Route::middleware(['domain.permission'])->group(function () {
