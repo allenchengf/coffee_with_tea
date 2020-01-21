@@ -313,9 +313,9 @@ class BatchService{
             }
             
             // 新增 cdn
-            $cdn_id = $this->cdnRepository->store($cdn, $domain_id, $user);
-            if (! is_int($cdn_id)) {
-                throw $cdn_id;
+            $rtnCdn = $this->cdnRepository->store($cdn, $domain_id, $user);
+            if (! $rtnCdn) {
+                throw $rtnCdn;
             }
             
         } catch (\Exception $e) {

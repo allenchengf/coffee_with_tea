@@ -31,7 +31,7 @@ class CdnRepository
                 "default"            => $info["default"],
                 "created_at"         => \Carbon\Carbon::now(),
             ];
-            $cdnId = $this->cdn->store($row);
+            $rtn = $this->cdn->create($row);
 
             $jwtToken = isset($operationLogInfo['jwtToken']) ? $operationLogInfo['jwtToken'] : null;
             $jwtPayload = isset($operationLogInfo['jwtPayload']) ? $operationLogInfo['jwtPayload'] : null;
@@ -41,10 +41,10 @@ class CdnRepository
                     ->setJWTToken($jwtToken)
                     ->setJWTPayload($jwtPayload)
                     ->setClientIp($ip)
-                    ->setChangeTo($this->cdn->fresh()->saveLog())
+                    ->setChangeTo($rtn->fresh()->saveLog())
                     ->createOperationLog(); // SaveLog
 
-            return $cdnId;
+            return $rtn;
         } catch (\Exception $e) {
             if ($e->getCode() == '23000')
                 return new \Exception(DbError::getDescription(DbError::DUPLICATE_ENTRY), DbError::DUPLICATE_ENTRY);  
