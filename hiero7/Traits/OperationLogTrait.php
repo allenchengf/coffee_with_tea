@@ -37,7 +37,7 @@ trait OperationLogTrait
      * @param string $message Log 訊息(Success, Fail, any other...)
      * @return void
      */
-    public function createOperationLog(string $category = null, string $changeType = null, string $message = 'Success')
+    public function createOperationLog(string $category = null, string $changeType = null, string $message = 'Success', array $job = null)
     {
         if (config('app.env') === 'testing') {
             return true;

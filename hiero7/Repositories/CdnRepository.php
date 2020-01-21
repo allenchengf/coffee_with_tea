@@ -19,7 +19,7 @@ class CdnRepository
         $this->setCategory(config('logging.category.cdn'));
     }
 
-    public function store($info, int $id, $user)
+    public function store($info, int $id, $user, array $job = null)
     {
         try {
             $row = [
@@ -32,7 +32,8 @@ class CdnRepository
                 "created_at"         => \Carbon\Carbon::now(),
             ];
             $cdnId = $this->cdn->store($row);
-            // $this->setChangeTo($this->cdn->fresh()->saveLog())->createOperationLog(); // SaveLog
+
+            $this->setChangeTo($this->cdn->fresh()->saveLog())->createOperationLog(null,$job); // SaveLog
             return $cdnId;
         } catch (\Exception $e) {
             if ($e->getCode() == '23000')
@@ -101,4 +102,27 @@ class CdnRepository
     {
         return $this->cdn->where('domain_id',$domainId)->get();
     }
+
+    private function setClientIp($ip)
+    {
+        $this->ip = $ip;
+    }
+
+    private function getClientIp()
+    {
+        return $this->ip;
+    }
+
+    public function setJWTPayload($payload)
+    {
+        $this->getJWTPayload = $payload;
+        return $this;
+    }
+
+    public function getJWTPayload(): array
+    {
+        return $this->getJWTPayload;
+    }
+
+
 }

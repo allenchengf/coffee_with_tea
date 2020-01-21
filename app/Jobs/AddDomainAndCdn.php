@@ -18,19 +18,20 @@ class AddDomainAndCdn implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public $tries = 1;
-    public $domain, $user, $batchService, $queueName ,$redis;
+    public $domain, $user, $batchService, $queueName, $redis, $operationLogInfo;
     
     /**
      * Create a new job instance.
      *
      * @return void
      */
-    public function __construct(array $domain, array $user, string $queueName)
+    public function __construct(array $domain, array $user, string $queueName, array $operationLogInfo)
     {
         $this->domain = $domain;
         $this->user = $user;
         $this->queueName = $queueName;
         $this->redis = Redis::connection('record');
+        $this->operationLogInfo = $operationLogInfo;
     }
 
     /**
@@ -42,7 +43,7 @@ class AddDomainAndCdn implements ShouldQueue
     {
         $domainError = $cdnSuccess = $cdnError = $success = $failure =[];
         // 新增或查詢已存在 domain
-        list($domainResult, $domain_id, $errorMessage, $errorCode) = app('Hiero7\Services\BatchService')->storeDomain($this->domain, $this->user);
+        list($domainResult, $domain_id, $errorMessage, $errorCode) = app('Hiero7\Services\BatchService')->storeDomain($this->domain, $this->user, $this->operationLogInfo);
 
         if (! is_null($errorCode)||! is_null($errorMessage)) {
             $domainError = [
@@ -61,7 +62,7 @@ class AddDomainAndCdn implements ShouldQueue
             //有 Domain error
             //針對已經存在的domain 還是要處理之後的 cdn
             if($errorCode == 4046 && isset($domainResult['cdns'])){
-                list($cdnSuccess, $cdnError) = app('Hiero7\Services\BatchService')->handelCdn($this->user, $domain_id, $domainResult);
+                list($cdnSuccess, $cdnError) = app('Hiero7\Services\BatchService')->handelCdn($this->user, $domain_id, $domainResult, $this->operationLogInfo);
                 
                 if(!empty($cdnSuccess)){
                     $success[] = ['name' => $domainResult['name'], 'cdn' => $cdnSuccess];
@@ -75,7 +76,7 @@ class AddDomainAndCdn implements ShouldQueue
             //無 Domain error
             //處理之後的 cdn
             if(isset($domainResult['cdns'])){
-                list($cdnSuccess, $cdnError) = app('Hiero7\Services\BatchService')->handelCdn($this->user, $domain_id, $domainResult);
+                list($cdnSuccess, $cdnError) = app('Hiero7\Services\BatchService')->handelCdn($this->user, $domain_id, $domainResult, $this->operationLogInfo);
                 
                 if(!empty($cdnError)){
                     //有 Cdn error

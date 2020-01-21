@@ -4,7 +4,7 @@ namespace Hiero7\Services;
 use Hiero7\Repositories\{CdnRepository, DomainRepository, CdnProviderRepository};
 use Hiero7\Services\DnsProviderService;
 use Hiero7\Enums\{InputError,InternalError};
-use Hiero7\Traits\DomainHelperTrait;
+use Hiero7\Traits\{DomainHelperTrait, JwtPayloadTrait};
 use Illuminate\Support\Collection;
 use Hiero7\Models\Job;
 use Artisan;
@@ -18,6 +18,7 @@ class BatchService{
 
     use DomainHelperTrait;
     use DispatchesJobs;
+    use JwtPayloadTrait;
 
     protected $cdnRepository;
     protected $domainRepository;
@@ -119,7 +120,7 @@ class BatchService{
      * @param [type] $domain
      * @return void
      */
-    public function handelCdn($user, $domain_id, $domain)
+    public function handelCdn($user, $domain_id, $domain, $operationLogInfo=null)
     {
         // 取此權限全部 cdn_providers
         $myCdnProviders = collect($this->cdnProviderRepository->getCdnProvider($user["user_group_id"])->toArray());
@@ -178,12 +179,18 @@ class BatchService{
         //檢查是否有原本的資料
         $this->checkProcessRecord($queueName,$redisJobs);
 
+        // Job 存 Operation Log 資訊
+        $operationLogInfo = [
+            'jwtToken' => $this->getJWTToken(),
+            'jwtPayload' => $this->getJWTPayload(),
+        ];
+
         // 批次新增 domain & cdn 迴圈， $count 記錄總共有幾筆
         $count = 0;
         foreach ($domains as $domain) {
             $count++;
             //把原邏輯 搬去 job 
-            $job = (new AddDomainAndCdn($domain,$user,$queueName))
+            $job = (new AddDomainAndCdn($domain,$user,$queueName,$operationLogInfo))
             ->onConnection('database')
             ->onQueue($queueName.$count);
 
@@ -225,7 +232,7 @@ class BatchService{
 
     }
 
-    public function storeDomain($domain, $user)
+    public function storeDomain($domain, $user, $operationLogInfo=null)
     {
         $domain_id = null;
         $errorMessage = $errorCode = null;
