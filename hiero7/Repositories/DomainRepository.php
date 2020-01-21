@@ -36,7 +36,14 @@ class DomainRepository
                 ]
             );
 
-            // $this->setChangeTo($rtn->saveLog())->createOperationLog(); // SaveLog
+            $jwtPayload = isset($operationLogInfo['jwtPayload']) ? $operationLogInfo['jwtPayload'] : null;
+            $ip = isset($operationLogInfo['ip']) ? $operationLogInfo['ip'] : null;
+            
+            $this->setChangeType('Create')
+                    ->setJWTPayload($jwtPayload)
+                    ->setClientIp($ip)
+                    ->setChangeTo($rtn->fresh()->saveLog())
+                    ->createOperationLog(); // SaveLog
 
             return $rtn;
         } catch (\Exception $e) {
@@ -80,4 +87,39 @@ class DomainRepository
                 return (count($item->cdnProvider) == $countList) ? true : false;
             })->values();
     }
+
+    // Operation Log ++
+    private function setClientIp($ip)
+    {
+        $this->ip = $ip;
+        return $this;
+    }
+
+    private function getClientIp()
+    {
+        return $this->ip;
+    }
+
+    public function setJWTPayload($jwtPayload): array
+    {
+        $this->jwtPayload = $jwtPayload;
+        return $this;
+    }
+
+    public function getJWTUserId()
+    {
+        return $this->jwtPayload['sub'] ?? null;
+    }
+
+    public function getJWTUserGroupId()
+    {
+        return $this->jwtPayload['user_group_id'] ?? null;
+    }
+
+    public function setChangeType(string $type)
+    {
+        $this->changeType = $type;
+        return $this;
+    }
+    // Operation Log --
 }

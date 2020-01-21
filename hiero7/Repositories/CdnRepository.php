@@ -10,8 +10,9 @@ use Hiero7\Traits\OperationLogTrait;
 class CdnRepository
 {
     use OperationLogTrait;
-
+    
     protected $cdn;
+    public $jwtPayload;
 
     public function __construct(Cdn $cdn)
     {
@@ -19,7 +20,7 @@ class CdnRepository
         $this->setCategory(config('logging.category.cdn'));
     }
 
-    public function store($info, int $id, $user, array $job = null)
+    public function store($info, int $id, $user, array $operationLogInfo = null)
     {
         try {
             $row = [
@@ -33,7 +34,15 @@ class CdnRepository
             ];
             $cdnId = $this->cdn->store($row);
 
-            $this->setChangeTo($this->cdn->fresh()->saveLog())->createOperationLog(null,$job); // SaveLog
+            $jwtPayload = isset($operationLogInfo['jwtPayload']) ? $operationLogInfo['jwtPayload'] : null;
+            $ip = isset($operationLogInfo['ip']) ? $operationLogInfo['ip'] : null;
+            
+            $this->setChangeType('Create')
+                    ->setJWTPayload($jwtPayload)
+                    ->setClientIp($ip)
+                    ->setChangeTo($this->cdn->fresh()->saveLog())
+                    ->createOperationLog(); // SaveLog
+
             return $cdnId;
         } catch (\Exception $e) {
             if ($e->getCode() == '23000')
@@ -103,9 +112,11 @@ class CdnRepository
         return $this->cdn->where('domain_id',$domainId)->get();
     }
 
+    // Operation Log ++
     private function setClientIp($ip)
     {
         $this->ip = $ip;
+        return $this;
     }
 
     private function getClientIp()
@@ -113,16 +124,27 @@ class CdnRepository
         return $this->ip;
     }
 
-    public function setJWTPayload($payload)
+    public function setJWTPayload($jwtPayload): array
     {
-        $this->getJWTPayload = $payload;
+        $this->jwtPayload = $jwtPayload;
         return $this;
     }
 
-    public function getJWTPayload(): array
+    public function getJWTUserId()
     {
-        return $this->getJWTPayload;
+        return $this->jwtPayload['sub'] ?? null;
     }
 
+    public function getJWTUserGroupId()
+    {
+        return $this->jwtPayload['user_group_id'] ?? null;
+    }
+
+    public function setChangeType(string $type)
+    {
+        $this->changeType = $type;
+        return $this;
+    }
+    // Operation Log --
 
 }

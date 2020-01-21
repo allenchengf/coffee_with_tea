@@ -4,7 +4,7 @@ namespace Hiero7\Services;
 use Hiero7\Repositories\{CdnRepository, DomainRepository, CdnProviderRepository};
 use Hiero7\Services\DnsProviderService;
 use Hiero7\Enums\{InputError,InternalError};
-use Hiero7\Traits\{DomainHelperTrait, JwtPayloadTrait};
+use Hiero7\Traits\{DomainHelperTrait, OperationLogTrait};
 use Illuminate\Support\Collection;
 use Hiero7\Models\Job;
 use Artisan;
@@ -18,7 +18,7 @@ class BatchService{
 
     use DomainHelperTrait;
     use DispatchesJobs;
-    use JwtPayloadTrait;
+    use OperationLogTrait;
 
     protected $cdnRepository;
     protected $domainRepository;
@@ -183,6 +183,7 @@ class BatchService{
         $operationLogInfo = [
             'jwtToken' => $this->getJWTToken(),
             'jwtPayload' => $this->getJWTPayload(),
+            'ip' => $this->getClientIp(),
         ];
 
         // 批次新增 domain & cdn 迴圈， $count 記錄總共有幾筆
