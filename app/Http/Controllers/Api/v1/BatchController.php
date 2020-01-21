@@ -28,11 +28,25 @@ class BatchController extends Controller
 
     }
 
-    public function store(BatchRequest $request)
+    /**
+     * 原本的 Batch，Justin 建議保留以供測試。
+     *
+     * @return void
+     */
+    public function oldStore(BatchRequest $request)
     {
-        // 原本的 Batch 邏輯，暫時先不拿，等穩定後會拿掉，包含 store()
-        // $errors = $this->batchService->store($request->domains, $request->get('user'));
-        
+        $errors = $this->batchService->store($request->domains, $request->get('user'));
+        return $this->response('Success', null, $errors);
+    }
+    
+    /**
+     * 有在使用的
+     *
+     * @param BatchRequest $request
+     * @return void
+     */
+    public function store(BatchRequest $request)
+    {        
         $errors = $this->batchService->process($request->domains, $request->get('user'),$this->getUgid($request));
 
         DB::connection()->enableQueryLog();

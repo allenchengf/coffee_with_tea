@@ -3,7 +3,7 @@
 namespace Hiero7\Services;
 use Hiero7\Repositories\{CdnRepository, DomainRepository, CdnProviderRepository};
 use Hiero7\Services\DnsProviderService;
-use Hiero7\Enums\InputError;
+use Hiero7\Enums\{InputError,InternalError};
 use Hiero7\Traits\DomainHelperTrait;
 use Illuminate\Support\Collection;
 use Hiero7\Models\Job;
@@ -291,7 +291,8 @@ class BatchService{
             if ($isFirstCdn) {
                 list($cdn, $errorMessage) = $this->createPodRecord($domain, $cdn);
                 if (! is_null($errorMessage)) {
-                    throw new \Exception($errorMessage);
+                    throw new Exception(InternalError::getDescription(InternalError::DNSPOD_INSERT_ERROR));
+                    // throw new \Exception($errorMessage); 原本 DNSPod 回傳的 error
                 }
                 $isFirstCdn = false;
             }
