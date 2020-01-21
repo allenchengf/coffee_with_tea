@@ -19,6 +19,7 @@ class InternalError extends Enum
     const CHECK_S3_BUCKET_IF_EXISTS = 5003;
     const NO_S3_FILES_FROM_UIGD = 5004;
     const DNSPOD_ERROR = 5005;
+    const DNSPOD_INSERT_ERROR = 5006;
     /**
      * @var array
      */
@@ -29,5 +30,6 @@ class InternalError extends Enum
         self::CHECK_S3_BUCKET_IF_EXISTS => 'Check Bucket if exists.',
         self::NO_S3_FILES_FROM_UIGD => 'No Config Backups From this User\'s Group.',
         self::DNSPOD_ERROR => "Please contact iRoute admin.",
+        self::DNSPOD_INSERT_ERROR => "When created occur problem, please contact iRoute admin.",
     ];
 }
