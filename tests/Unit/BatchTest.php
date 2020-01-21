@@ -66,6 +66,10 @@ class BatchTest extends TestCase
 
     public function testBatchAddDomainNonCdnToAdd() 
     {
+        // login
+        $loginUid = 1;
+        $this->addUuidforPayload()->setJwtTokenPayload($loginUid, $this->jwtPayload);
+
         $this->domains[] = $this->addDomain("hello2.com");
 
         $result = $this->batchService->store($this->domains, $this->user);
@@ -82,6 +86,10 @@ class BatchTest extends TestCase
 
     public function testBatchAddDomainSuccessAndAddCdnFail()
     {
+        // login
+        $loginUid = 1;
+        $this->addUuidforPayload()->setJwtTokenPayload($loginUid, $this->jwtPayload);
+
         $this->domains[] = $this->addDomain("hello.com", $this->addCdn("Hiero7", "hiero8.hero.com"));
 
         $result = $this->batchService->store($this->domains, $this->user);
@@ -103,6 +111,10 @@ class BatchTest extends TestCase
 
     public function testBatchAddDomainFormatFailAndCnameFormatFail()
     {
+        // login
+        $loginUid = 1;
+        $this->addUuidforPayload()->setJwtTokenPayload($loginUid, $this->jwtPayload);
+
         $this->domains[] = $this->addDomain("hello,com", $this->addCdn("Hiero7", "hiero8.hero.com"));
         $this->domains[] = $this->addDomain("hello2.com", $this->addCdn("Hiero7", "hiero8,hero.com"));
 

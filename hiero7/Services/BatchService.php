@@ -55,11 +55,18 @@ class BatchService{
     {
         $success = $failure = [];
 
+        // Job 存 Operation Log 資訊
+        $operationLogInfo = [
+            'jwtToken' => $this->getJWTToken(),
+            'jwtPayload' => $this->getJWTPayload(),
+            'ip' => $this->getClientIp(),
+        ];
+
         // 批次新增 domain 迴圈
         foreach ($domains as $domain) {
             $domainError = $cdnSuccess = $cdnError =[];
             // 新增或查詢已存在 domain
-            list($domain, $domain_id, $errorMessage, $errorCode) = $this->storeDomain($domain, $user);
+            list($domain, $domain_id, $errorMessage, $errorCode) = $this->storeDomain($domain, $user, $operationLogInfo);
 
             if (! is_null($errorCode)||! is_null($errorMessage)) {
                 $domainError = [
@@ -82,7 +89,7 @@ class BatchService{
             //會有 已經存在的 domain 處理之後的 cdn
             if(isset($domain['cdns'])){
                 //處理 Cdn 的 新增 刪除
-                list($cdnSuccess, $cdnError) = $this->handelCdn($user, $domain_id, $domain);
+                list($cdnSuccess, $cdnError) = $this->handelCdn($user, $domain_id, $domain, $operationLogInfo);
             }
 
             
@@ -252,7 +259,7 @@ class BatchService{
             $domain['cname'] = $this->formatDomainCname($domain["name"], $user["user_group_id"]);
 
             // 新增 domain
-            $domainObj = $this->domainRepository->store($domain, $user);
+            $domainObj = $this->domainRepository->store($domain, $user, $operationLogInfo);
             if(is_null($domainObj))
                 throw $domainObj;
             // 新增 domain 成功

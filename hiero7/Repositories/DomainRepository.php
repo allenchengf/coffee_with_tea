@@ -10,7 +10,7 @@ class DomainRepository
 {
     use OperationLogTrait;
 
-    protected $domain;
+    protected $domain, $jwtToken, $jwtPayload;
 
     public function __construct(Domain $domain)
     {
@@ -23,7 +23,7 @@ class DomainRepository
         return $this->domain->all();
     }
 
-    public function store($info, $user)
+    public function store($info, $user, $operationLogInfo)
     {
         try {
             $rtn = $this->domain::create(
@@ -36,10 +36,12 @@ class DomainRepository
                 ]
             );
 
+            $jwtToken = isset($operationLogInfo['jwtToken']) ? $operationLogInfo['jwtToken'] : null;
             $jwtPayload = isset($operationLogInfo['jwtPayload']) ? $operationLogInfo['jwtPayload'] : null;
             $ip = isset($operationLogInfo['ip']) ? $operationLogInfo['ip'] : null;
             
             $this->setChangeType('Create')
+                    ->setJWTToken($jwtToken)
                     ->setJWTPayload($jwtPayload)
                     ->setClientIp($ip)
                     ->setChangeTo($rtn->fresh()->saveLog())
@@ -100,7 +102,13 @@ class DomainRepository
         return $this->ip;
     }
 
-    public function setJWTPayload($jwtPayload): array
+    public function setJWTToken($jwtToken)
+    {
+        $this->jwtToken = $jwtToken;
+        return $this;
+    }
+
+    public function setJWTPayload($jwtPayload)
     {
         $this->jwtPayload = $jwtPayload;
         return $this;
@@ -116,10 +124,10 @@ class DomainRepository
         return $this->jwtPayload['user_group_id'] ?? null;
     }
 
-    public function setChangeType(string $type)
+    private function getJWTToken()
     {
-        $this->changeType = $type;
-        return $this;
+        return $this->jwtToken;
     }
+
     // Operation Log --
 }

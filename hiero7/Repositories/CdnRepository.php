@@ -11,8 +11,7 @@ class CdnRepository
 {
     use OperationLogTrait;
     
-    protected $cdn;
-    public $jwtPayload;
+    protected $cdn, $jwtToken, $jwtPayload;
 
     public function __construct(Cdn $cdn)
     {
@@ -34,10 +33,12 @@ class CdnRepository
             ];
             $cdnId = $this->cdn->store($row);
 
+            $jwtToken = isset($operationLogInfo['jwtToken']) ? $operationLogInfo['jwtToken'] : null;
             $jwtPayload = isset($operationLogInfo['jwtPayload']) ? $operationLogInfo['jwtPayload'] : null;
             $ip = isset($operationLogInfo['ip']) ? $operationLogInfo['ip'] : null;
             
             $this->setChangeType('Create')
+                    ->setJWTToken($jwtToken)
                     ->setJWTPayload($jwtPayload)
                     ->setClientIp($ip)
                     ->setChangeTo($this->cdn->fresh()->saveLog())
@@ -124,7 +125,13 @@ class CdnRepository
         return $this->ip;
     }
 
-    public function setJWTPayload($jwtPayload): array
+    public function setJWTToken($jwtToken)
+    {
+        $this->jwtToken = $jwtToken;
+        return $this;
+    }
+
+    public function setJWTPayload($jwtPayload)
     {
         $this->jwtPayload = $jwtPayload;
         return $this;
@@ -140,10 +147,9 @@ class CdnRepository
         return $this->jwtPayload['user_group_id'] ?? null;
     }
 
-    public function setChangeType(string $type)
+    private function getJWTToken()
     {
-        $this->changeType = $type;
-        return $this;
+        return $this->jwtToken;
     }
     // Operation Log --
 
