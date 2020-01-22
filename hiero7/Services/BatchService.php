@@ -277,7 +277,7 @@ class BatchService{
             }
 
             if (!$errorCode){ //還不知道會有什麼
-                $errorCode = InputError::BATCH_DOMAIN_ERROR;
+                $errorCode = InputError::DOMAIN_ALREADY_EXISTS_IN_OTHER_USERGROUP;
                 $errorMessage = $e->getMessage();
             }
 
