@@ -209,7 +209,7 @@ class BatchService{
             // 一個 AddDomainAndCdn job 配一個 worker job 才會剛好都處理完，table 不會有殘留 worker
             // supervisor 監督的 queue 是此 worker
             $workerJob = (new CallWorker($queueName.$count))
-            ->onConnection('database')
+            ->onConnection('redis')
             ->onQueue('worker');
     
             $this->dispatch($workerJob);
