@@ -3,7 +3,7 @@
 namespace Hiero7\Services;
 use Hiero7\Repositories\{CdnRepository, DomainRepository, CdnProviderRepository};
 use Hiero7\Services\DnsProviderService;
-use Hiero7\Enums\{InputError,InternalError};
+use Hiero7\Enums\{InputError,InternalError,DbError};
 use Hiero7\Traits\{DomainHelperTrait, OperationLogTrait};
 use Illuminate\Support\Collection;
 use Hiero7\Models\Job;
@@ -314,10 +314,9 @@ class BatchService{
             
             // 新增 cdn
             $rtnCdn = $this->cdnRepository->store($cdn, $domain_id, $user);
-            if (! $rtnCdn) {
+            if($rtnCdn instanceof \Exception)
                 throw $rtnCdn;
-            }
-            
+
         } catch (\Exception $e) {
             $errorMessage = $cdn["cname"]." ".$e->getMessage();
         }
