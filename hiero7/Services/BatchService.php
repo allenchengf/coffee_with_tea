@@ -273,7 +273,7 @@ class BatchService{
                 $domain_id = $result->id;
                 // 判斷 domain 有沒有 Group
                 $result->domainGroup->isEmpty() ? 
-                $errorCode = InputError::DOMAIN_ALREADY_EXISTED : $errorMessage = InputError::DOMAIN_ALREADY_HAS_GROUP;
+                $errorCode = InputError::DOMAIN_ALREADY_EXISTED : $errorCode = InputError::DOMAIN_ALREADY_HAS_GROUP;
             }
 
             if (!$errorCode){ //還不知道會有什麼
