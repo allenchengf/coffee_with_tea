@@ -4,7 +4,7 @@ namespace Hiero7\Services;
 use Hiero7\Repositories\{CdnRepository, DomainRepository, CdnProviderRepository};
 use Hiero7\Services\DnsProviderService;
 use Hiero7\Enums\{InputError,InternalError};
-use Hiero7\Traits\DomainHelperTrait;
+use Hiero7\Traits\{DomainHelperTrait, OperationLogTrait};
 use Illuminate\Support\Collection;
 use Hiero7\Models\Job;
 use Artisan;
@@ -18,6 +18,7 @@ class BatchService{
 
     use DomainHelperTrait;
     use DispatchesJobs;
+    use OperationLogTrait;
 
     protected $cdnRepository;
     protected $domainRepository;
@@ -54,11 +55,18 @@ class BatchService{
     {
         $success = $failure = [];
 
+        // Job 存 Operation Log 資訊
+        $operationLogInfo = [
+            'jwtToken' => $this->getJWTToken(),
+            'jwtPayload' => $this->getJWTPayload(),
+            'ip' => $this->getClientIp(),
+        ];
+
         // 批次新增 domain 迴圈
         foreach ($domains as $domain) {
             $domainError = $cdnSuccess = $cdnError =[];
             // 新增或查詢已存在 domain
-            list($domain, $domain_id, $errorMessage, $errorCode) = $this->storeDomain($domain, $user);
+            list($domain, $domain_id, $errorMessage, $errorCode) = $this->storeDomain($domain, $user, $operationLogInfo);
 
             if (! is_null($errorCode)||! is_null($errorMessage)) {
                 $domainError = [
@@ -81,7 +89,7 @@ class BatchService{
             //會有 已經存在的 domain 處理之後的 cdn
             if(isset($domain['cdns'])){
                 //處理 Cdn 的 新增 刪除
-                list($cdnSuccess, $cdnError) = $this->handelCdn($user, $domain_id, $domain);
+                list($cdnSuccess, $cdnError) = $this->handelCdn($user, $domain_id, $domain, $operationLogInfo);
             }
 
             
@@ -119,7 +127,7 @@ class BatchService{
      * @param [type] $domain
      * @return void
      */
-    public function handelCdn($user, $domain_id, $domain)
+    public function handelCdn($user, $domain_id, $domain, $operationLogInfo=null)
     {
         // 取此權限全部 cdn_providers
         $myCdnProviders = collect($this->cdnProviderRepository->getCdnProvider($user["user_group_id"])->toArray());
@@ -178,12 +186,19 @@ class BatchService{
         //檢查是否有原本的資料
         $this->checkProcessRecord($queueName,$redisJobs);
 
+        // Job 存 Operation Log 資訊
+        $operationLogInfo = [
+            'jwtToken' => $this->getJWTToken(),
+            'jwtPayload' => $this->getJWTPayload(),
+            'ip' => $this->getClientIp(),
+        ];
+
         // 批次新增 domain & cdn 迴圈， $count 記錄總共有幾筆
         $count = 0;
         foreach ($domains as $domain) {
             $count++;
             //把原邏輯 搬去 job 
-            $job = (new AddDomainAndCdn($domain,$user,$queueName))
+            $job = (new AddDomainAndCdn($domain,$user,$queueName,$operationLogInfo))
             ->onConnection('database')
             ->onQueue($queueName.$count);
 
@@ -194,7 +209,7 @@ class BatchService{
             // 一個 AddDomainAndCdn job 配一個 worker job 才會剛好都處理完，table 不會有殘留 worker
             // supervisor 監督的 queue 是此 worker
             $workerJob = (new CallWorker($queueName.$count))
-            ->onConnection('database')
+            ->onConnection('redis')
             ->onQueue('worker');
     
             $this->dispatch($workerJob);
@@ -225,7 +240,7 @@ class BatchService{
 
     }
 
-    public function storeDomain($domain, $user)
+    public function storeDomain($domain, $user, $operationLogInfo=null)
     {
         $domain_id = null;
         $errorMessage = $errorCode = null;
@@ -244,7 +259,7 @@ class BatchService{
             $domain['cname'] = $this->formatDomainCname($domain["name"], $user["user_group_id"]);
 
             // 新增 domain
-            $domainObj = $this->domainRepository->store($domain, $user);
+            $domainObj = $this->domainRepository->store($domain, $user, $operationLogInfo);
             if(is_null($domainObj))
                 throw $domainObj;
             // 新增 domain 成功
@@ -298,9 +313,9 @@ class BatchService{
             }
             
             // 新增 cdn
-            $cdn_id = $this->cdnRepository->store($cdn, $domain_id, $user);
-            if (! is_int($cdn_id)) {
-                throw $cdn_id;
+            $rtnCdn = $this->cdnRepository->store($cdn, $domain_id, $user);
+            if (! $rtnCdn) {
+                throw $rtnCdn;
             }
             
         } catch (\Exception $e) {
