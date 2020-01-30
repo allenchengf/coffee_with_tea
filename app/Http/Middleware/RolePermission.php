@@ -61,6 +61,10 @@ class RolePermission
             'method' => 'DELETE',
             'path_regex' => 'roles\/[0-9]+\/permissions',
         ],
+        [ // [ For test ] Batch Create Domain & Cdn
+            'method' => 'POST',
+            'path_regex' => 'domains\/oldBatch',
+        ],
     ];
 
     // Dashboard APIs 直接給過:

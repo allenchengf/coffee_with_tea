@@ -10,6 +10,7 @@ namespace Hiero7\Traits;
 
 use Illuminate\Support\Facades\Request;
 use Ixudra\Curl\Facades\Curl;
+use Illuminate\Support\Facades\Log;
 
 trait OperationLogTrait
 {
@@ -60,7 +61,9 @@ trait OperationLogTrait
             'input' => json_encode(Request::except(['password', 'password_confirmation', 'edited_by', 'old', 'new'])),
         ];
 
-        $this->curlWithUri(self::getOperationLogURL(), '/log/platform/iRouteCDN', $body, 'post');
+        $callback = $this->curlWithUri(self::getOperationLogURL(), '/log/platform/iRouteCDN', $body, 'post');
+
+        Log::info('[OperationLogTrait::createOperationLog()] ' . json_encode($callback));
     }
 
     public function getEsLog()
