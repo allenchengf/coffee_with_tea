@@ -10,8 +10,8 @@ use Hiero7\Traits\OperationLogTrait;
 class CdnRepository
 {
     use OperationLogTrait;
-
-    protected $cdn;
+    
+    protected $cdn, $jwtToken, $jwtPayload;
 
     public function __construct(Cdn $cdn)
     {
@@ -19,7 +19,7 @@ class CdnRepository
         $this->setCategory(config('logging.category.cdn'));
     }
 
-    public function store($info, int $id, $user)
+    public function store($info, int $id, $user, array $operationLogInfo = null)
     {
         try {
             $row = [
@@ -31,9 +31,20 @@ class CdnRepository
                 "default"            => $info["default"],
                 "created_at"         => \Carbon\Carbon::now(),
             ];
-            $cdnId = $this->cdn->store($row);
-            // $this->setChangeTo($this->cdn->fresh()->saveLog())->createOperationLog(); // SaveLog
-            return $cdnId;
+            $rtn = $this->cdn->create($row);
+
+            $jwtToken = isset($operationLogInfo['jwtToken']) ? $operationLogInfo['jwtToken'] : null;
+            $jwtPayload = isset($operationLogInfo['jwtPayload']) ? $operationLogInfo['jwtPayload'] : null;
+            $ip = isset($operationLogInfo['ip']) ? $operationLogInfo['ip'] : null;
+            
+            $this->setChangeType('Create')
+                    ->setJWTToken($jwtToken)
+                    ->setJWTPayload($jwtPayload)
+                    ->setClientIp($ip)
+                    ->setChangeTo($rtn->fresh()->saveLog())
+                    ->createOperationLog(); // SaveLog
+
+            return $rtn;
         } catch (\Exception $e) {
             if ($e->getCode() == '23000')
                 return new \Exception(DbError::getDescription(DbError::DUPLICATE_ENTRY), DbError::DUPLICATE_ENTRY);  
@@ -101,4 +112,45 @@ class CdnRepository
     {
         return $this->cdn->where('domain_id',$domainId)->get();
     }
+
+    // Operation Log ++
+    private function setClientIp($ip)
+    {
+        $this->ip = $ip;
+        return $this;
+    }
+
+    private function getClientIp()
+    {
+        return $this->ip;
+    }
+
+    public function setJWTToken($jwtToken)
+    {
+        $this->jwtToken = $jwtToken;
+        return $this;
+    }
+
+    public function setJWTPayload($jwtPayload)
+    {
+        $this->jwtPayload = $jwtPayload;
+        return $this;
+    }
+
+    public function getJWTUserId()
+    {
+        return $this->jwtPayload['sub'] ?? null;
+    }
+
+    public function getJWTUserGroupId()
+    {
+        return $this->jwtPayload['user_group_id'] ?? null;
+    }
+
+    private function getJWTToken()
+    {
+        return $this->jwtToken;
+    }
+    // Operation Log --
+
 }
