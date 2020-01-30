@@ -12,16 +12,21 @@ use App\Events\CdnWasBatchEdited;
 use App\Events\CdnWasEdited;
 use DB;
 use Hiero7\Models\Cdn;
+use Hiero7\Models\CdnProvider;
 use Hiero7\Models\Domain;
+use Hiero7\Models\LocationDnsSetting;
+use Hiero7\Services\DnsProviderService;
 use Illuminate\Http\Request;
-use Hiero7\Services\DomainGroupService;
 
 class CdnService
 {
+    protected $defaultLine;
+    protected $dnsProviderService;
+
     public function __construct(DnsProviderService $dnsProviderService)
     {
         $this->dnsProviderService = $dnsProviderService;
-
+        $this->defaultLine = "默认";
     }
 
     public function setEditedByOfRequest(Request $request, $uuid)
@@ -132,4 +137,120 @@ class CdnService
         $dnsProviderIdArray = $cdn->getlocationDnsSettingDomainId($cdn->id)->toArray();
         return event(new CdnWasBatchEdited($cdn->cname, $dnsProviderIdArray, 'value'));
     }
+
+    /**
+     * 取得 DNS Pod Record By CDN
+     *
+     * @param Cdn $cdn
+     * @return array
+     */
+    public function getRecordByCDN(Cdn $cdn)
+    {
+        $records = $this->getDnsPodDefaultRecord($cdn);
+        $cdnProvider = $this->getCDNProviderByCDN($cdn);
+
+        $recordTTL = (int) $cdnProvider->ttl;
+        $recordValue = $cdn->cname;
+        $recordStatus = (bool) $cdnProvider->status;
+        $recordName = $cdn->domain->cname;
+
+        foreach ($cdn['locationDnsSetting'] as $locationDnsSetting) {
+            $line = $this->getDNSPodLineByLocationDnsSetting($locationDnsSetting);
+
+            $records[] = [
+                'id' => (int) $locationDnsSetting->provider_record_id,
+                'ttl' => $recordTTL,
+                'value' => $recordValue,
+                'enabled' => $recordStatus,
+                'name' => $recordName,
+                'line' => $line,
+                'type' => "CNAME",
+            ];
+        }
+
+        return $records;
+    }
+
+    /**
+     * 取得 DNS Pod Record By Default Records
+     *
+     * @param Cdn $cdn
+     * @return array
+     */
+    public function getDnsPodDefaultRecord(Cdn $cdn): array
+    {
+        if ($cdn->default) {
+            $cdnProvider = $this->getCDNProviderByCDN($cdn);
+
+            // record 的狀態已 cdn provider 的狀態為主
+            $enabled = $cdnProvider->status;
+
+            $record = [
+                'id' => (int) $cdn->provider_record_id,
+                'ttl' => (int) $cdnProvider->ttl,
+                'value' => $cdn->cname,
+                'enabled' => (bool) $enabled,
+                'name' => $cdn->domain->cname,
+                'line' => $this->defaultLine,
+                'type' => "CNAME",
+            ];
+
+            return $record;
+        }
+
+        return [];
+    }
+
+    /**
+     * 取得 CDN Provider By CDN
+     *
+     * @param Cdn $cdn
+     * @return CdnProvider
+     */
+    public function getCDNProviderByCDN(Cdn $cdn)
+    {
+        if (!isset($this->cdnProviders[$cdn->cdn_provider_id])) {
+            $this->tempCDNProvider($cdn->cdnProvider);
+        }
+
+        return $this->cdnProviders[$cdn->cdn_provider_id];
+    }
+
+    /**
+     * 取得 Line
+     *
+     * @param Cdn $cdn
+     * @return string
+     */
+    public function getDNSPodLineByLocationDnsSetting(LocationDnsSetting $locationDnsSetting)
+    {
+        if (!isset($this->lines[$locationDnsSetting->location_networks_id])) {
+            $this->tempDNSPodLine($locationDnsSetting);
+        }
+
+        return $this->lines[$locationDnsSetting->location_networks_id];
+    }
+
+    /**
+     * 暫存 CDN Provider Module
+     *
+     * @param CdnProvider $cdnProvider
+     */
+    private function tempCDNProvider(CdnProvider $cdnProvider)
+    {
+        $this->cdnProviders[$cdnProvider->id] = $cdnProvider;
+    }
+
+    /**
+     * 暫存 Line
+     *
+     * @param CdnProvider $cdnProvider
+     */
+    private function tempDNSPodLine(LocationDnsSetting $locationDnsSetting)
+    {
+        $line = $locationDnsSetting->location()->first()->network()->first()->name;
+
+        $this->lines[$locationDnsSetting->location_networks_id] = $line;
+    }
+
 }
