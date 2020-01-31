@@ -11,9 +11,11 @@ use Hiero7\Enums\PermissionError;
 use Hiero7\Models\Cdn;
 use Hiero7\Models\CdnProvider;
 use Hiero7\Services\CdnProviderService;
+use Hiero7\Services\CdnService;
+use Hiero7\Services\DnsPodRecordSyncService;
 use Hiero7\Traits\OperationLogTrait;
-use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
 
 /**
  * Class CdnProviderController
@@ -22,14 +24,17 @@ use Illuminate\Database\Eloquent\Builder;
 class CdnProviderController extends Controller
 {
     use OperationLogTrait;
-    protected $cdnProviderService;
+    protected $cdnProviderService, $cdnService, $dnsPodRecordSyncService;
     protected $status;
     /**
      * CdnProviderController constructor.
      */
-    public function __construct(CdnProviderService $cdnProviderService)
+    public function __construct(CdnProviderService $cdnProviderService, CdnService $cdnService, DnsPodRecordSyncService $dnsPodRecordSyncService)
     {
-        $this->cdnProviderService = $cdnProviderService;
+        $this->cdnProviderService      = $cdnProviderService;
+        $this->cdnService              = $cdnService;
+        $this->dnsPodRecordSyncService = $dnsPodRecordSyncService;
+
         $this->setCategory(config('logging.category.cdn_provider'));
     }
 
@@ -41,7 +46,7 @@ class CdnProviderController extends Controller
     public function index(Request $request)
     {
         $user_group_id = $this->getUgid($request);
-        $result = $this->cdnProviderService->getCdnProvider($user_group_id);
+        $result        = $this->cdnProviderService->getCdnProvider($user_group_id);
 
         return $this->setStatusCode($result ? 200 : 404)->response('success', null, $result);
     }
@@ -90,19 +95,30 @@ class CdnProviderController extends Controller
         }
 
         DB::beginTransaction();
+
+        $oldTTL = (int) $cdnProvider->ttl;
+
         $cdnProvider->update($request->only('name', 'ttl', 'edited_by', 'url'));
-        $cdn = Cdn::where('cdn_provider_id', $cdnProvider->id)->with('locationDnsSetting')->get();
 
-        $recordList = array_filter($this->getRecordList($cdn));
+        $newTTL = (int) $cdnProvider->ttl;
 
-        if (!empty($recordList)) {
-            $BatchEditedDnsProviderRecordResult = $this->cdnProviderService->updateCdnProviderTTL($cdnProvider, $recordList);
-            if (array_key_exists('errors', $BatchEditedDnsProviderRecordResult[0])) {
-                DB::rollback();
-                return $this->setStatusCode(409)->response('please contact the admin', InternalError::INTERNAL_ERROR, []);
+        if ($oldTTL != $newTTL) {
+            $cdns = Cdn::where('cdn_provider_id', $cdnProvider->id)->with('locationDnsSetting')->get();
+
+            // 取得這次所有異動的 Record
+            $allRecord = [];
+
+            foreach ($cdns as $cdn) {
+                $records   = $this->cdnService->getRecordByCDN($cdn);
+                $allRecord = array_merge($allRecord, $records);
             }
+
+            // 執行修改 Record 狀態
+            $result = $this->dnsPodRecordSyncService->syncRecord([], $allRecord, []);
         }
+
         DB::commit();
+
         $this->cdnProviderService->checkWhetherStopScannable($cdnProvider, $request->get('edited_by'));
 
         $this->setChangeTo($cdnProvider->saveLog())->createOperationLog();
@@ -210,7 +226,7 @@ class CdnProviderController extends Controller
     {
         $defaultInfo = [
             'have_multi_cdn' => [],
-            'only_default' => [],
+            'only_default'   => [],
         ];
 
         if ($cdnProvider->status) {
@@ -253,7 +269,7 @@ class CdnProviderController extends Controller
         $result = $cdnProvider::select(['name', 'status'])->withCount([
             'domains as default_domains_count' => function (Builder $query) {
                 $query->where('default', '=', 1);
-            }
+            },
         ])->where('user_group_id', $this->getJWTPayload()['user_group_id'])->get();
 
         return $this->setStatusCode($result ? 200 : 400)->response('', '', $result);
