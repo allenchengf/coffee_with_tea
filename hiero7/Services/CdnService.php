@@ -26,7 +26,7 @@ class CdnService
     public function __construct(DnsProviderService $dnsProviderService)
     {
         $this->dnsProviderService = $dnsProviderService;
-        $this->defaultLine = "默认";
+        $this->defaultLine        = "默认";
     }
 
     public function setEditedByOfRequest(Request $request, $uuid)
@@ -93,8 +93,8 @@ class CdnService
 
         $cdn->update([
             'provider_record_id' => $getDefaultRecord->provider_record_id,
-            'default' => true,
-            'edited_by' => $edited_by,
+            'default'            => true,
+            'edited_by'          => $edited_by,
         ]);
 
         $cdn = $domain->getCdnById($cdn->id)->first();
@@ -146,25 +146,30 @@ class CdnService
      */
     public function getRecordByCDN(Cdn $cdn)
     {
-        $records = $this->getDnsPodDefaultRecord($cdn);
+        $records = [];
+
+        if ($defaultRecord = $this->getDnsPodDefaultRecord($cdn)) {
+            $records[] = $defaultRecord;
+        }
+
         $cdnProvider = $this->getCDNProviderByCDN($cdn);
 
-        $recordTTL = (int) $cdnProvider->ttl;
-        $recordValue = $cdn->cname;
+        $recordTTL    = (int) $cdnProvider->ttl;
+        $recordValue  = $cdn->cname;
         $recordStatus = (bool) $cdnProvider->status;
-        $recordName = $cdn->domain->cname;
+        $recordName   = $cdn->domain->cname;
 
         foreach ($cdn['locationDnsSetting'] as $locationDnsSetting) {
             $line = $this->getDNSPodLineByLocationDnsSetting($locationDnsSetting);
 
             $records[] = [
-                'id' => (int) $locationDnsSetting->provider_record_id,
-                'ttl' => $recordTTL,
-                'value' => $recordValue,
+                'id'      => (int) $locationDnsSetting->provider_record_id,
+                'ttl'     => $recordTTL,
+                'value'   => $recordValue,
                 'enabled' => $recordStatus,
-                'name' => $recordName,
-                'line' => $line,
-                'type' => "CNAME",
+                'name'    => $recordName,
+                'line'    => $line,
+                'type'    => "CNAME",
             ];
         }
 
@@ -181,18 +186,16 @@ class CdnService
     {
         if ($cdn->default) {
             $cdnProvider = $this->getCDNProviderByCDN($cdn);
-
-            // record 的狀態已 cdn provider 的狀態為主
-            $enabled = $cdnProvider->status;
+            $enabled     = $cdnProvider->status;
 
             $record = [
-                'id' => (int) $cdn->provider_record_id,
-                'ttl' => (int) $cdnProvider->ttl,
-                'value' => $cdn->cname,
+                'id'      => (int) $cdn->provider_record_id,
+                'ttl'     => (int) $cdnProvider->ttl,
+                'value'   => $cdn->cname,
                 'enabled' => (bool) $enabled,
-                'name' => $cdn->domain->cname,
-                'line' => $this->defaultLine,
-                'type' => "CNAME",
+                'name'    => $cdn->domain->cname,
+                'line'    => $this->defaultLine,
+                'type'    => "CNAME",
             ];
 
             return $record;
@@ -252,5 +255,4 @@ class CdnService
 
         $this->lines[$locationDnsSetting->location_networks_id] = $line;
     }
-
 }

@@ -31,8 +31,8 @@ class CdnProviderController extends Controller
      */
     public function __construct(CdnProviderService $cdnProviderService, CdnService $cdnService, DnsPodRecordSyncService $dnsPodRecordSyncService)
     {
-        $this->cdnProviderService = $cdnProviderService;
-        $this->cdnService = $cdnService;
+        $this->cdnProviderService      = $cdnProviderService;
+        $this->cdnService              = $cdnService;
         $this->dnsPodRecordSyncService = $dnsPodRecordSyncService;
 
         $this->setCategory(config('logging.category.cdn_provider'));
@@ -46,7 +46,7 @@ class CdnProviderController extends Controller
     public function index(Request $request)
     {
         $user_group_id = $this->getUgid($request);
-        $result = $this->cdnProviderService->getCdnProvider($user_group_id);
+        $result        = $this->cdnProviderService->getCdnProvider($user_group_id);
 
         return $this->setStatusCode($result ? 200 : 404)->response('success', null, $result);
     }
@@ -109,7 +109,7 @@ class CdnProviderController extends Controller
             $allRecord = [];
 
             foreach ($cdns as $cdn) {
-                $records = $this->cdnService->getRecordByCDN($cdn);
+                $records   = $this->cdnService->getRecordByCDN($cdn);
                 $allRecord = array_merge($allRecord, $records);
             }
 
@@ -226,7 +226,7 @@ class CdnProviderController extends Controller
     {
         $defaultInfo = [
             'have_multi_cdn' => [],
-            'only_default' => [],
+            'only_default'   => [],
         ];
 
         if ($cdnProvider->status) {
