@@ -86,7 +86,6 @@ return [
         'cdn' => 'CDN',
         'domain_group' => 'Group',
         'iroutecdn' => 'iRouteCDN',
-        'network' => 'Network',
     ],
 
 ];
