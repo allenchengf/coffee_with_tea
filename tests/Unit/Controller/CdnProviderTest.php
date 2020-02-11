@@ -185,22 +185,12 @@ class CdnProviderTest extends TestCase
 
         $cdnProvider = $this->cdnProvider->find(1);
 
-        $this->dnsprovider->shouldReceive('batchEditRecord')
-            ->withAnyArgs()
-            ->andReturn([
-                "errorCode" => null, "data" => [
-                    "job_id" => ["id" => 1],
-                    "detail" => [
-                        "domain_id" => 1,
-                    ],
-                ],
-            ]);
-
         $editData = [
             'status' => 'stop',
         ];
         $request = new Request;
         $request->merge($editData);
+        $this->mockSyncRecordToDnsPod();
         $response = $this->controller->changeStatus($request, $cdnProvider);
 
         $this->dnsprovider->shouldReceive('batchEditRecord')
@@ -234,32 +224,13 @@ class CdnProviderTest extends TestCase
 
         $cdnProvider = $this->cdnProvider->find(1);
 
-        $this->dnsprovider->shouldReceive('batchEditRecord')
-            ->withAnyArgs()
-            ->andReturn([
-                "errorCode" => null, "data" => [
-                    "job_id" => ["id" => 1],
-                    "detail" => [
-                        "domain_id" => 1,
-                    ],
-                ],
-            ]);
-
-        $this->dnsprovider->shouldReceive('editRecord')->withAnyArgs()
-            ->andReturn(["message" => "Success", "errorCode" => null, "data" => [
-                "record" => [
-                    "id" => "426278576",
-                    "name" => "hiero7.test1.com",
-                    "value" => "cCnPjg.com.",
-                    "status" => "enable",
-                    "weight" => null,
-                ]]]);
         $editData = [
             'status' => 'active',
         ];
 
         $request = new Request;
         $request->merge($editData);
+        $this->mockSyncRecordToDnsPod();
         $response = $this->controller->changeStatus($request, $cdnProvider);
 
         $this->dnsprovider->shouldReceive('batchEditRecord')
