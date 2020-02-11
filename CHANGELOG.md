@@ -6,7 +6,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.11.4] - 2020-02-11
 ### Fixed
-- CDN Provider Status Bug
+- CDN Provider Status / TTL Bug
 
 ## [0.11.3] - 2020-01-30
 ### Fixed
