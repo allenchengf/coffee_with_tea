@@ -74,7 +74,7 @@ class DnsPodRecordSyncService
     private function getDifferent(array $record = [], string $domainCname = '')
     {
         $data = [
-            'records' => json_encode($record),
+            'records'    => json_encode($record),
             'sub_domain' => $domainCname,
         ];
 
@@ -166,8 +166,8 @@ class DnsPodRecordSyncService
     public function getCdnProvider(CdnProvider $cdnProvider, int $ugid)
     {
         $this->cdnProvider = $cdnProvider->where('user_group_id', $ugid)
-            ->get()
-            ->keyBy('id');
+                                         ->get()
+                                         ->keyBy('id');
 
         return $this->cdnProvider;
     }
@@ -267,7 +267,7 @@ class DnsPodRecordSyncService
             if ($soruceRecord[$key]['id'] != $value['id']) {
                 app()->call([$this, 'updateProviderRecordId'],
                     [
-                        'record' => $soruceRecord[$key],
+                        'record'      => $soruceRecord[$key],
                         'dnsRecordId' => $value['id'],
                     ]);
             }
@@ -301,8 +301,8 @@ class DnsPodRecordSyncService
             });
 
             $locationDnsSetting->where('location_networks_id', $location_networks_id)
-                ->where('cdn_id', $cdn['id'])
-                ->update(['provider_record_id' => $dnsRecordId]);
+                               ->where('cdn_id', $cdn['id'])
+                               ->update(['provider_record_id' => $dnsRecordId]);
         }
     }
 
