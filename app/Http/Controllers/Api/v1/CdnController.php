@@ -71,7 +71,7 @@ class CdnController extends Controller
 
                 DB::rollback();
 
-                return $this->setStatusCode(409)->response('please contact the admin', InternalError::INTERNAL_ERROR, []);
+                return $this->setStatusCode(409)->response("", InternalError::DNSPOD_INSERT_ERROR, []);
             }
 
             DB::commit();
@@ -103,8 +103,8 @@ class CdnController extends Controller
 
         if (!$error) {
             return $this->setStatusCode(409)->response(
-                'please contact the admin',
-                InternalError::INTERNAL_ERROR
+                "",
+                InternalError::DNSPOD_UPDATE_ERROR
             );
         }
 
@@ -131,7 +131,7 @@ class CdnController extends Controller
         if (!$this->cdnService->changeDnsProviderCname($domain, $cdn)) {
             DB::rollback();
 
-            return $this->setStatusCode(409)->response('please contact the admin', InternalError::INTERNAL_ERROR, []);
+            return $this->setStatusCode(409)->response("", InternalError::DNSPOD_UPDATE_ERROR, []);
         }
 
         $this->cdnService->batchChangeDnsCnameForLocationSetting($cdn);
