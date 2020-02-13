@@ -57,7 +57,7 @@ sudo ntpdate ntp.ubuntu.com
 3. phpunit
 ```bash
 # 測試覆蓋率
-phpunit --coverage-html coverage
+vendor/bin/phpunit --coverage-html coverage
 ```
 
 4. DB Seeder 

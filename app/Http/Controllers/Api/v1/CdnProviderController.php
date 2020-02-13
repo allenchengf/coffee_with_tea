@@ -138,24 +138,33 @@ class CdnProviderController extends Controller
         $request->merge(['edited_by' => $this->getJWTPayload()['uuid']]);
         $recordList = [];
         $status = $request->get('status') ? 'active' : 'stop';
+
         DB::beginTransaction();
+        $oldStatus = (int) $cdnProvider->status;
+
         $cdnProvider->update(['status' => $status, 'edited_by' => $request->get('edited_by')]);
-        $cdn = Cdn::where('cdn_provider_id', $cdnProvider->id)->with('locationDnsSetting')->get();
 
-        $recordList = array_filter($this->getRecordList($cdn));
+        $newStatus = (int) $cdnProvider->status;
 
-        if (!empty($recordList)) {
-            $BatchEditedDnsProviderRecordResult = $this->cdnProviderService->updateCdnProviderStatus($recordList, $status);
-            if (array_key_exists('errors', $BatchEditedDnsProviderRecordResult[0])) {
-                DB::rollback();
-                return $this->setStatusCode(409)->response('please contact the admin', InternalError::INTERNAL_ERROR, []);
+        if ($oldStatus != $newStatus) {
+            $cdns = Cdn::where('cdn_provider_id', $cdnProvider->id)->with('locationDnsSetting')->get();
+
+            $allRecord = [];
+
+            foreach ($cdns as $cdn) {
+                $records   = $this->cdnService->getRecordByCDN($cdn);
+                $allRecord = array_merge($allRecord, $records);
             }
+
+            $result = $this->dnsPodRecordSyncService->syncRecord([], $allRecord, []);
         }
+
         if ($status == 'stop') {
             $cdnProviderCollection = CdnProvider::with('domains')->where('id', $cdnProvider->id)->get();
             $this->cdnProviderService->changeDefaultCDN($cdnProviderCollection);
         }
         DB::commit();
+
         $this->cdnProviderService->checkWhetherStopScannable($cdnProvider, $request->get('edited_by'));
 
         $this->setChangeTo($cdnProvider->fresh()->saveLog())->createOperationLog();
