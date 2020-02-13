@@ -329,6 +329,8 @@ class BatchService{
         $errorMessage = null;
 
         try {
+            $this->dnsProviderService->setTimeout(600);
+
             $dnsPodResponse = $this->dnsProviderService->createRecord(
                 [
                     'sub_domain' => $domain['cname'],
