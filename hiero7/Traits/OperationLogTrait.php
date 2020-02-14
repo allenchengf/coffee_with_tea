@@ -8,16 +8,16 @@
 
 namespace Hiero7\Traits;
 
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Request;
 use Ixudra\Curl\Facades\Curl;
-use Illuminate\Support\Facades\Log;
 
 trait OperationLogTrait
 {
     use JwtPayloadTrait;
 
     protected $changeFrom = [], $changeTo = [], $changeType = null;
-    protected $category = null;
+    protected $category   = null;
 
     protected function curlWithUri(string $domain, string $uri, array $body, string $method, $asJson = true)
     {
@@ -47,23 +47,23 @@ trait OperationLogTrait
         $this->setChangeType($changeType);
 
         $body = [
-            'uid' => $this->getJWTUserId(),
-            'userGroup' => $this->getJWTUserGroupId(),
-            'platform' => $this->getPlatform(),
-            'category' => $category ?? $this->getCategory(),
-            'change_type' => $this->getChangeType(),
+            'uid'          => $this->getJWTUserId(),
+            'userGroup'    => $this->getJWTUserGroupId(),
+            'platform'     => $this->getPlatform(),
+            'category'     => $category ?? $this->getCategory(),
+            'change_type'  => $this->getChangeType(),
             'changed_from' => json_encode($this->getChangeFrom()),
-            'changed_to' => json_encode($this->getChangeTo()),
-            'message' => $message,
-            'ip' => $this->getClientIp(),
-            'method' => $this->getRequestMethod(),
-            'url' => Request::url(),
-            'input' => json_encode(Request::except(['password', 'password_confirmation', 'edited_by', 'old', 'new'])),
+            'changed_to'   => json_encode($this->getChangeTo()),
+            'message'      => $message,
+            'ip'           => $this->getClientIp(),
+            'method'       => $this->getRequestMethod(),
+            'url'          => Request::url(),
+            'input'        => json_encode(Request::except(['password', 'password_confirmation', 'edited_by', 'old', 'new'])),
         ];
 
         $callback = $this->curlWithUri(self::getOperationLogURL(), '/log/platform/iRouteCDN', $body, 'post');
 
-        Log::info('[OperationLogTrait::createOperationLog()] ' . json_encode($callback));
+        // Log::info('[OperationLogTrait::createOperationLog()] ' . json_encode($callback));
     }
 
     public function getEsLog()
@@ -84,10 +84,10 @@ trait OperationLogTrait
     protected function getMappingChangeType()
     {
         return [
-            'GET' => 'Check',
-            'POST' => 'Create',
-            'PATCH' => 'Update',
-            'PUT' => 'Update',
+            'GET'    => 'Check',
+            'POST'   => 'Create',
+            'PATCH'  => 'Update',
+            'PUT'    => 'Update',
             'DELETE' => 'Delete',
         ];
     }
