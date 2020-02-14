@@ -154,7 +154,7 @@ class DomainController extends Controller
 
         //有 DomainGroup 並且 不能是 Group 內唯一的 Domain
         if (!$domain->domainGroup->isEmpty() && $domain->domainGroup->first()->domains->count() == 1) {
-            return $this->setStatusCode(400)->response('', PermissionError::CANT_DELETE_LAST_DOMAIN, []);
+            return $this->setStatusCode(400)->response('', PermissionError::CANT_DELETE_LAST_DOMAIN, compact('domain_name'));
         }
 
         $domain->domainGroup()->detach();
@@ -169,7 +169,7 @@ class DomainController extends Controller
         }
 
         if (!$deleteRestult) {
-            return $this->response('', InputError::PLEASE_DELETE_DOMAIN_AGAIN, compact('domain_name'));
+            return $this->setStatusCode(400)->response('', InputError::PLEASE_DELETE_DOMAIN_AGAIN, compact('domain_name'));
         }
 
         $domain->delete();
