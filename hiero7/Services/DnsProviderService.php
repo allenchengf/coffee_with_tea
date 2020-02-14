@@ -5,13 +5,14 @@ use Ixudra\Curl\Facades\Curl;
 
 class DnsProviderService
 {
-    protected $timeout = 120;
+    protected $timeout = 600;
     protected $dnsProviderApi;
 
     public function __construct()
     {
         $this->dnsProviderApi   = env('DNS_PROVIDER_API') . '/dnspod';
         $this->dnsPodLoginToken = env('DNS_POD_LOGIN_TOKEN');
+        $this->timeout          = env('DNS_POD_TIMEOUT', 600);
     }
 
     /**
