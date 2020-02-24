@@ -54,9 +54,11 @@ class DnsPodRecordSyncController extends Controller
 
     private function getDomainObject(Request $request, Domain $domain)
     {
-        $domain = $request->has('name') ?
-        $domain->where('name', $request->get('name'))->first() : null;
+        $name = $request->get('name');
         
+        $domain = $request->has('name') ?
+        $domain->where('name', $name)->first() : null;
+
         return $domain;
     }
 }
