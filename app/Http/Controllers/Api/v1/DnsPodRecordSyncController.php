@@ -52,10 +52,17 @@ class DnsPodRecordSyncController extends Controller
         return $this->response('', null, $record);
     }
 
+    public function syncDnsDataByDomain(Domain $domain)
+    {
+        $records = $this->dnsPodRecordSyncService->syncAndCheckRecords($domain);
+
+        return $this->response('', null, $records);
+    }
+
     private function getDomainObject(Request $request, Domain $domain)
     {
         $name = $request->get('name');
-        
+
         $domain = $request->has('name') ?
         $domain->where('name', $name)->first() : null;
 

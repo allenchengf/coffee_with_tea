@@ -20,6 +20,8 @@ Route::group(['middleware' => ['api', 'check.role.permission', 'check.config'], 
             Route::post('', 'DomainController@create')->name('domain.create');
 
             Route::group(['prefix' => '/{domain}'], function () {
+                Route::post('check-sync', 'DnsPodRecordSyncController@syncDnsDataByDomain');
+
                 Route::get('/cdn', 'CdnController@index')->name('cdn.index');
                 Route::resource('/cdn', 'CdnController', ['only' => ['store', 'destroy']])->middleware('check.dnspod');
                 Route::patch('cdn/{cdn}/default', 'CdnController@updateDefault')->name('cdn.default')->middleware('check.dnspod');

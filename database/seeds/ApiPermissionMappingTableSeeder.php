@@ -64,6 +64,12 @@ class ApiPermissionMappingTableSeeder extends Seeder
             ['id' => 7],
             ['permission_id' => 2, 'api_id' => 5, 'created_at' => $now]
         )
+        // POST Check And Sync Record
+        // sidebar: Domains
+        ->updateOrCreate(
+            ['id' => 79],
+            ['permission_id' => 2, 'api_id' => 68, 'created_at' => $now]
+        )
 
 /*
     * =======
