@@ -13,7 +13,7 @@ use Illuminate\Database\Eloquent\Collection;
 
 class DnsPodRecordSyncService
 {
-    protected $defaultLine, $dnsProviderService, $domainRepository, $domainName, $cdnProvider, $cdns;
+    protected $defaultLine, $dnsProviderService, $domainRepository, $domainCNAME, $cdnProvider, $cdns;
 
     private $domainArray = [], $cdnsArray = [], $locationNetworkLine = [];
 
@@ -61,7 +61,7 @@ class DnsPodRecordSyncService
             $this->syncRecord($differentRecord['create'], $differentRecord['different'], $differentRecord['delete']);
         }
 
-        return $this->getDifferent($this->record, $this->domainName);
+        return $this->getDifferent($this->record, $this->domainCNAME);
     }
 
     /**
@@ -129,11 +129,11 @@ class DnsPodRecordSyncService
 
         $domainAll = $this->domainRepository->getAll();
 
-        foreach ($domainAll as $domain) {
+        $domainAll->map(function ($domain, $key) {
             $this->getDomainRecord($domain);
-        }
+        });
 
-        $this->domainName = '';
+        $this->domainCNAME = '';
 
         return $this->record;
     }
@@ -146,7 +146,7 @@ class DnsPodRecordSyncService
      */
     public function getDomainRecord(Domain $domain)
     {
-        $this->domainName = $domain->cname;
+        $this->domainCNAME = $domain->cname;
 
         $this->domainArray[] = $domain->toArray();
 
@@ -165,9 +165,7 @@ class DnsPodRecordSyncService
 
     public function getCdnProvider(CdnProvider $cdnProvider, int $ugid)
     {
-        $this->cdnProvider = $cdnProvider->where('user_group_id', $ugid)
-                                         ->get()
-                                         ->keyBy('id');
+        $this->cdnProvider = $this->cdnProvider ?? $cdnProvider->get()->keyBy('id');
 
         return $this->cdnProvider;
     }
@@ -187,13 +185,14 @@ class DnsPodRecordSyncService
             $cdnProvider = $this->cdnProvider[$cdnDefault->cdn_provider_id];
 
             $record = [
-                'id'      => (int) $cdnDefault->provider_record_id,
-                'ttl'     => (int) $cdnProvider['ttl'],
-                'value'   => $cdnDefault->cname,
-                'enabled' => (bool) $cdnProvider['status'],
-                'name'    => $this->domainName,
-                'line'    => $this->defaultLine,
-                'type'    => "CNAME",
+                'id'          => (int) $cdnDefault->provider_record_id,
+                'ttl'         => (int) $cdnProvider['ttl'],
+                'value'       => $cdnDefault->cname,
+                'enabled'     => (bool) $cdnProvider['status'],
+                'name'        => $this->domainToChinese($this->domainCNAME),
+                'origin_name' => $this->domainCNAME,
+                'line'        => $this->defaultLine,
+                'type'        => "CNAME",
             ];
 
             $this->record[] = $record;
@@ -221,13 +220,14 @@ class DnsPodRecordSyncService
             $cdnProvider = $this->cdnProvider[$cdn['cdn_provider_id']];
 
             $data = [
-                'id'      => (int) $value->provider_record_id,
-                'ttl'     => (int) $cdnProvider['ttl'],
-                'value'   => $cdn['cname'],
-                'enabled' => (bool) $cdnProvider['status'],
-                'name'    => $this->domainName,
-                'line'    => $line,
-                'type'    => "CNAME",
+                'id'          => (int) $value->provider_record_id,
+                'ttl'         => (int) $cdnProvider['ttl'],
+                'value'       => $cdn['cname'],
+                'enabled'     => (bool) $cdnProvider['status'],
+                'name'        => $this->domainToChinese($this->domainCNAME),
+                'origin_name' => $this->domainCNAME,
+                'line'        => $line,
+                'type'        => "CNAME",
             ];
 
             $record[] = $data;
@@ -296,8 +296,8 @@ class DnsPodRecordSyncService
 
             $location_networks_id = $this->locationNetworkLine[$record["line"]];
 
-            $cdn = $this->cdnsArray->first(function ($value, $key) use ($domain_id, $record) {
-                return ($value['domain_id'] == $domain_id) && ($value['cname'] == $record['value']);
+            $cdn = $this->cdnsArray->first(function ($cdn, $key) use ($domain_id, $record) {
+                return ($cdn['domain_id'] == $domain_id) && ($cdn['cname'] == $record['value']);
             });
 
             $locationDnsSetting->where('location_networks_id', $location_networks_id)
@@ -306,15 +306,19 @@ class DnsPodRecordSyncService
         }
     }
 
-    private function transferRecord(array $record)
+    private function transferRecord(array $records)
     {
-        return collect($record)->map(function ($item, $key) {
+        $recordList = collect($records)->map(function ($item, $key) {
+            $item['origin_name'] = $item['name'];
+            $item['name']        = $this->domainToChinese($item['name']);
             return array_merge($item,
                 [
                     'hash' => $this->hashRecord($item),
                 ]
             );
         });
+
+        return $recordList;
     }
 
     /**
@@ -335,5 +339,18 @@ class DnsPodRecordSyncService
         $this->locationNetworkLine = $networkRepository->getLineList();
 
         return $this->locationNetworkLine;
+    }
+
+    /**
+     * 將 Domain 轉換成中文
+     *
+     * @param string $domain
+     * @return string
+     */
+    private function domainToChinese(string $domain)
+    {
+        $idm = idn_to_utf8($domain, IDNA_DEFAULT, INTL_IDNA_VARIANT_UTS46);
+
+        return $idm;
     }
 }
