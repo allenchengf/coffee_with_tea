@@ -47,6 +47,7 @@ class SyncAllRecordService
         $this->getCdnProviders();
         $this->getDomains();
         $this->getCDNs();
+        $this->getLocationNetworkLine();
 
         $this->getDefaultRecords();
         $this->getiRouteRecord();
@@ -120,7 +121,6 @@ class SyncAllRecordService
         $this->getLocationDnsSetting();
 
         if ($this->locationDnsSettings->isNotEmpty()) {
-            $this->getLocationNetworkLine();
 
             $this->locationDnsSettings->map(function ($locationDnsSetting) {
 
