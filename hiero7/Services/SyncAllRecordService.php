@@ -2,40 +2,29 @@
 
 namespace Hiero7\Services;
 
-use DB;
-use Hiero7\Models\Cdn;
-use Hiero7\Models\CdnProvider;
 use Hiero7\Models\Domain;
-use Hiero7\Models\LocationDnsSetting;
 use Hiero7\Repositories\CdnProviderRepository;
 use Hiero7\Repositories\CdnRepository;
 use Hiero7\Repositories\DomainRepository;
 use Hiero7\Repositories\LocationDnsSettingRepository;
 use Hiero7\Repositories\NetworkRepository;
-use Illuminate\Database\Eloquent\Collection;
+use Hiero7\Services\DnsProviderService;
 
 class SyncAllRecordService
 {
     protected $defaultLine;
+    protected $dnsProviderService;
     protected $domainRepository, $cdnProviderRepository, $locationDnsSettingRepository, $networkRepository;
 
-    private $domainCNAME, $cdnProvider, $cdns;
+    private $cdnProvider, $cdns;
 
-    private $domainArray;
-
-    private $cdnProviderArray;
-
-    private $cdnArray;
-
-    private $locationDnsSettings;
-
-    private $lines;
-
-    private $cdnsArray = [];
+    private $domainArray, $cdnProviderArray, $cdnArray;
+    private $locationDnsSettings, $lines;
 
     private $record = [];
 
     public function __construct(
+        DnsProviderService           $dnsProviderService,
         DomainRepository             $domainRepository,
         CdnRepository                $cdnRepository,
         CdnProviderRepository        $cdnProviderRepository,
@@ -43,6 +32,8 @@ class SyncAllRecordService
         NetworkRepository            $networkRepository
     ) {
         $this->defaultLine = "默认";
+
+        $this->dnsProviderService = $dnsProviderService;
 
         $this->domainRepository             = $domainRepository;
         $this->cdnRepository                = $cdnRepository;
@@ -58,20 +49,43 @@ class SyncAllRecordService
         $this->getCDNs();
 
         $this->getDefaultRecords();
-
-        $this->getIRouteRecord();
+        $this->getiRouteRecord();
 
         return $this->record;
     }
 
+    /**
+     * Get Different Record
+     *
+     * @param array $record
+     * @param string $domainCname
+     * @return array
+     */
+    public function getDifferent(array $reocrds = [])
+    {
+        $data = [
+            'records' => json_encode($reocrds),
+        ];
+
+        $response = $this->dnsProviderService->getDiffRecord($data);
+
+        if ($this->dnsProviderService->checkAPIOutput($response)) {
+
+            $this->syncDnsProviderRecordId($reocrds, $response['data']['match']);
+
+            return $response['data'];
+        }
+
+        return ['error' => true];
+    }
+
     public function getDefaultRecords()
     {
-        $this->cdnArray->map(function ($cdn, $key) {
-
+        $this->cdnArray->map(function ($cdn) {
             if ($cdn->default) {
                 $domainCNAME = $this->domainArray[$cdn->domain_id]['cname'];
 
-                $cdnProvider = $this->cdnProvider[$cdn->cdn_provider_id];
+                $cdnProvider = $this->cdnProviderArray[$cdn->cdn_provider_id];
 
                 $record = [
                     'id'          => (int) $cdn->provider_record_id,
@@ -90,14 +104,14 @@ class SyncAllRecordService
         });
     }
 
-    public function getIRouteRecord()
+    public function getiRouteRecord()
     {
         $this->getLocationDnsSetting();
 
         if ($this->locationDnsSettings->isNotEmpty()) {
             $this->getLocationNetworkLine();
 
-            $this->locationDnsSettings->map(function ($locationDnsSetting, $key) {
+            $this->locationDnsSettings->map(function ($locationDnsSetting) {
 
                 $cdn = $this->cdnArray[$locationDnsSetting->cdn_id];
 
@@ -105,7 +119,7 @@ class SyncAllRecordService
 
                 $line = $this->lines[$locationDnsSetting->location_networks_id];
 
-                $cdnProvider = $this->cdnProvider[$cdn->cdn_provider_id];
+                $cdnProvider = $this->cdnProviderArray[$cdn->cdn_provider_id];
 
                 $record = [
                     'id'          => (int) $locationDnsSetting->provider_record_id,
@@ -125,43 +139,51 @@ class SyncAllRecordService
     }
 
     /**
-     * Get Location DNS Setting To Record Data
+     * 將 Match 的 Record_id 寫回 DB
      *
-     * @param array $locationDnsSettings
-     * @return array
+     * @param array $soruceRecord
+     * @param array $matchData
+     * @return void
      */
-    private function getIRouteSetting(Collection $locationDnsSettings = null)
+    private function syncDnsProviderRecordId(array $soruceRecord = [], array $matchRecords = [])
     {
-        $record = [];
+        $soruceRecord = collect($soruceRecord)->keyBy('hash');
 
-        $locationDnsSettings->map(function ($value, $key) use (&$record) {
+        $matchRecords = collect($matchRecords)->keyBy('hash');
 
-            $cdn = $this->cdns[$value->cdn_id];
+        $this->domainArray = $this->domainArray->keyBy('cname');
 
-            $line = $value->location()->first()->network()->first()->name;
+        $this->linesName = array_flip($this->lines);
 
-            $cdnProvider = $this->cdnProvider[$cdn['cdn_provider_id']];
+        $matchRecords->map(function ($matchRecord, $key) use (&$soruceRecord) {
+            if (!isset($soruceRecord[$key])) {
+                return;
+            }
 
-            $data = [
-                'id'          => (int) $value->provider_record_id,
-                'ttl'         => (int) $cdnProvider['ttl'],
-                'value'       => $cdn['cname'],
-                'enabled'     => (bool) $cdnProvider['status'],
-                'name'        => $this->domainToChinese($this->domainCNAME),
-                'origin_name' => $this->domainCNAME,
-                'line'        => $line,
-                'type'        => "CNAME",
-            ];
+            // 同樣的 hash ，但是 id 不相同
+            if ($soruceRecord[$key]['id'] != $matchRecord['id']) {
 
-            $data['hash'] = $this->hashRecord($data);
+                $domain = $this->domainArray[$matchRecord["name"]];
 
-            $record[] = $data;
-
+                ($matchRecord['line'] == $this->defaultLine) ?
+                $this->updateDefaultRecordId($domain, $matchRecord) :
+                $this->updateiRouteRecordId($domain, $matchRecord);
+            }
         });
+    }
 
-        $this->record = array_merge($this->record, $record);
+    protected function updateDefaultRecordId(Domain $domain, array $record)
+    {
+        $this->cdnRepository->updateRecordIdByDomainId($domain->id, $record['id']);
+    }
 
-        return $record;
+    protected function updateiRouteRecordId(Domain $domain, array $record)
+    {
+        $locationNetworkId = $this->linesName[$record['line']];
+
+        $cdn = $this->cdnRepository->getCdnsByDomainIdAndCname($domain->id, $record['value']);
+
+        $this->locationDnsSettingRepository->updateRecordIdByCdnIdAndLocationNetworkId($cdn->id, $locationNetworkId, $record['id']);
     }
 
     public function getLocationNetworkLine()
@@ -225,7 +247,7 @@ class SyncAllRecordService
      */
     private function getCdnProviders()
     {
-        $this->cdnProvider = $this->cdnProvider ?? $this->cdnProviderRepository->getAll()->keyBy('id');
+        $this->cdnProviderArray = $this->cdnProviderArray ?? $this->cdnProviderRepository->getAll()->keyBy('id');
     }
 
     /**

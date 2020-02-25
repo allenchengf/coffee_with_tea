@@ -118,6 +118,25 @@ class CdnRepository
         return $this->cdn->where('domain_id',$domainId)->get();
     }
 
+    public function getCdnsByDomainIdAndCname(int $domainId,string $cname)
+    {
+        $cdns = $this->getCdnsByDomainId($domainId);
+
+        $cdn = $cdns->filter(function($cdn) use ($cname){
+            return $cdn->cname == $cname;
+
+        })->first();
+
+        return $cdn;
+    }
+
+    public function updateRecordIdByDomainId(int $domainId,int $providerId)
+    {
+        return $this->cdn->where('domain_id',$domainId)->update([
+            'provider_record_id' => $providerId
+        ]);
+    }
+
     // Operation Log ++
     private function setClientIp($ip)
     {

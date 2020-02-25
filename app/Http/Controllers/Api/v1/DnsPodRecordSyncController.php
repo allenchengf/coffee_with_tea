@@ -6,7 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\DnsPodRecordSyncRequest as Request;
 use Hiero7\Models\Domain;
 use Hiero7\Services\DnsPodRecordSyncService;
-use Hiero7\Services\RecordTrans;
+use Hiero7\Services\SyncAllRecordService;
 
 class DnsPodRecordSyncController extends Controller
 {
@@ -41,9 +41,16 @@ class DnsPodRecordSyncController extends Controller
     {
         $domain = $this->getDomainObject($request, $domain);
 
-        $record = $this->dnsPodRecordSyncService->getDifferentRecords($domain);
+        if (!$domain) {
+            $localRecords = $this->syncAllRecordService->getAllRecord();
 
-        return $this->response('', null, $record);
+            $records = $this->syncAllRecordService->getDifferent($localRecords);
+        } else {
+
+            $records = $this->dnsPodRecordSyncService->getDifferentRecords($domain);
+        }
+
+        return $this->response('', null, $records);
     }
 
     public function syncDnsData(Request $request, Domain $domain)
