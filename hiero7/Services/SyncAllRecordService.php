@@ -79,6 +79,17 @@ class SyncAllRecordService
         return ['error' => true];
     }
 
+    public function syncRecords(array $records = [])
+    {
+        $data = [
+            'create'    => json_encode($records['create'] ?? []),
+            'different' => json_encode($records['different'] ?? []),
+            'delete'    => json_encode($records['delete'] ?? []),
+        ];
+
+        $this->dnsProviderService->syncRecordToDnsPod($data);
+    }
+
     public function getDefaultRecords()
     {
         $this->cdnArray->map(function ($cdn) {
