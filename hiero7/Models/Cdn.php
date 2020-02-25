@@ -46,7 +46,6 @@ class Cdn extends Model
     }
 
     public function locationDnsSetting()
-    
     {
         return $this->hasMany(LocationDnsSetting::class);
     }

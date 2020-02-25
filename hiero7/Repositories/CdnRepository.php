@@ -19,6 +19,11 @@ class CdnRepository
         $this->setCategory(config('logging.category.cdn'));
     }
 
+    public function getAll()
+    {
+        return $this->cdn->get();
+    }
+
     public function store($info, int $id, $user, array $operationLogInfo = null)
     {
         try {

@@ -17,6 +17,11 @@ class LocationDnsSettingRepository
         $this->locationDnsSetting = $locationDnsSetting;
     }
 
+    public function all()
+    {
+        return $this->locationDnsSetting->get();
+    }
+
     public function getAll()
     {
         return $this->locationDnsSetting->with('cdn', 'location')->get();
