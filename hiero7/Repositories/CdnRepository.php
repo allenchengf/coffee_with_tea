@@ -19,6 +19,11 @@ class CdnRepository
         $this->setCategory(config('logging.category.cdn'));
     }
 
+    public function getAll()
+    {
+        return $this->cdn->get();
+    }
+
     public function store($info, int $id, $user, array $operationLogInfo = null)
     {
         try {
@@ -111,6 +116,25 @@ class CdnRepository
     public function getCdnsByDomainId(int $domainId)
     {
         return $this->cdn->where('domain_id',$domainId)->get();
+    }
+
+    public function getCdnsByDomainIdAndCname(int $domainId,string $cname)
+    {
+        $cdns = $this->getCdnsByDomainId($domainId);
+
+        $cdn = $cdns->filter(function($cdn) use ($cname){
+            return $cdn->cname == $cname;
+
+        })->first();
+
+        return $cdn;
+    }
+
+    public function updateRecordIdByDomainId(int $domainId,int $providerId)
+    {
+        return $this->cdn->where('domain_id',$domainId)->update([
+            'provider_record_id' => $providerId
+        ]);
     }
 
     // Operation Log ++
