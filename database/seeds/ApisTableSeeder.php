@@ -56,6 +56,12 @@ class ApisTableSeeder extends Seeder
             ['id' => 5],
             ['method' => 'DELETE', 'path_regex' => 'domains\/[0-9]+', 'created_at' => $now]
         )
+        // POST Check And Sync Record
+        // sidebar: Domains
+        ->updateOrCreate(
+            ['id' => 68],
+            ['method' => 'POST', 'path_regex' => 'domains\/[0-9]+\/check-sync', 'created_at' => $now]
+        )
 
 /*
  * =======
@@ -483,6 +489,8 @@ class ApisTableSeeder extends Seeder
             ['id' => 67],
             ['method' => 'PUT', 'path_regex' => 'config\/s3\/[0-9]+', 'created_at' => $now]
         )
+
+
 
 /*
 * =====================
