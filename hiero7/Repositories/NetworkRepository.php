@@ -46,4 +46,20 @@ class NetworkRepository
 
         return $line;
     }
+
+    public function getLinesMappingToLocationNetworks()
+    {
+        $networks = $this->getAll();
+        
+        $lines = [];
+
+        $networks->map(function($line) use (&$lines){
+
+            if($line->locationNetwork){
+                $lines[$line->locationNetwork->id] = $line->name;
+            }
+        });
+
+        return $lines;
+    }
 }

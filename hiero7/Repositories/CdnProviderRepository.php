@@ -26,6 +26,11 @@ class CdnProviderRepository
         $this->cdnProvider = $cdnProvider;
     }
 
+    public function getAll()
+    {
+        return $this->cdnProvider->get();
+    }
+
     public function getCdnProvider(int $ugid)
     {
         return $this->cdnProvider::where('user_group_id', $ugid)->orderBy('created_at', 'asc')->get();
