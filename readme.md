@@ -3,6 +3,7 @@
 ```yaml
 
 DB_DATABASE=coffee_with_tea
+QUEUE_RETRY_TIME=360
 
 JWT_SECRET=s07mAuXcJUWZq3LZAiXrqjec6EEg2ZR5N97or1WytTONkjJwhfowVrK8eQzI1S5o
 
