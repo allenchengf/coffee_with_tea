@@ -150,7 +150,7 @@ class DnsPodRecordSyncService
 
         $this->domainArray[] = $domain->toArray();
 
-        app()->call([$this, 'getCdnProvider'], ['ugid' => $domain->user_group_id]);
+        app()->call([$this, 'getCdnProvider']);
 
         $this->cdns = $domain->cdns->keyBy('id');
 
@@ -163,7 +163,7 @@ class DnsPodRecordSyncService
         return $this->record;
     }
 
-    public function getCdnProvider(CdnProvider $cdnProvider, int $ugid)
+    public function getCdnProvider(CdnProvider $cdnProvider)
     {
         $this->cdnProvider = $this->cdnProvider ?? $cdnProvider->get()->keyBy('id');
 
@@ -195,6 +195,8 @@ class DnsPodRecordSyncService
                 'type'        => "CNAME",
             ];
 
+            $record['hash'] = $this->hashRecord($record);
+
             $this->record[] = $record;
         }
 
@@ -209,9 +211,9 @@ class DnsPodRecordSyncService
      */
     private function getIRouteSetting(Collection $locationDnsSettings = null)
     {
-        $record = [];
+        $records = [];
 
-        $locationDnsSettings->map(function ($value, $key) use (&$record) {
+        $locationDnsSettings->map(function ($value, $key) use (&$records) {
 
             $cdn = $this->cdns[$value->cdn_id];
 
@@ -219,7 +221,7 @@ class DnsPodRecordSyncService
 
             $cdnProvider = $this->cdnProvider[$cdn['cdn_provider_id']];
 
-            $data = [
+            $record = [
                 'id'          => (int) $value->provider_record_id,
                 'ttl'         => (int) $cdnProvider['ttl'],
                 'value'       => $cdn['cname'],
@@ -230,13 +232,15 @@ class DnsPodRecordSyncService
                 'type'        => "CNAME",
             ];
 
-            $record[] = $data;
+            $record['hash'] = $this->hashRecord($record);
+
+            $records[] = $record;
 
         });
 
-        $this->record = array_merge($this->record, $record);
+        $this->record = array_merge($this->record, $records);
 
-        return $record;
+        return $records;
     }
 
     /**
@@ -309,8 +313,10 @@ class DnsPodRecordSyncService
     private function transferRecord(array $records)
     {
         $recordList = collect($records)->map(function ($item, $key) {
+
             $item['origin_name'] = $item['name'];
             $item['name']        = $this->domainToChinese($item['name']);
+
             return array_merge($item,
                 [
                     'hash' => $this->hashRecord($item),
