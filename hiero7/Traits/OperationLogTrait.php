@@ -19,11 +19,12 @@ trait OperationLogTrait
     protected $changeFrom = [], $changeTo = [], $changeType = null;
     protected $category   = null;
 
-    protected function curlWithUri(string $domain, string $uri, array $body, string $method, $asJson = true)
+    protected function curlWithUri(string $domain, string $uri, array $body, string $method, $asJson = true, $timeout = 30)
     {
         return Curl::to($domain . $uri)
             ->withHeader('Authorization: ' . 'Bearer ' . $this->getJWTToken())
             ->withData($body)
+            ->withTimeout($timeout)
             ->asJson($asJson)
             ->$method();
     }
@@ -61,7 +62,7 @@ trait OperationLogTrait
             'input'        => json_encode(Request::except(['password', 'password_confirmation', 'edited_by', 'old', 'new'])),
         ];
 
-        $callback = $this->curlWithUri(self::getOperationLogURL(), '/log/platform/iRouteCDN', $body, 'post');
+        $callback = $this->curlWithUri(self::getOperationLogURL(), '/log/platform/iRouteCDN', $body, 'post', 1);
 
         // Log::info('[OperationLogTrait::createOperationLog()] ' . json_encode($callback));
     }
