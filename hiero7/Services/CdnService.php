@@ -85,19 +85,18 @@ class CdnService
         if ($this->checkCurrentCdnIsDefault($domain, $cdn)) {
             return true;
         }
-
         DB::beginTransaction();
 
         $getDefaultRecord = $this->getDefaultRecord($domain);
-        $getDefaultRecord->update(['default' => false]);
+        $getDefaultRecord->update([
+            'default' => false,
+        ]);
 
         $cdn->update([
             'provider_record_id' => $getDefaultRecord->provider_record_id,
             'default'            => true,
             'edited_by'          => $edited_by,
         ]);
-
-        $cdn = $domain->getCdnById($cdn->id)->first();
 
         if (!event(new CdnWasEdited($domain, $cdn))) {
 
