@@ -1,6 +1,8 @@
 ## .env
 
 ```yaml
+LOG_CHANNEL=daily
+LOG_SAVE_DAY=30
 
 DB_DATABASE=coffee_with_tea
 
