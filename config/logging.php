@@ -15,7 +15,7 @@ return [
     |
      */
 
-    'default' => env('LOG_CHANNEL', 'stack'),
+    'default'  => env('LOG_CHANNEL', 'stack'),
 
     /*
     |--------------------------------------------------------------------------
@@ -33,60 +33,59 @@ return [
      */
 
     'channels' => [
-        'stack' => [
-            'driver' => 'stack',
+        'stack'    => [
+            'driver'   => 'stack',
             'channels' => ['single'],
         ],
 
-        'single' => [
+        'single'   => [
             'driver' => 'single',
-            'path' => storage_path('logs/laravel.log'),
-            'level' => 'debug',
+            'path'   => storage_path('logs/laravel.log'),
+            'level'  => 'debug',
         ],
 
-        'daily' => [
+        'daily'    => [
             'driver' => 'daily',
-            'path' => storage_path('logs/laravel.log'),
-            'level' => 'debug',
-            'days' => 7,
+            'path'   => storage_path('logs/laravel.log'),
+            'level'  => 'debug',
+            'days'   => env('LOG_SAVE_DAY', 14),
         ],
 
-        'slack' => [
-            'driver' => 'slack',
-            'url' => env('LOG_SLACK_WEBHOOK_URL'),
+        'slack'    => [
+            'driver'   => 'slack',
+            'url'      => env('LOG_SLACK_WEBHOOK_URL'),
             'username' => 'Laravel Log',
-            'emoji' => ':boom:',
-            'level' => 'critical',
+            'emoji'    => ':boom:',
+            'level'    => 'critical',
         ],
 
-        'stderr' => [
-            'driver' => 'monolog',
+        'stderr'   => [
+            'driver'  => 'monolog',
             'handler' => StreamHandler::class,
-            'with' => [
+            'with'    => [
                 'stream' => 'php://stderr',
             ],
         ],
 
-        'syslog' => [
+        'syslog'   => [
             'driver' => 'syslog',
-            'level' => 'debug',
+            'level'  => 'debug',
         ],
 
         'errorlog' => [
             'driver' => 'errorlog',
-            'level' => 'debug',
+            'level'  => 'debug',
         ],
     ],
 
     'category' => [
-        'user' => 'User',
-        'Profile' => 'Profile',
-        'domain' => 'Domain',
+        'user'         => 'User',
+        'Profile'      => 'Profile',
+        'domain'       => 'Domain',
         'cdn_provider' => 'CDN Provider',
-        'cdn' => 'CDN',
+        'cdn'          => 'CDN',
         'domain_group' => 'Group',
-        'iroutecdn' => 'iRouteCDN',
-        'network' => 'Network',
+        'iroutecdn'    => 'iRouteCDN',
     ],
 
 ];

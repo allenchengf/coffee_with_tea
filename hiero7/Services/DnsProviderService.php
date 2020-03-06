@@ -5,12 +5,14 @@ use Ixudra\Curl\Facades\Curl;
 
 class DnsProviderService
 {
+    protected $timeout = 600;
     protected $dnsProviderApi;
 
     public function __construct()
     {
-        $this->dnsProviderApi = env('DNS_PROVIDER_API') . '/dnspod';
+        $this->dnsProviderApi   = env('DNS_PROVIDER_API') . '/dnspod';
         $this->dnsPodLoginToken = env('DNS_POD_LOGIN_TOKEN');
+        $this->timeout          = env('DNS_POD_TIMEOUT', 600);
     }
 
     /**
@@ -70,12 +72,13 @@ class DnsProviderService
     {
         $url = $this->dnsProviderApi . "/records/create";
 
-        $data = $this->addLoginTokenAndDomainId($data);
+        $data                = $this->addLoginTokenAndDomainId($data);
         $data['record_type'] = $data['record_type'] ?? "CNAME";
         $data['record_line'] = $data['record_line'] ?? "默认";
 
         return Curl::to($url)
             ->withData($data)
+            ->withTimeout($this->timeout)
             ->asJson(true)
             ->post();
     }
@@ -97,11 +100,12 @@ class DnsProviderService
     {
         $url = $this->dnsProviderApi . "/records";
 
-        $data = $this->addLoginTokenAndDomainId($data);
+        $data                = $this->addLoginTokenAndDomainId($data);
         $data['record_type'] = $data['record_type'] ?? "CNAME";
 
         return Curl::to($url)
             ->withData($data)
+            ->withTimeout($this->timeout)
             ->asJson(true)
             ->put();
     }
@@ -143,13 +147,14 @@ class DnsProviderService
 
         return Curl::to($url)
             ->withData($data)
+            ->withTimeout($this->timeout)
             ->asJson(true)
             ->delete();
     }
 
     /**
      * 由 Hiero7 實作的功能
-     * 
+     *
      * Get Soruce Record With DNS Pod Record Diff function
      *
      * @param string login_token DNS Pod LoginToken
@@ -165,13 +170,14 @@ class DnsProviderService
 
         return Curl::to($url)
             ->withData($data)
+            ->withTimeout($this->timeout)
             ->asJson(true)
             ->post();
     }
 
     /**
      * 由 Hiero7 實作的功能
-     * 
+     *
      * Get Soruce Record With DNS Pod Record Diff function
      *
      * @param string login_token DNS Pod LoginToken
@@ -185,9 +191,10 @@ class DnsProviderService
         $url = $this->dnsProviderApi . "/records-sync";
 
         $data = $this->addLoginTokenAndDomainId($data);
-        
+
         $response = Curl::to($url)
             ->withData($data)
+            ->withTimeout($this->timeout)
             ->asJson(true)
             ->post();
 
@@ -195,17 +202,25 @@ class DnsProviderService
 
     }
 
+    public function setTimeout($second)
+    {
+        $this->timeout = $second;
+        $this;
+    }
+
     /**
      * 檢查 DNS Pod Response
      *
      * @param array $response
-     * @return boolean 
+     * @return boolean
      * false = 失敗
      * true  = 成功有資訊回傳
      */
     public function checkAPIOutput($response = []): bool
     {
-        if (!$response || array_key_exists('errors', $response) || !is_null($response['errorCode'])) {
+        if (!$response) {
+            return false;
+        } else if (array_key_exists('errors', $response) || !is_null($response['errorCode'])) {
             return false;
         }
         return true;
@@ -214,7 +229,8 @@ class DnsProviderService
     private function addLoginTokenAndDomainId(array $data)
     {
         $data['login_token'] = $data['login_token'] ?? $this->dnsPodLoginToken;
-        $data['domain_id'] = $data['domain_id'] ?? env('DNS_POD_DOMAIN_ID');
+        $data['domain_id']   = $data['domain_id'] ?? env('DNS_POD_DOMAIN_ID');
         return $data;
     }
+
 }

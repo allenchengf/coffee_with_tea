@@ -6,6 +6,7 @@ use DB;
 use App\Events\CdnWasDelete;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\DomainRequest as Request;
+use Hiero7\Enums\InputError;
 use Hiero7\Enums\PermissionError;
 use Hiero7\Models\Domain;
 use Hiero7\Services\DomainService;
@@ -87,18 +88,18 @@ class DomainController extends Controller
 
         // 換頁
         // 初始換頁資訊
-        $last_page = $current_page = $per_page = $total = null;
+        $last_page                                        = $current_page                                        = $per_page                                        = $total                                        = null;
         list($perPage, $columns, $pageName, $currentPage) = $this->getPaginationInfo($request->per_page, $request->current_page);
 
         if (!is_null($perPage)) { // 換頁
             $current_page = $currentPage;
-            $total = $domains->count();
-            $last_page = ceil($total / $perPage);
-            $per_page = $perPage;
+            $total        = $domains->count();
+            $last_page    = ceil($total / $perPage);
+            $per_page     = $perPage;
 
             $domains = $domains->forPage($currentPage, $perPage)->all();
         } else { // 全部列表
-            //
+                     //
         }
 
         return $this->response('', null, compact('current_page', 'last_page', 'per_page', 'total', 'domains', 'dnsPodDomain'));
@@ -189,7 +190,7 @@ class DomainController extends Controller
 
         $request->merge([
             'user_group_id' => $ugid,
-            'cname' => $this->domainService->cnameFormat($request, $ugid),
+            'cname'         => $this->domainService->cnameFormat($request, $ugid),
         ]);
 
         if (!$errorCode = $this->domainService->checkUniqueCname($request->cname)) {
@@ -227,20 +228,29 @@ class DomainController extends Controller
 
         $domain_name = $domain->name;
 
+        $deleteRestult = true;
+
         //有 DomainGroup 並且 不能是 Group 內唯一的 Domain
         if (!$domain->domainGroup->isEmpty() && $domain->domainGroup->first()->domains->count() == 1) {
-            return $this->setStatusCode(400)->response('', PermissionError::CANT_DELETE_LAST_DOMAIN, []);
+            return $this->setStatusCode(400)->response('', PermissionError::CANT_DELETE_LAST_DOMAIN, compact('domain_name'));
         }
+
+        $domain->domainGroup()->detach();
 
         //有 cdn 設定才要刪掉
         if (!$domain->cdns->isEmpty()) {
             foreach ($domain->cdns as $cdnModel) {
-                event(new CdnWasDelete($cdnModel, 1));
+                $result = event(new CdnWasDelete($cdnModel, 1));
+
+                $deleteRestult = ($deleteRestult == false || $result == false) ? false : true;
             }
         }
 
-        $domain->delete();
+        if (!$deleteRestult) {
+            return $this->setStatusCode(400)->response('', InputError::PLEASE_DELETE_DOMAIN_AGAIN, compact('domain_name'));
+        }
 
+        $domain->delete();
         $this->createOperationLog();
 
         return $this->response('', '', compact('domain_name'));

@@ -4,6 +4,38 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.11.9] - 2020-03-03
+### Changed
+- queue 等待時間
+- Save Log timeout
+- Check DnsPod Middleware 調整
+
+## [0.11.8] - 2020-02-26
+### Fixed
+- 中文域名 Mapping Error Bug
+- 優化 Check-sync All DNS Pod Record 效能
+
+## [0.11.7] - 2020-02-14
+### Fixed
+- Delete Domain Error Message
+
+## [0.11.6] - 2020-02-14
+### Fixed
+- Delete Domain Error
+
+## [0.11.5] - 2020-02-13
+### Fixed
+- 對 Dns Provider API Timeout 時間延長
+
+## [0.11.4] - 2020-02-11
+### Fixed
+- CDN Provider Status / TTL Bug
+
+## [0.11.3] - 2020-01-30
+### Fixed
+- Batch Domain Error Message
+- Batch Domain Add Operation Log for job
+
 ## [0.11.2] - 2020-01-21
 ### Fixed
 - Batch Domain Error Message
@@ -57,7 +89,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - Batch Domain & CDN Logic
 
-### Upate
+### Changed
 - Batch Domain & CDN Result
 - Get Log for new format
 - Log save format Array To Json 

@@ -1,8 +1,13 @@
 ## .env
 
 ```yaml
+LOG_CHANNEL=daily
+LOG_SAVE_DAY=30
 
 DB_DATABASE=coffee_with_tea
+
+QUEUE_CONNECTION=redis (原本是 sync 要改成 redis - Yuan)
+QUEUE_RETRY_TIME=360
 
 JWT_SECRET=s07mAuXcJUWZq3LZAiXrqjec6EEg2ZR5N97or1WytTONkjJwhfowVrK8eQzI1S5o
 
@@ -33,7 +38,6 @@ S3_BUCKET_NAME_CONFIG_BACKUP= (S3 Bucket 名稱，目前為 Config Backup 用 - 
 
 BACKUP_AT=03:00 (沒設定 Backup 時間的 user_group 們其備份時間 - Justin)
 
-QUEUE_CONNECTION=redis (原本是 sync 要改成 redis - Yuan)
 ```
 
 ## 部署確認
@@ -57,7 +61,7 @@ sudo ntpdate ntp.ubuntu.com
 3. phpunit
 ```bash
 # 測試覆蓋率
-phpunit --coverage-html coverage
+vendor/bin/phpunit --coverage-html coverage
 ```
 
 4. DB Seeder 

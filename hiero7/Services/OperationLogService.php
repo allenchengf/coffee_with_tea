@@ -31,10 +31,10 @@ class OperationLogService
 
     function get()
     {
-        $query = $this->formatQuery();
+        $query  = $this->formatQuery();
         $output = $this->getEsLogByQuery($query);
 
-        return $output->data;
+        return $output->data ?? [];
     }
 
     function show(string $category, int $page = 1, int $pageCount = 3000)
@@ -71,14 +71,14 @@ class OperationLogService
         }
 
         return [
-            "from" => $from,
-            "size" => $size ?? env('OPERATION_LOG_SIZE'),
+            "from"  => $from,
+            "size"  => $size ?? env('OPERATION_LOG_SIZE'),
             "query" => [
                 "bool" => [
                     "must" => $match,
                 ],
             ],
-            "sort" => [
+            "sort"  => [
                 [
                     "time.keyword" => [
                         "order" => "desc",
