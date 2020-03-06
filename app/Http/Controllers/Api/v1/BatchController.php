@@ -49,7 +49,7 @@ class BatchController extends Controller
     {        
         $errors = $this->batchService->process($request->domains, $request->get('user'),$this->getUgid($request));
 
-        DB::connection()->enableQueryLog();
+        // DB::connection()->enableQueryLog();
         return $this->response('Success', null, $errors);
     }
 
