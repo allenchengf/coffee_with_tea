@@ -15,7 +15,7 @@ class AddDomainAndCdn implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public $tries   = 1;
-    public $timeout = 0;
+    public $timeout = 600;
     public $domain, $user, $batchService, $queueName, $redis, $operationLogInfo;
 
     /**

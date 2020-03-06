@@ -45,10 +45,11 @@ return [
         ],
 
         'daily'    => [
-            'driver' => 'daily',
-            'path'   => storage_path('logs/laravel.log'),
-            'level'  => 'debug',
-            'days'   => env('LOG_SAVE_DAY', 14),
+            'driver'     => 'daily',
+            'path'       => storage_path('logs/' . php_sapi_name() . '/laravel.log'),
+            'level'      => 'debug',
+            'days'       => env('LOG_SAVE_DAY', 14),
+            'permission' => 0664,
         ],
 
         'slack'    => [
