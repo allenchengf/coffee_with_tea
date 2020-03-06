@@ -26,13 +26,17 @@ class CreateDnsPodRecord
      */
     public function handle(CdnWasCreated $event)
     {
-
-        return $this->dnsProviderService->createRecord([
+        $response = $this->dnsProviderService->createRecord([
             'sub_domain' => $event->domain->cname,
-            'value' => $event->cdn->cname,
-            'ttl' => $event->cdn->cdnProvider->ttl,
-            'status' => $event->cdn->default && $event->cdn->cdnProvider->status,
+            'value'      => $event->cdn->cname,
+            'ttl'        => $event->cdn->cdnProvider->ttl,
+            'status'     => $event->cdn->default && $event->cdn->cdnProvider->status,
         ]);
 
+        if ($this->dnsProviderService->checkAPIOutput($response)) {
+            return $response['data']['record']['id'];
+        }
+
+        return 0;
     }
 }

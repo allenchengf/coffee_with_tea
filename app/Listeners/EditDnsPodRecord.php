@@ -9,7 +9,7 @@ class EditDnsPodRecord
     protected $dnsProviderService;
 
     /**
-     * CreateDnsPodRecord constructor.
+     * EditDnsPodRecord constructor.
      *
      * @param \Hiero7\Services\DnsProviderService $dnsProviderService
      */
