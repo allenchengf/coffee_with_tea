@@ -77,7 +77,7 @@ class RolePermission
             'method' => 'GET',
             'path_regex' => 'groups',
         ],
-        [ // Get Domain (pagination)
+        [ // Get Domain [ORM] (pagination)
             'method' => 'GET',
             'path_regex' => 'domains',
         ],

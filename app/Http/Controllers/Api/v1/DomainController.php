@@ -108,9 +108,6 @@ class DomainController extends Controller
 
     public function getDomainSqlJoin(Request $request)
     {
-        // 解鎖 MySQL 5.7 Group By 限制: sql_mode=only_full_group_by
-        config()->set('database.connections.mysql.strict', false);
-
         // 取得換頁資訊
         list($perPage, $columns, $pageName, $currentPage) = $this->getPaginationInfo($request->get('per_page'), $request->get('current_page'));
 
@@ -124,7 +121,7 @@ class DomainController extends Controller
                     ->leftjoin('domain_groups', 'domain_group_mapping.domain_group_id', '=', 'domain_groups.id')
                     // 欄位篩選
                     ->select('domains.id', /*'domains.user_group_id',*/ 'domains.name', 'domains.cname', 'domains.label')
-                    ->addSelect('domain_groups.id as groups_id', 'domain_groups.name as groups_name')
+                    ->addSelect('domain_groups.id as group_id', 'domain_groups.name as group_name')
                     ->addSelect(DB::raw('group_concat(cdns.cdn_provider_id) as cdn_provider_id'))
                     // 排序
                     ->orderBy('domains.id', 'asc');
