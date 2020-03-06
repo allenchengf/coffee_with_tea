@@ -22,12 +22,11 @@ class BatchRequest extends FormRequest
     {
         if ($this->route()->getName() == "domains.batch") {
             
-            $uuid = $this->edited_by;
-            
             $controller = new Controller;
+
             $ugId = $controller->getUgid($this);
 
-            $queueName = 'batchCreateDomainAndCdn'.$uuid.$ugId;
+            $queueName = 'batchCreateDomainAndCdn_'.$ugId;
 
             if(Job::where('queue', $queueName)->count()){
                 return false;               
