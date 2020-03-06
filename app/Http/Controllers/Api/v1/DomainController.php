@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api\v1;
 
+use DB;
 use App\Events\CdnWasDelete;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\DomainRequest as Request;
@@ -99,6 +100,83 @@ class DomainController extends Controller
         } else { // 全部列表
             //
         }
+
+        return $this->response('', null, compact('current_page', 'last_page', 'per_page', 'total', 'domains', 'dnsPodDomain'));
+    }
+
+
+    public function getDomainSqlJoin(Request $request)
+    {
+        // 解鎖 MySQL 5.7 Group By 限制: sql_mode=only_full_group_by
+        config()->set('database.connections.mysql.strict', false);
+
+        // 取得換頁資訊
+        list($perPage, $columns, $pageName, $currentPage) = $this->getPaginationInfo($request->get('per_page'), $request->get('current_page'));
+
+        // SQL
+        $query = DB::table('domains')
+                    // 一對多 cdns
+                    ->leftjoin('cdns', 'domains.id', '=', 'cdns.domain_id')
+                    ->groupBy('cdns.domain_id')
+                    // 多對多 domain_groups
+                    ->leftjoin('domain_group_mapping', 'domains.id', '=', 'domain_group_mapping.domain_id')
+                    ->leftjoin('domain_groups', 'domain_group_mapping.domain_group_id', '=', 'domain_groups.id')
+                    // 欄位篩選
+                    ->select('domains.id', /*'domains.user_group_id',*/ 'domains.name', 'domains.cname', 'domains.label')
+                    ->addSelect('domain_groups.id as groups_id', 'domain_groups.name as groups_name')
+                    ->addSelect(DB::raw('group_concat(cdns.cdn_provider_id) as cdn_provider_id'))
+                    // 排序
+                    ->orderBy('domains.id', 'asc');
+                    
+        // 條件限定 domain_group_id
+        if ($request->has('domain_group_id')) {
+            $domain_group_id = $request->domain_group_id;
+            if ($domain_group_id > 0) { // 限定 domain_group_id
+                $query = $query->where('domain_groups.id', $domain_group_id);
+            }
+            elseif ($domain_group_id == 0) { // 而 0 是只取孤兒 domain
+                $query = $query->whereNull('domain_groups.id');
+            }
+        } // else: 不給 domain_group_id 預設為 all Group (含孤兒 Domain)
+
+        // 條件限定 user_group_id
+        $user_group_id = $this->getUgid($request);
+        if ($user_group_id > 1) {
+            $query = $query->where('domains.user_group_id', $user_group_id);
+        }
+        elseif ($user_group_id == 1 &&  $request->has('user_group_id')) { // Hiero7 全給或依 user_group_id 篩選
+            $query = $query->where('domains.user_group_id', $request->user_group_id);
+        }
+
+        // 搜尋
+        if ($request->has('search') && $request->search) {
+            $search = $request->search;
+            $query = $query->where(function($q) use (&$search){
+                            $q->orWhere('domains.name', 'like', "%$search%")
+                            ->orWhere('domains.cname', 'like', "%$search%")
+                            ->orWhere('domains.label', 'like', "%$search%");
+                    });
+        }
+
+        // 分頁
+        if(! is_null($perPage)){
+            $domains = $query->paginate($perPage, $columns, $pageName, $currentPage);
+
+            $last_page = $domains->lastPage();
+            $current_page = $domains->currentPage();
+            $per_page = $perPage;
+            $total = $domains->total();
+            $domains = $domains->items();
+        } else { // 不分頁
+            $domains = $query->get();
+
+            $last_page = 1;
+            $current_page = 1;
+            $per_page = 1;
+            $total = $domains->count();
+        }
+
+        $dnsPodDomain = env('DNS_POD_DOMAIN');
 
         return $this->response('', null, compact('current_page', 'last_page', 'per_page', 'total', 'domains', 'dnsPodDomain'));
     }
