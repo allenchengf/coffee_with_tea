@@ -122,7 +122,7 @@ class DomainController extends Controller
                     // 欄位篩選
                     ->select('domains.id', /*'domains.user_group_id',*/ 'domains.name', 'domains.cname', 'domains.label')
                     ->addSelect('domain_groups.id as group_id', 'domain_groups.name as group_name')
-                    ->addSelect(DB::raw('group_concat(cdns.cdn_provider_id) as cdn_provider_id'))
+                    ->addSelect(DB::raw('group_concat(cdns.cdn_provider_id) as cdn_provider_id, group_concat(cdns.cname) as cdn_cname, group_concat(cdns.default) as cdn_default'))
                     // 排序
                     ->orderBy('domains.id', 'asc');
                     
