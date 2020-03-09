@@ -3,27 +3,29 @@
 namespace App\Http\Controllers\Api\v1;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
-use DB;
-use Hiero7\Services\{BatchService,BatchGroupService};
 use App\Http\Requests\BatchRequest;
+use DB;
+use Hiero7\Enums\InputError;
 use Hiero7\Models\DomainGroup;
-
+use Hiero7\Models\Job;
+use Hiero7\Services\BatchGroupService;
+use Hiero7\Services\BatchService;
+use Illuminate\Http\Request;
 
 class BatchController extends Controller
 {
     protected $batchService;
     protected $batchGroupService;
 
-    public function __construct(BatchService $batchService,BatchGroupService $batchGroupService)
+    public function __construct(BatchService $batchService, BatchGroupService $batchGroupService)
     {
-        $this->batchService = $batchService;
+        $this->batchService      = $batchService;
         $this->batchGroupService = $batchGroupService;
         config(['database.connections.mysql.options' => [
-            \PDO::ATTR_PERSISTENT => true
+            \PDO::ATTR_PERSISTENT => true,
         ]]);
         DB::purge(env('DB_CONNECTION'));
-        DB::reconnect(env('DB_CONNECTION'));        
+        DB::reconnect(env('DB_CONNECTION'));
         DB::connection()->disableQueryLog();
 
     }
@@ -38,7 +40,7 @@ class BatchController extends Controller
         $errors = $this->batchService->store($request->domains, $request->get('user'));
         return $this->response('Success', null, $errors);
     }
-    
+
     /**
      * 有在使用的
      *
@@ -46,14 +48,22 @@ class BatchController extends Controller
      * @return void
      */
     public function store(BatchRequest $request)
-    {        
-        $errors = $this->batchService->process($request->domains, $request->get('user'),$this->getUgid($request));
+    {
+        $ugId = $this->getUgid($request);
 
-        DB::connection()->enableQueryLog();
+        $queueName = 'batchCreateDomainAndCdn_' . $ugId;
+
+        if (Job::where('queue', $queueName)->count()) {
+            return $this->setStatusCode(400)->response("", InputError::PLEASE_WAIT_PREVIOUS_FINISH);
+        }
+
+        $errors = $this->batchService->process($request->domains, $request->get('user'), $this->getUgid($request));
+
+        // DB::connection()->enableQueryLog();
         return $this->response('Success', null, $errors);
     }
 
-    public function storeDomainToGroup(BatchRequest $request,DomainGroup $domainGroup)
+    public function storeDomainToGroup(BatchRequest $request, DomainGroup $domainGroup)
     {
         $errors = $this->batchGroupService->store($request->domains, $domainGroup, $request->get('user'));
 
