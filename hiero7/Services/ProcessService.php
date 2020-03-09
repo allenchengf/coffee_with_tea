@@ -2,31 +2,31 @@
 
 namespace Hiero7\Services;
 
-use Illuminate\Support\Facades\Redis;
 use Hiero7\Models\Job;
 use Illuminate\Support\Collection;
-
+use Illuminate\Support\Facades\Redis;
 
 class ProcessService
 {
     public function __construct(Job $jobs)
     {
-        $this->jobs = $jobs;
-        $this->redis =  Redis::connection('jobs');
+        $this->jobs  = $jobs;
+        $this->redis = Redis::connection('jobs');
     }
 
     public function index(array $request, $ugId)
     {
-        $this->getQueueName($request, $ugId);
+        $this->setQueueName($request, $ugId);
 
-        $all = (int) $this->redis->get($this->queueName);
-        $process = $this->jobs->where('queue','like', "{$this->queueName}%")->count();
-        $done = ($all - $process) < 0 ? 0 : $all - $process ;
+        $all     = (int) $this->redis->get($this->queueName);
+        $process = $this->jobs->where('queue', 'like', "{$this->queueName}%")->count();
+        $done    = ($all - $process) < 0 ? 0 : $all - $process;
 
-        $result = ['all' => $all,
-                    'process' => $process,
-                    'done' => $done
-                ];
+        $result = [
+            'all'     => $all,
+            'process' => $process,
+            'done'    => $done,
+        ];
 
         return $result;
     }
@@ -39,16 +39,18 @@ class ProcessService
      */
     public function getBatchResult(array $request, $ugId)
     {
-        $this->getQueueName($request, $ugId);
+        $this->setQueueName($request, $ugId);
+
         $connect = Redis::connection('record');
 
-        $error = $connect->lrange($this->queueName,0,-1);
+        $error = $connect->lrange($this->queueName, 0, -1);
 
-        list($success,$failure) = $this->format($error);
+        list($success, $failure) = $this->format($error);
 
-        $result = ['success'=> $success,
-                    'failure' => $failure
-                    ];
+        $result = [
+            'success' => $success,
+            'failure' => $failure,
+        ];
 
         $this->deleteRedisRecord($connect);
 
@@ -63,10 +65,9 @@ class ProcessService
      */
     private function deleteRedisRecord($connect)
     {
-        $process = $this->jobs->where('queue','like', "{$this->queueName}%")->count();
-        
-        if($process == 0)
-        {
+        $process = $this->jobs->where('queue', 'like', "{$this->queueName}%")->count();
+
+        if ($process == 0) {
             $connect->del($this->queueName);
             $this->redis->del($this->queueName);
         }
@@ -82,13 +83,11 @@ class ProcessService
     {
         $all = [];
 
-        foreach($result as $count){
+        foreach ($result as $count) {
             $all[] = json_decode($count);
         }
 
-        list($success,$failure) = $this->formatArray(collect($all));
-
-        return [$success,$failure];
+        return $this->formatArray(collect($all));
     }
 
     /**
@@ -101,13 +100,13 @@ class ProcessService
     {
         $domainSuccess = $domainFailure = [];
 
-        foreach($data as $array){
-            if(!empty($array->success->domain)){
-                $domainSuccess[]= $array->success->domain;
+        foreach ($data as $array) {
+            if (!empty($array->success->domain)) {
+                $domainSuccess[] = $array->success->domain;
             }
 
-            if(!empty($array->failure->domain)){
-                $domainFailure[]= $array->failure->domain;
+            if (!empty($array->failure->domain)) {
+                $domainFailure[] = $array->failure->domain;
             }
         }
 
@@ -117,7 +116,7 @@ class ProcessService
         $success = ['domain' => $domainSuccess];
         $failure = ['domain' => $domainFailure];
 
-        return [ $success, $failure];
+        return [$success, $failure];
     }
 
     /**
@@ -130,8 +129,8 @@ class ProcessService
     {
         $result = [];
 
-        foreach($data as $array){
-            if(!empty($array)){
+        foreach ($data as $array) {
+            if (!empty($array)) {
                 $result[] = $array;
             }
         }
@@ -140,8 +139,8 @@ class ProcessService
 
     }
 
-    private function getQueueName(array $request, $ugId)
+    private function setQueueName(array $request, $ugId)
     {
-        $this->queueName = $request['function_name'].$request['edited_by'].$ugId;
+        $this->queueName = $request['function_name'] . "_" . $ugId;
     }
 }

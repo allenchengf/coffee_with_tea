@@ -9,7 +9,7 @@ class EditDnsPodRecord
     protected $dnsProviderService;
 
     /**
-     * CreateDnsPodRecord constructor.
+     * EditDnsPodRecord constructor.
      *
      * @param \Hiero7\Services\DnsProviderService $dnsProviderService
      */
@@ -25,15 +25,18 @@ class EditDnsPodRecord
      */
     public function handle($event)
     {
-        $response = $this->dnsProviderService->editRecord([
-            'record_id' => $event->cdn->provider_record_id,
-            'sub_domain' => $event->domain->cname,
+        $data = [
+            'record_id'   => $event->cdn->provider_record_id,
+            'sub_domain'  => $event->domain->cname,
             'record_type' => "CNAME",
             'record_line' => "默认",
-            'value' => $event->cdn->cname,
-            'ttl' => $event->cdn->cdnProvider->ttl,
-            'status' => $event->cdn->default && $event->cdn->cdnProvider->status,
-        ]);
+            'value'       => $event->cdn->cname,
+            'ttl'         => $event->cdn->cdnProvider->ttl,
+            'status'      => $event->cdn->cdnProvider->status,
+        ];
+
+        $response = $this->dnsProviderService->editRecord($data);
+
         return $this->dnsProviderService->checkAPIOutput($response);
     }
 }

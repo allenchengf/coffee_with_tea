@@ -64,10 +64,9 @@ class CdnController extends Controller
 
         if ($cdn and $request->input('default')) {
 
-            $createdDnsProviderRecordResult = event(new CdnWasCreated($domain, $cdn));
+            $recordId = event(new CdnWasCreated($domain, $cdn))[0];
 
-            if (!is_null($createdDnsProviderRecordResult[0]['errorCode']) or array_key_exists('errors',
-                $createdDnsProviderRecordResult[0])) {
+            if (!$recordId) {
 
                 DB::rollback();
 
@@ -76,7 +75,7 @@ class CdnController extends Controller
 
             DB::commit();
 
-            $cdn->update(['provider_record_id' => $createdDnsProviderRecordResult[0]['data']['record']['id']]);
+            $cdn->update(['provider_record_id' => $recordId]);
 
         }
 
