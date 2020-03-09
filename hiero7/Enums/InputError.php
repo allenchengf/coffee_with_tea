@@ -60,6 +60,7 @@ class InputError extends Enum
     const DOMAIN_NOT_EXIST                                = 4048;
     const INPUT_PERMISSIONS_NOT_MATCH                     = 4049;
     const PLEASE_DELETE_DOMAIN_AGAIN                      = 4050;
+    const PLEASE_WAIT_PREVIOUS_FINISH                     = 4051;
 
     /**
      * @var array
@@ -116,5 +117,6 @@ class InputError extends Enum
         self::DOMAIN_NOT_EXIST                                => "Domain not exist.",
         self::INPUT_PERMISSIONS_NOT_MATCH                     => "Permissions ID Not Exists",
         self::PLEASE_DELETE_DOMAIN_AGAIN                      => "Please delete the domain again.",
+        self::PLEASE_WAIT_PREVIOUS_FINISH                     => "Please wait for the previous to finish processing.",
     ];
 }

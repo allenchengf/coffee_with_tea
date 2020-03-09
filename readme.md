@@ -43,7 +43,7 @@ BACKUP_AT=03:00 (沒設定 Backup 時間的 user_group 們其備份時間 - Just
 ## 部署確認
 1. 重置 supversor
 ```
-supervisorctl restart iroutecdn:*
+supervisorctl restart all
 ```
 
 #### Note

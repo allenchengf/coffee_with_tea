@@ -2,14 +2,12 @@
 
 namespace App\Http\Requests;
 
+use Hiero7\Models\Job;
+use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Validation\ValidationException;
-use Illuminate\Contracts\Validation\Validator;
-use Illuminate\Http\Exceptions\HttpResponseException;
-use Illuminate\Support\MessageBag;
-use App\Http\Controllers\Controller;
-use Hiero7\Models\Job;
 
 class BatchRequest extends FormRequest
 {
@@ -20,20 +18,6 @@ class BatchRequest extends FormRequest
      */
     public function authorize()
     {
-        if ($this->route()->getName() == "domains.batch") {
-            
-            $controller = new Controller;
-
-            $ugId = $controller->getUgid($this);
-
-            $queueName = 'batchCreateDomainAndCdn_'.$ugId;
-
-            if(Job::where('queue', $queueName)->count()){
-                return false;               
-            }
-
-        }
-        
         return true;
     }
 
@@ -44,40 +28,40 @@ class BatchRequest extends FormRequest
      */
     public function rules()
     {
-        $action = 'batch';
+        $action    = 'batch';
         $routeName = $this->route()->getName();
 
-        switch($routeName){
+        switch ($routeName) {
             case ($routeName == "domains.$action"):
                 return [
-                    'domains' => 'required|array',
-                    'domains.*.cdns' => 'array',
+                    'domains'               => 'required|array',
+                    'domains.*.cdns'        => 'array',
                     'domains.*.cdns.*.name' => ['required', 'string'],
-                    'domains.*.cdns.*.ttl' => ['integer', 'min:'.env('CDN_TTL'), 'max:604800'],
+                    'domains.*.cdns.*.ttl'  => ['integer', 'min:' . env('CDN_TTL'), 'max:604800'],
                 ];
                 break;
             case ($routeName == "groups.$action"):
                 return [
-                    'domains' => 'required|array'
+                    'domains' => 'required|array',
                 ];
                 break;
-            default :
+            default:
                 return [];
                 break;
         }
 
     }
-    
+
     public function attributes()
     {
         return [
-            'domains.*.name' => 'domain',
-            'domains.*.cdns.*.name' => 'cdn',
+            'domains.*.name'         => 'domain',
+            'domains.*.cdns.*.name'  => 'cdn',
             'domains.*.cdns.*.cname' => 'cname',
-            'domains.*.cdns.*.ttl' => 'ttl',
+            'domains.*.cdns.*.ttl'   => 'ttl',
         ];
     }
-    
+
     public function messages()
     {
         return [
@@ -89,9 +73,9 @@ class BatchRequest extends FormRequest
     {
         $errors = (new ValidationException($validator))->errors();
         throw new HttpResponseException(response()->json([
-            'message' => $errors,
+            'message'   => $errors,
             'errorCode' => null,
-            'data' => null
+            'data'      => null,
         ], JsonResponse::HTTP_UNPROCESSABLE_ENTITY));
-    }    
+    }
 }
