@@ -17,7 +17,7 @@ class CdnWasDelete
     public $cdn;
 
     /**
-     * CdnWasCreated constructor.
+     * CdnWasDelete constructor.
      *
      * @param \Hiero7\Models\Domain $domain
      * @param \Hiero7\Models\Cdn    $cdn

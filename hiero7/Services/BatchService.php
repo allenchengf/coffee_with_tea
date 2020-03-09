@@ -178,7 +178,7 @@ class BatchService{
 
     public function process($domains, $user, $ugId)
     {
-        $queueName = 'batchCreateDomainAndCdn'.$user['uuid'].$ugId;
+        $queueName = 'batchCreateDomainAndCdn_'.$ugId;
 
         //連 Redis 的 2 dataBase
         $redisJobs = Redis::connection('jobs');
@@ -200,19 +200,20 @@ class BatchService{
             //把原邏輯 搬去 job 
             $job = (new AddDomainAndCdn($domain,$user,$queueName,$operationLogInfo))
             ->onConnection('database')
-            ->onQueue($queueName.$count);
+            ->onQueue($queueName);
 
             // 這個到時候可以拿到 jobId 
             $this->dispatch($job);
 
+            // 暫時用不到，改成 Supervisor 直接連 Job Name
             // 用 job 呼叫指令(Artisan::Call) 才不會 return 被吃掉
             // 一個 AddDomainAndCdn job 配一個 worker job 才會剛好都處理完，table 不會有殘留 worker
             // supervisor 監督的 queue 是此 worker
-            $workerJob = (new CallWorker($queueName.$count))
-            ->onConnection('redis')
-            ->onQueue('worker');
+            // $workerJob = (new CallWorker($queueName.$count))
+            // ->onConnection('redis')
+            // ->onQueue('worker');
     
-            $this->dispatch($workerJob);
+            // $this->dispatch($workerJob);
         }
 
         // 記錄總共有幾筆
