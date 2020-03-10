@@ -184,13 +184,15 @@ class DomainController extends Controller
         $user_group_id = $this->getUgid($request);
 
         // SQL
-        $data = DB::table('domains')
-                    ->select(DB::raw('count(id) as total'))
-                    ->where('user_group_id', $user_group_id)
-                    ->groupBy('user_group_id')
-                    ->get();
+        $query = DB::table('domains')->select(DB::raw('count(id) as total'));
 
-        return $this->response('', null, ['total' => $data[0]->total]);
+        if ($user_group_id != 1) { // Hiero7 全給
+            $query = $query->where('user_group_id', $user_group_id);
+        }
+
+        $data = $query->first();
+
+        return $this->response('', null, ['total' => $data->total]);
     }
 
     public function create(Request $request, Domain $domain)
