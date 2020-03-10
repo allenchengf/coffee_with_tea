@@ -552,10 +552,18 @@ class ApiPermissionMappingTableSeeder extends Seeder
             ['permission_id' => 2, 'api_id' => 68, 'created_at' => $now]
         )
         // POST Check And Sync Record
-        // sidebar: Domains
+        // sidebar: Domains,Group,iRoueCDN
         ->updateOrCreate(
             ['id' => 80],
             ['permission_id' => 2, 'api_id' => 69, 'created_at' => $now]
+        )
+        ->updateOrCreate(
+            ['id' => 81],
+            ['permission_id' => 3, 'api_id' => 69, 'created_at' => $now]
+        )
+        ->updateOrCreate(
+            ['id' => 82],
+            ['permission_id' => 4, 'api_id' => 69, 'created_at' => $now]
         )
 
 /*
