@@ -16,6 +16,7 @@ Route::group(['middleware' => ['api', 'check.role.permission', 'check.config'], 
 
         Route::get('', 'DomainController@getDomain')->name('domain.index');
         Route::get('sql', 'DomainController@getDomainSqlJoin')->name('domain.indexSql');
+        Route::get('count', 'DomainController@countDomain')->name('domain.count');
 
         Route::middleware(['domain.permission'])->group(function () {
             Route::post('', 'DomainController@create')->name('domain.create');

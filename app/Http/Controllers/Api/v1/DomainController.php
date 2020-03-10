@@ -179,6 +179,20 @@ class DomainController extends Controller
         return $this->response('', null, compact('current_page', 'last_page', 'per_page', 'total', 'domains', 'dnsPodDomain'));
     }
 
+    public function countDomain(Request $request)
+    {
+        $user_group_id = $this->getUgid($request);
+
+        // SQL
+        $data = DB::table('domains')
+                    ->select(DB::raw('count(id) as total'))
+                    ->where('user_group_id', $user_group_id)
+                    ->groupBy('user_group_id')
+                    ->get();
+
+        return $this->response('', null, ['total' => $data[0]->total]);
+    }
+
     public function create(Request $request, Domain $domain)
     {
         $ugid = $this->getUgid($request);
