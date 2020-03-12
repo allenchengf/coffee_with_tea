@@ -77,9 +77,9 @@ class RolePermission
             'method' => 'GET',
             'path_regex' => 'groups',
         ],
-        [ // Get Domain (pagination)
+        [ // Get Domain Rows Counting
             'method' => 'GET',
-            'path_regex' => 'domains',
+            'path_regex' => 'domains\/count',
         ],
         [ // GET Get Operation Logs by Category
             'method' => 'GET',
