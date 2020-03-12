@@ -28,7 +28,8 @@ class LocationDnsSettingController extends Controller
     public function __construct(LocationDnsSettingService $locationDnsSettingService, DomainGroupService $domainGroupService)
     {
         $this->locationDnsSettingService = $locationDnsSettingService;
-        $this->domainGroupService = $domainGroupService;
+        $this->domainGroupService        = $domainGroupService;
+
         $this->setCategory(config('logging.category.iroutecdn'));
     }
 
@@ -53,16 +54,17 @@ class LocationDnsSettingController extends Controller
         $user_group_id = $this->getUgid($request);
 
         $domainGroup = DomainGroup::where(compact('user_group_id'))->get();
-        //取每個 Group 所有的 cdn list
-        foreach ($domainGroup as $domainGroupModel) {
-            $cdnProvider = $domainGroupModel->domains()->first()->cdnProvider()->get();
-            $domainGroupModel->cdn_provider = $cdnProvider;
-        }
 
-        $domains = $domain->with('cdnProvider', 'domainGroup')->where(compact('user_group_id'))->get();
-        //取沒有 Group 的 domain
+        $domains = $domain->with('domainGroupMapping')
+                          ->where(compact('user_group_id'))
+                          ->select(['id', 'name', 'cname'])->get();
+
+        // 取得沒有 Group 的 domain
         $domains = $domains->filter(function ($item) {
-            return $item->domainGroup->isEmpty();
+            if ($item->domainGroupMapping->isEmpty()) {
+                unset($item->domainGroupMapping);
+                return true;
+            }
         });
 
         $domains = $domains->flatten();
@@ -124,10 +126,10 @@ class LocationDnsSettingController extends Controller
         if (!is_null($perPage)) { // 換頁
             $domainGroupCollection = $domainGroupCollection->paginate($perPage, $columns, $pageName, $currentPage);
 
-            $last_page = $domainGroupCollection->lastPage();
+            $last_page    = $domainGroupCollection->lastPage();
             $current_page = $domainGroupCollection->currentPage();
-            $per_page = $perPage;
-            $total = $domainGroupCollection->total();
+            $per_page     = $perPage;
+            $total        = $domainGroupCollection->total();
         } else { // 全部列表
             $domainGroupCollection = $domainGroupCollection->get();
         }
@@ -165,10 +167,10 @@ class LocationDnsSettingController extends Controller
         if (!is_null($perPage)) { // 換頁
             $domainsCollection = $domainsCollection->paginate($perPage, $columns, $pageName, $currentPage);
 
-            $last_page = $domainsCollection->lastPage();
+            $last_page    = $domainsCollection->lastPage();
             $current_page = $domainsCollection->currentPage();
-            $per_page = $perPage;
-            $total = $domainsCollection->total();
+            $per_page     = $perPage;
+            $total        = $domainsCollection->total();
         } else { // 全部列表
             $domainsCollection = $domainsCollection->get();
         }
@@ -195,14 +197,14 @@ class LocationDnsSettingController extends Controller
     public function editSetting(LocationDnsSettingRequest $request, Domain $domain, LocationNetwork $locationNetwork)
     {
         $log['cdnProvider'] = $this->getOriginCdnProvider($domain, $locationNetwork)->name;
-        $log['domain'] = $domain->name;
-        $log['region'] = $locationNetwork->saveLog();
+        $log['domain']      = $domain->name;
+        $log['region']      = $locationNetwork->saveLog();
 
         $this->setChangeFrom($log);
 
         $httpStatusCode = 200;
-        $message = '';
-        $errorCode = null;
+        $message        = '';
+        $errorCode      = null;
 
         $request->merge([
             'edited_by' => $this->getJWTPayload()['uuid'],
@@ -213,7 +215,7 @@ class LocationDnsSettingController extends Controller
         if ($result === 'differentGroup' || !$result) {
 
             $this->setStatusCode(!$result ? 409 : 400);
-            $message = !$result ? 'please contact the admin' : '';
+            $message   = !$result ? 'please contact the admin' : '';
             $errorCode = !$result ? InternalError::INTERNAL_ERROR : InputError::WRONG_PARAMETER_ERROR;
 
         } else {
