@@ -6,10 +6,10 @@ use Illuminate\Database\Eloquent\Model;
 
 class Domain extends Model
 {
-    protected $table = 'domains';
+    protected $table      = 'domains';
     protected $primaryKey = 'id';
-    protected $fillable = ['user_group_id', 'name', 'cname', 'label', 'edited_by'];
-    protected $hidden = ['created_at', 'updated_at'];
+    protected $fillable   = ['user_group_id', 'name', 'cname', 'label', 'edited_by'];
+    protected $hidden     = ['created_at', 'updated_at'];
 
     public function cdns()
     {
@@ -24,14 +24,19 @@ class Domain extends Model
     public function cdnProvider()
     {
         return $this->belongsToMany(CdnProvider::class, 'cdns', 'domain_id', 'cdn_provider_id')
-            ->as('cdns')
-            ->withPivot('id', 'cname', 'default')
-            ->withTimestamps();
+                    ->as('cdns')
+                    ->withPivot('id', 'cname', 'default')
+                    ->withTimestamps();
     }
 
     public function domainGroup()
     {
         return $this->belongsToMany(DomainGroup::class, 'domain_group_mapping')->as('domain_group_mapping');
+    }
+
+    public function domainGroupMapping()
+    {
+        return $this->hasMany(DomainGroupMapping::class);
     }
 
     public function getDefaultCdnProvider()
