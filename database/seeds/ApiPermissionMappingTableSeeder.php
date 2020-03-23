@@ -1,7 +1,7 @@
 <?php
 
-use Illuminate\Database\Seeder;
 use Hiero7\Models\ApiPermissionMapping;
+use Illuminate\Database\Seeder;
 
 class ApiPermissionMappingTableSeeder extends Seeder
 {
@@ -18,13 +18,13 @@ class ApiPermissionMappingTableSeeder extends Seeder
  * =====================
  * 第 一 批 start
  * =====================
-*/
+ */
 
 /*
  * =======
  * Domain
  * =======
-*/
+ */
         $apiPermissionMapping
         // Get Domain (pagination)
         // sidebar: Domains,Group,iRoueCDN
@@ -66,10 +66,10 @@ class ApiPermissionMappingTableSeeder extends Seeder
         )
 
 /*
-    * =======
-    * CDN
-    * =======
-*/
+ * =======
+ * CDN
+ * =======
+ */
         // GET Get All
         // sidebar: Domains
         ->updateOrCreate(
@@ -102,10 +102,10 @@ class ApiPermissionMappingTableSeeder extends Seeder
         )
 
 /*
-* =======
-* IRouteCDN
-* =======
-*/
+ * =======
+ * IRouteCDN
+ * =======
+ */
         // GET Get iRoute
         // sidebar: Domain, iRoueCDN
         ->updateOrCreate(
@@ -224,10 +224,10 @@ class ApiPermissionMappingTableSeeder extends Seeder
         )
 
 /*
-* =======
-* Operation Logs
-* =======
-*/
+ * =======
+ * Operation Logs
+ * =======
+ */
         // GET Get Operation All Logs
         // sidebar: Logs
         ->updateOrCreate(
@@ -248,10 +248,10 @@ class ApiPermissionMappingTableSeeder extends Seeder
         )
 
 /*
-* =======
-* Config
-* =======
-*/
+ * =======
+ * Config
+ * =======
+ */
         // GET get Config
         // sidebar: Tool > Config Backup
         ->updateOrCreate(
@@ -266,10 +266,10 @@ class ApiPermissionMappingTableSeeder extends Seeder
         )
 
 /*
-* =======
-* Auto Scan
-* =======
-*/
+ * =======
+ * Auto Scan
+ * =======
+ */
         // PUT 一鍵切換 By Domain
         // sidebar: auto-scan
         ->updateOrCreate(
@@ -290,10 +290,10 @@ class ApiPermissionMappingTableSeeder extends Seeder
         )
 
 /*
-* =======
-* Process
-* =======
-*/
+ * =======
+ * Process
+ * =======
+ */
         // GET get Process Result
         // sidebar: Domains
         ->updateOrCreate(
@@ -308,10 +308,10 @@ class ApiPermissionMappingTableSeeder extends Seeder
         )
 
 /*
-* =======
-* Users
-* =======
-*/
+ * =======
+ * Users
+ * =======
+ */
         // GET Get Permission
         // sidebar: Users
         ->updateOrCreate(
@@ -331,16 +331,16 @@ class ApiPermissionMappingTableSeeder extends Seeder
             ['permission_id' => 8, 'api_id' => 41, 'created_at' => $now]
         )
 /*
-* =====================
-* 第 一 批 end
-* =====================
-*/
+ * =====================
+ * 第 一 批 end
+ * =====================
+ */
 
 /*
  * =====================
  * 第 二 批 start
  * =====================
-*/
+ */
 
         // GET get list from S3
         // sidebar: Config
@@ -490,19 +490,17 @@ class ApiPermissionMappingTableSeeder extends Seeder
         )
 
 /*
-* =====================
-* 第 二 批 end
-* =====================
-*/
-
-
+ * =====================
+ * 第 二 批 end
+ * =====================
+ */
 
 /*
  * =====================
  * 第 三 批 start
  * 2020-01-07
  * =====================
-*/
+ */
         // GET Get CDN Providers
         // sidebar: CDN Providers
         ->updateOrCreate(
@@ -567,11 +565,27 @@ class ApiPermissionMappingTableSeeder extends Seeder
         )
 
 /*
-* =====================
-* 第 三 批 end
-* =====================
-*/
+ * =====================
+ * 第 三 批 end
+ * =====================
+ */
 
+/*
+ * =====================
+ * 第 四 批 start
+ * =====================
+ */
+        // DELETE Delete Domain From Group
+        // sidebar: Domain
+        ->updateOrCreate(
+            ['id' => 83],
+            ['permission_id' => 2, 'api_id' => 24, 'created_at' => $now]
+        )
+/*
+ * =====================
+ * 第 四 批 end
+ * =====================
+ */
         ;
     }
 }
