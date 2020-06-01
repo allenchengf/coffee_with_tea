@@ -56,7 +56,7 @@ trait OperationLogTrait
             'changed_from' => json_encode($this->getChangeFrom()),
             'changed_to'   => json_encode($this->getChangeTo()),
             'message'      => $message,
-            'ip'           => $this->getClientIp(),
+//            'ip'           => $this->getClientIp(),
             'method'       => $this->getRequestMethod(),
             'url'          => Request::url(),
             'input'        => json_encode(Request::except(['password', 'password_confirmation', 'edited_by', 'old', 'new'])),
