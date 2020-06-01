@@ -122,10 +122,11 @@ class DomainController extends Controller
                     // 欄位篩選
                     ->select('domains.id', /*'domains.user_group_id',*/ 'domains.name', 'domains.cname', 'domains.label')
                     ->addSelect('domain_groups.id as group_id', 'domain_groups.name as group_name')
-                    ->addSelect(DB::raw('group_concat(cdns.cdn_provider_id) as cdn_provider_id, group_concat(cdns.cname) as cdn_cname, group_concat(cdns.default) as cdn_default'))
+//                    ->addSelect(DB::raw('group_concat(cdns.cdn_provider_id) as cdn_provider_id, group_concat(cdns.cname) as cdn_cname, group_concat(cdns.default) as cdn_default'))
+                    ->addSelect(DB::raw('group_concat(cdns.cdn_provider_id) as cdn_provider_id, group_concat(cdns.cname) as cdn_cname, group_concat(cdns.default) as cdn_default, group_concat(cdns.id) as cdn_id'))
                     // 排序
                     ->orderBy('domains.id', 'asc');
-                    
+
         // 條件限定 domain_group_id
         if ($request->has('domain_group_id')) {
             $domain_group_id = $request->domain_group_id;
