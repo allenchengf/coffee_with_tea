@@ -17,10 +17,16 @@ trait OperationLogTrait
     use JwtPayloadTrait;
 
     protected $changeFrom = [], $changeTo = [], $changeType = null;
-    protected $category   = null;
+    protected $category = null;
 
-    protected function curlWithUri(string $domain, string $uri, array $body, string $method, $asJson = true, $timeout = 30)
-    {
+    protected function curlWithUri(
+        string $domain,
+        string $uri,
+        array $body,
+        string $method,
+        $asJson = true,
+        $timeout = 30
+    ) {
         return Curl::to($domain . $uri)
             ->withHeader('Authorization: ' . 'Bearer ' . $this->getJWTToken())
             ->withData($body)
@@ -59,22 +65,30 @@ trait OperationLogTrait
             'ip'           => $this->getClientIp(),
             'method'       => $this->getRequestMethod(),
             'url'          => Request::url(),
-            'input'        => json_encode(Request::except(['password', 'password_confirmation', 'edited_by', 'old', 'new'])),
+            'input'        => json_encode(Request::except([
+                'password',
+                'password_confirmation',
+                'edited_by',
+                'old',
+                'new',
+            ])),
         ];
 
         $callback = $this->curlWithUri(self::getOperationLogURL(), '/log/platform/iRouteCDN', $body, 'post', 1);
 
-        // Log::info('[OperationLogTrait::createOperationLog()] ' . json_encode($callback));
+//        Log::info('[OperationLogTrait::createOperationLog()] ' . json_encode($callback));
     }
 
     public function getEsLog()
     {
-        return $this->curlWithUri(self::getOperationLogURL(), "/log/platform/iRouteCDN", ['user_group_id' => $this->getJWTUserGroupId()], 'get', false);
+        return $this->curlWithUri(self::getOperationLogURL(), "/log/platform/iRouteCDN",
+            ['user_group_id' => $this->getJWTUserGroupId()], 'get', false);
     }
 
     public function getEsLogByCategory(string $category)
     {
-        return $this->curlWithUri(self::getOperationLogURL(), "/log/platform/iRouteCDN/category/$category", ['user_group_id' => $this->getJWTUserGroupId()], 'get', false);
+        return $this->curlWithUri(self::getOperationLogURL(), "/log/platform/iRouteCDN/category/$category",
+            ['user_group_id' => $this->getJWTUserGroupId()], 'get', false);
     }
 
     public function getEsLogByQuery(array $query)
