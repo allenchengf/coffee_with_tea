@@ -266,7 +266,7 @@ class DomainGroupController extends Controller
     ) {
         $this->setCategory(config('logging.category.iroutecdn'));
         $log['cdnProvider'] = $this->getOriginCdnProvider($domainGroup, $locationNetwork)->name;
-        $log['group']       = $domainGroup->name;
+        $log['domain']       = $domainGroup->name;
         $log['region']      = $locationNetwork->saveLog();
 
         $this->setChangeFrom($log);
@@ -276,7 +276,7 @@ class DomainGroupController extends Controller
             $request->edited_by);
 
         unset($log['region']);
-        $log['cdnProvider'] = $locationNetwork->cdn['name'];
+        $log['cdnProvider'] = $this->getOriginCdnProvider($domainGroup, $locationNetwork)->name;
         $this->setChangeTo($log)->createOperationLog();
 
         return $this->handleResponse($result);
