@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\v1;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\DomainGroupRequest;
+use Carbon\Carbon;
 use Hiero7\Enums\InputError;
 use Hiero7\Enums\InternalError;
 use Hiero7\Enums\PermissionError;
@@ -14,10 +15,12 @@ use Hiero7\Services\CdnService;
 use Hiero7\Services\DomainGroupService;
 use Hiero7\Traits\OperationLogTrait;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Redis;
 
 class DomainGroupController extends Controller
 {
     use OperationLogTrait;
+
     protected $domainGroupService;
     protected $message;
     protected $error;
@@ -27,7 +30,7 @@ class DomainGroupController extends Controller
     public function __construct(DomainGroupService $domainGroupService, CdnService $cdnService)
     {
         $this->domainGroupService = $domainGroupService;
-        $this->cdnService = $cdnService;
+        $this->cdnService         = $cdnService;
         $this->setCategory(config('logging.category.domain_group'));
 
     }
@@ -92,17 +95,17 @@ class DomainGroupController extends Controller
         $result = $this->domainGroupService->create($request);
         if ($result == 'exist') {
             $this->error = InputError::GROUP_EXIST;
-            $result = [];
+            $result      = [];
         }
 
         if ($result == 'NoneCdn') {
             $this->error = PermissionError::THIS_DOMAIN_DONT_HAVE_ANY_CDN;
-            $result = [];
+            $result      = [];
         }
 
         if ($result == 'differentGroup') {
             $this->error = InputError::PARAMETERS_IN_DIFFERENT_USERGROUP;
-            $result = [];
+            $result      = [];
         }
 
         if (gettype($result) == 'object') {
@@ -122,7 +125,7 @@ class DomainGroupController extends Controller
             return $this->setStatusCode(400)->response($this->message, InputError::DOMAIN_ALREADY_EXIST_GROUP, []);
         }
 
-        if(!$targetDomain = Domain::find($request->domain_id)){
+        if (!$targetDomain = Domain::find($request->domain_id)) {
             return $this->setStatusCode(400)->response($this->message, InputError::DOMAIN_NOT_EXIST, []);
         }
 
@@ -130,18 +133,20 @@ class DomainGroupController extends Controller
 
         if ($result == false) {
             $this->error = InputError::DOMAIN_CDNPROVIDER_DIFFERENT;
-            $result = [];
-        } else if ($result == 'cdnError' || $result == 'iRouteError') {
-            $this->error = InternalError::INTERNAL_SERVICE_ERROR;
-            $result = [];
+            $result      = [];
         } else {
-            $result->domain;
-            $result->domainGroup;
+            if ($result == 'cdnError' || $result == 'iRouteError') {
+                $this->error = InternalError::INTERNAL_SERVICE_ERROR;
+                $result      = [];
+            } else {
+                $result->domain;
+                $result->domainGroup;
 
-            $log = $result->domainGroup()->first()->saveLog();
-            $log += $this->domainLogFormat($result->domain);
+                $log = $result->domainGroup()->first()->saveLog();
+                $log += $this->domainLogFormat($result->domain);
 
-            $this->setChangeTo($log)->createOperationLog();
+                $this->setChangeTo($log)->createOperationLog();
+            }
         }
 
         return $this->setStatusCode($this->error ? 400 : 200)->response($this->message, $this->error, $result);
@@ -168,7 +173,8 @@ class DomainGroupController extends Controller
             $this->setChangeTo($domainGroup->fresh()->saveLog())->createOperationLog();
         }
 
-        return $this->setStatusCode($this->error ? 400 : 200)->response($this->message, $this->error, $this->error ? null : $domainGroup);
+        return $this->setStatusCode($this->error ? 400 : 200)->response($this->message, $this->error,
+            $this->error ? null : $domainGroup);
     }
 
     /**
@@ -230,7 +236,9 @@ class DomainGroupController extends Controller
      */
     public function changeDefaultCdn(DomainGroupRequest $request, DomainGroup $domainGroup)
     {
-        $log = $domainGroup->saveLog();
+        $this->setPortalLogByGroup($domainGroup, $request->cdn_provider_id);
+
+        $log            = $domainGroup->saveLog();
         $log['default'] = $this->domainLogFormat($domainGroup->domains()->first())['default'];
 
         $this->setChangeFrom($log);
@@ -238,16 +246,18 @@ class DomainGroupController extends Controller
         $domainModel = $domainGroup->domains;
 
         foreach ($domainModel as $domain) {
-            $cdn = $domain->cdns()->where('cdns.cdn_provider_id', $request->cdn_provider_id)->first();
+            $cdn    = $domain->cdns()->where('cdns.cdn_provider_id', $request->cdn_provider_id)->first();
             $result = $this->cdnService->changeDefaultToTrue($domain, $cdn, $this->getJWTPayload()['uuid']);
         }
 
         if ($result == false) {
             $this->error = InternalError::INTERNAL_ERROR;
-            $result = [];
+            $result      = [];
         } else {
 
             $log['default'] = $this->domainLogFormat($domainGroup->domains()->first())['default'];
+
+            $this->saveForPortalLog();
 
             $this->setChangeTo($log)->createOperationLog();
         }
@@ -255,10 +265,25 @@ class DomainGroupController extends Controller
         return $this->setStatusCode($this->error ? 409 : 200)->response($this->message, $this->error, $result);
     }
 
-    public function updateRouteCdn(DomainGroupRequest $request, DomainGroup $domainGroup, LocationNetwork $locationNetwork)
-    {
+    public function updateRouteCdn(
+        DomainGroupRequest $request,
+        DomainGroup $domainGroup,
+        LocationNetwork $locationNetwork
+    ) {
+        $this->setCategory(config('logging.category.iroutecdn'));
+        $log['cdnProvider'] = $this->getOriginCdnProvider($domainGroup, $locationNetwork)->name;
+        $log['domain']      = $domainGroup->name;
+        $log['region']      = $locationNetwork->saveLog();
+
+        $this->setChangeFrom($log);
+
         $this->formatRequestAndThis($request);
-        $result = $this->domainGroupService->updateRouteCdn($domainGroup, $locationNetwork, $request->cdn_provider_id, $request->edited_by);
+        $result = $this->domainGroupService->updateRouteCdn($domainGroup, $locationNetwork, $request->cdn_provider_id,
+            $request->edited_by);
+
+        unset($log['region']);
+        $log['cdnProvider'] = $this->getOriginCdnProvider($domainGroup, $locationNetwork)->name;
+        $this->setChangeTo($log)->createOperationLog();
 
         return $this->handleResponse($result);
     }
@@ -266,11 +291,11 @@ class DomainGroupController extends Controller
     private function formatRequestAndThis(DomainGroupRequest $request)
     {
         $this->userGroupId = $this->getUgid($request);
-        $this->uuid = $this->getJWTPayload()['uuid'];
+        $this->uuid        = $this->getJWTPayload()['uuid'];
 
         return $request->merge([
             'user_group_id' => $this->userGroupId,
-            'edited_by' => $this->uuid,
+            'edited_by'     => $this->uuid,
         ]);
     }
 
@@ -289,9 +314,30 @@ class DomainGroupController extends Controller
 
     private function domainLogFormat(Domain $domain)
     {
-        $log = [];
-        $log['domain'] = $domain->name;
+        $log            = [];
+        $log['domain']  = $domain->name;
         $log['default'] = $domain->getDefaultCdnProvider()->name;
         return $log;
+    }
+
+    /**
+     * @param DomainGroup $domainGroup
+     * @param LocationNetwork $locationNetwork
+     */
+    private function getOriginCdnProvider(DomainGroup $domainGroup, LocationNetwork $locationNetwork)
+    {
+        $domain = $domainGroup->domains()->first();
+
+        $locationDnsSetting = $domain->locationDnsSettings()->where('location_networks_id',
+            $locationNetwork->id)->first();
+
+        if ($locationDnsSetting) {
+            $cdnProvider = $locationDnsSetting->cdn()->first()->cdnProvider()->first();
+
+        } else {
+            $cdnProvider = $domain->getDefaultCdnProvider()->first();
+        }
+
+        return $cdnProvider;
     }
 }

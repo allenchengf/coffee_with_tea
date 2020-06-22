@@ -8,7 +8,13 @@
 
 namespace Hiero7\Traits;
 
+use Carbon\Carbon;
+use Hiero7\Models\Cdn;
+use Hiero7\Models\CdnProvider;
+use Hiero7\Models\Domain;
+use Hiero7\Models\DomainGroup;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Redis;
 use Illuminate\Support\Facades\Request;
 use Ixudra\Curl\Facades\Curl;
 
@@ -17,10 +23,19 @@ trait OperationLogTrait
     use JwtPayloadTrait;
 
     protected $changeFrom = [], $changeTo = [], $changeType = null;
-    protected $category   = null;
+    protected $category = null;
 
-    protected function curlWithUri(string $domain, string $uri, array $body, string $method, $asJson = true, $timeout = 30)
-    {
+    protected $timestamp;
+    protected $forPortalLog;
+
+    protected function curlWithUri(
+        string $domain,
+        string $uri,
+        array $body,
+        string $method,
+        $asJson = true,
+        $timeout = 30
+    ) {
         return Curl::to($domain . $uri)
             ->withHeader('Authorization: ' . 'Bearer ' . $this->getJWTToken())
             ->withData($body)
@@ -59,27 +74,96 @@ trait OperationLogTrait
             'ip'           => $this->getClientIp(),
             'method'       => $this->getRequestMethod(),
             'url'          => Request::url(),
-            'input'        => json_encode(Request::except(['password', 'password_confirmation', 'edited_by', 'old', 'new'])),
+            'input'        => json_encode(Request::except([
+                'password',
+                'password_confirmation',
+                'edited_by',
+                'old',
+                'new',
+            ])),
         ];
 
         $callback = $this->curlWithUri(self::getOperationLogURL(), '/log/platform/iRouteCDN', $body, 'post', 1);
 
-        // Log::info('[OperationLogTrait::createOperationLog()] ' . json_encode($callback));
+//        Log::info('[OperationLogTrait::createOperationLog()] ' . json_encode($callback));
     }
 
     public function getEsLog()
     {
-        return $this->curlWithUri(self::getOperationLogURL(), "/log/platform/iRouteCDN", ['user_group_id' => $this->getJWTUserGroupId()], 'get', false);
+        return $this->curlWithUri(self::getOperationLogURL(), "/log/platform/iRouteCDN",
+            ['user_group_id' => $this->getJWTUserGroupId()], 'get', false);
     }
 
     public function getEsLogByCategory(string $category)
     {
-        return $this->curlWithUri(self::getOperationLogURL(), "/log/platform/iRouteCDN/category/$category", ['user_group_id' => $this->getJWTUserGroupId()], 'get', false);
+        return $this->curlWithUri(self::getOperationLogURL(), "/log/platform/iRouteCDN/category/$category",
+            ['user_group_id' => $this->getJWTUserGroupId()], 'get', false);
     }
 
     public function getEsLogByQuery(array $query)
     {
         return $this->curlWithUri(self::getOperationLogURL(), "/log/platform/iRouteCDN/query", $query, 'post', false);
+    }
+
+    public function setPortalLogByDomain(Domain $domain, Cdn $cdn)
+    {
+        $this->timestamp = Carbon::now();
+
+        $defaultCDN = $domain->cdns()->where('default', 1)->first();
+
+        $cdnProvider = $defaultCDN->cdnProvider()->first();
+
+        $forPortalLog = [
+            'domains'      => [$domain->name],
+            'changed_from' => [
+                'cdn_provider_name' => $cdnProvider->name,
+//                'cdn_cname'         => $defaultCDN->cname,
+            ],
+            'changed_to'   => [
+                'cdn_provider_name' => $domain->cdns()->where('cdns.id',
+                    $cdn->id)->first()->cdnProvider()->first()->name,
+//                'cdn_cname'         => $cdn->cname,
+            ],
+            'timestamp'    => $this->timestamp->format('Y-m-d H:i:s'),
+        ];
+
+        $this->forPortalLog = $forPortalLog;
+    }
+
+    public function setPortalLogByGroup(DomainGroup $domainGroup, $cdnProviderId)
+    {
+        $this->timestamp = Carbon::now();
+        $cdnProviderName = null;
+        $domains         = [];
+//        $cdns            = [];
+
+        foreach ($domainGroup->domains as $domain) {
+            $domains[] = $domain->name;
+//            $cdns[]    = $domain->cdns()->where('default', 1)->first()->cname;
+
+            $cdnProviderName = $cdnProviderName ? $cdnProviderName : $domain->getDefaultCdnProvider()->name;
+        }
+
+        $forPortalLog = [
+            'domain'       => $domains,
+            'changed_from' => [
+                'cdn_provider_name' => $cdnProviderName,
+//                'cdns'              => $cdns
+            ],
+            'changed_to'   => [
+                'cdn_provider_name' => CdnProvider::find($cdnProviderId)->name,
+            ],
+            'timestampe'   => $this->timestamp->format('Y-m-d H:i:s'),
+        ];
+
+        $this->forPortalLog = $forPortalLog;
+    }
+
+    public function saveForPortalLog()
+    {
+        $redisKey = 'changeCDNLog_' . $this->timestamp->format('Y_m_d');
+        Redis::lpush($redisKey, json_encode($this->forPortalLog));
+        Redis::expire($redisKey, 60 * 60 * 24);
     }
 
     protected function getMappingChangeType()
