@@ -167,4 +167,9 @@ Route::group(['middleware' => ['api', 'check.role.permission', 'check.config'], 
     Route::group(['prefix' => 'permissions'], function () {
         Route::get('', 'PermissionController@index')->name('permissions.index');
     });
+
+});
+
+Route::group(['middleware' => ['api'], 'namespace' => 'Api\v1', 'prefix' => 'v1'], function () {
+    Route::get('log/cdn-change', 'OperationLogController@getForPortalLog')->name('operation_log.forPortal');
 });
