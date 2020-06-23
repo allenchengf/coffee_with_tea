@@ -3,7 +3,10 @@
 namespace App\Http\Controllers\Api\v1;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\TimestampRequest;
 use Carbon\Carbon;
+use Hiero7\Models\ChangeLogForPortal;
+use Hiero7\Repositories\ChangeLogForPortalRepository;
 use Hiero7\Services\OperationLogService;
 use Hiero7\Traits\OperationLogTrait;
 use Illuminate\Http\Request;
@@ -19,9 +22,13 @@ class OperationLogController extends Controller
      * OperationLogController constructor.
      * @param $operationLogService
      */
-    public function __construct(OperationLogService $operationLogService)
-    {
+    public function __construct(
+        OperationLogService $operationLogService,
+        ChangeLogForPortalRepository $changeLogForPortalRepository
+    ) {
         $this->operationLogService = $operationLogService;
+
+        $this->changeLogForPortalRepository = $changeLogForPortalRepository;
     }
 
     public function index()
@@ -48,15 +55,12 @@ class OperationLogController extends Controller
         return $this->response('', null, $categoryList);
     }
 
-    public function getForPortalLog()
+    public function getForPortalLog(TimestampRequest $request)
     {
-        $now = Carbon::now()->format('Y_m_d');
+        $startTime = $request->get('start_time');
+        $endTime   = $request->get('end_time');
 
-        $redisKey = 'changeCDNLog_' . $now;
-
-        $changeLog = collect(Redis::lrange($redisKey, 0, -1))->map(function ($log) {
-            return json_decode($log);
-        });
+        $changeLog = $this->changeLogForPortalRepository->getLogByTime($startTime, $endTime);
 
         return $this->response('', null, $changeLog);
     }
