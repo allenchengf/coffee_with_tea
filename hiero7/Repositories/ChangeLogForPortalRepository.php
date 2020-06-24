@@ -2,6 +2,7 @@
 
 namespace Hiero7\Repositories;
 
+use Carbon\Carbon;
 use Hiero7\Models\ChangeLogForPortal;
 use Hiero7\Models\Permission;
 
@@ -20,5 +21,16 @@ class ChangeLogForPortalRepository
             $startTime,
             $endTime,
         ])->get();
+    }
+
+    public function latestLogByCount(int $count = 50)
+    {
+        return $this->changeLogForPortal->latest()
+            ->limit($count)->get();
+    }
+
+    public function deleteInvalid(int $days = 5)
+    {
+        return $this->changeLogForPortal->where('created_at', '<', Carbon::now()->subDays($days))->delete();
     }
 }

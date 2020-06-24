@@ -25,6 +25,8 @@ class Kernel extends ConsoleKernel
     protected function schedule(Schedule $schedule)
     {
         $schedule->command('backup:config')->everyMinute();
+
+        $schedule->command('db:delete-invalid-log')->hourly();
     }
 
     /**

@@ -59,8 +59,10 @@ class OperationLogController extends Controller
     {
         $startTime = $request->get('start_time');
         $endTime   = $request->get('end_time');
+        $lastCount = $request->get('lastCount', 0);
 
-        $changeLog = $this->changeLogForPortalRepository->getLogByTime($startTime, $endTime);
+        $changeLog = $lastCount ? $this->changeLogForPortalRepository->latestLogByCount($lastCount) :
+            $this->changeLogForPortalRepository->getLogByTime($startTime, $endTime);
 
         return $this->response('', null, $changeLog);
     }

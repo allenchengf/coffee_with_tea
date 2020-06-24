@@ -22,8 +22,9 @@ class TimestampRequest extends FormRequest
     public function rules()
     {
         return [
-            'start_time' => 'required|date',
-            'end_time'   => 'required|date|after_or_equal:start_time',
+            'start_time' => 'nullable|date',
+            'end_time'   => 'nullable|date|after_or_equal:start_time',
+            'lastCount'  => 'nullable|int'
         ];
     }
 }
