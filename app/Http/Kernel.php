@@ -41,7 +41,7 @@ class Kernel extends HttpKernel
         'api' => [
             'throttle:10000,1',
             'bindings',
-            \App\Http\Middleware\TokenCheck::class,
+//            \App\Http\Middleware\TokenCheck::class,
         ],
     ];
 
@@ -53,21 +53,22 @@ class Kernel extends HttpKernel
      * @var array
      */
     protected $routeMiddleware = [
-        'auth' => \App\Http\Middleware\Authenticate::class,
-        'auth.basic' => \Illuminate\Auth\Middleware\AuthenticateWithBasicAuth::class,
-        'bindings' => \Illuminate\Routing\Middleware\SubstituteBindings::class,
-        'cache.headers' => \Illuminate\Http\Middleware\SetCacheHeaders::class,
-        'can' => \Illuminate\Auth\Middleware\Authorize::class,
-        'guest' => \App\Http\Middleware\RedirectIfAuthenticated::class,
-        'signed' => \Illuminate\Routing\Middleware\ValidateSignature::class,
-        'throttle' => \Illuminate\Routing\Middleware\ThrottleRequests::class,
-        'verified' => \Illuminate\Auth\Middleware\EnsureEmailIsVerified::class,
-        'internal.group' => \App\Http\Middleware\InternalGroup::class,
-        'auth.user.module' => \App\Http\Middleware\AuthUserModule::class,
-        'domain.permission' => \App\Http\Middleware\DomainPermission::class,
-        'admin.check' => \App\Http\Middleware\AdminCheck::class,
-        'check.config' => \App\Http\Middleware\CheckForImportConfig::class,
-        'check.dnspod' => \App\Http\Middleware\CheckDnsPod::class,
+        'auth'                  => \App\Http\Middleware\Authenticate::class,
+        'auth.basic'            => \Illuminate\Auth\Middleware\AuthenticateWithBasicAuth::class,
+        'bindings'              => \Illuminate\Routing\Middleware\SubstituteBindings::class,
+        'cache.headers'         => \Illuminate\Http\Middleware\SetCacheHeaders::class,
+        'can'                   => \Illuminate\Auth\Middleware\Authorize::class,
+        'guest'                 => \App\Http\Middleware\RedirectIfAuthenticated::class,
+        'signed'                => \Illuminate\Routing\Middleware\ValidateSignature::class,
+        'throttle'              => \Illuminate\Routing\Middleware\ThrottleRequests::class,
+        'verified'              => \Illuminate\Auth\Middleware\EnsureEmailIsVerified::class,
+        'internal.group'        => \App\Http\Middleware\InternalGroup::class,
+        'auth.user.module'      => \App\Http\Middleware\AuthUserModule::class,
+        'domain.permission'     => \App\Http\Middleware\DomainPermission::class,
+        'admin.check'           => \App\Http\Middleware\AdminCheck::class,
+        'check.config'          => \App\Http\Middleware\CheckForImportConfig::class,
+        'check.dnspod'          => \App\Http\Middleware\CheckDnsPod::class,
         'check.role.permission' => \App\Http\Middleware\RolePermission::class,
+        'auth.jwt'              => \App\Http\Middleware\TokenCheck::class,
     ];
 }

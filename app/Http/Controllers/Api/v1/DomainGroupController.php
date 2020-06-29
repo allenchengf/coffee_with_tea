@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\v1;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\DomainGroupRequest;
+use Carbon\Carbon;
 use Hiero7\Enums\InputError;
 use Hiero7\Enums\InternalError;
 use Hiero7\Enums\PermissionError;
@@ -14,6 +15,7 @@ use Hiero7\Services\CdnService;
 use Hiero7\Services\DomainGroupService;
 use Hiero7\Traits\OperationLogTrait;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Redis;
 
 class DomainGroupController extends Controller
 {
@@ -234,6 +236,8 @@ class DomainGroupController extends Controller
      */
     public function changeDefaultCdn(DomainGroupRequest $request, DomainGroup $domainGroup)
     {
+        $this->setPortalLogByGroup($domainGroup, $request->cdn_provider_id);
+
         $log            = $domainGroup->saveLog();
         $log['default'] = $this->domainLogFormat($domainGroup->domains()->first())['default'];
 
@@ -253,6 +257,8 @@ class DomainGroupController extends Controller
 
             $log['default'] = $this->domainLogFormat($domainGroup->domains()->first())['default'];
 
+            $this->saveForPortalLog();
+
             $this->setChangeTo($log)->createOperationLog();
         }
 
@@ -266,7 +272,7 @@ class DomainGroupController extends Controller
     ) {
         $this->setCategory(config('logging.category.iroutecdn'));
         $log['cdnProvider'] = $this->getOriginCdnProvider($domainGroup, $locationNetwork)->name;
-        $log['domain']       = $domainGroup->name;
+        $log['domain']      = $domainGroup->name;
         $log['region']      = $locationNetwork->saveLog();
 
         $this->setChangeFrom($log);
