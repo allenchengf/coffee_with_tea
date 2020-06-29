@@ -8,7 +8,14 @@
 
 namespace Hiero7\Traits;
 
+use Carbon\Carbon;
+use Hiero7\Models\Cdn;
+use Hiero7\Models\CdnProvider;
+use Hiero7\Models\ChangeLogForPortal;
+use Hiero7\Models\Domain;
+use Hiero7\Models\DomainGroup;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Redis;
 use Illuminate\Support\Facades\Request;
 use Ixudra\Curl\Facades\Curl;
 
@@ -18,6 +25,9 @@ trait OperationLogTrait
 
     protected $changeFrom = [], $changeTo = [], $changeType = null;
     protected $category = null;
+
+    protected $timestamp;
+    protected $forPortalLog;
 
     protected function curlWithUri(
         string $domain,
@@ -94,6 +104,67 @@ trait OperationLogTrait
     public function getEsLogByQuery(array $query)
     {
         return $this->curlWithUri(self::getOperationLogURL(), "/log/platform/iRouteCDN/query", $query, 'post', false);
+    }
+
+    public function setPortalLogByDomain(Domain $domain, Cdn $cdn)
+    {
+        $defaultCDN = $domain->cdns()->where('default', 1)->first();
+
+        $cdnProvider = $defaultCDN->cdnProvider()->first();
+
+        $forPortalLog = [
+            'domains'      => [$domain->name],
+            'changed_from' => [
+                'cdn_provider_name' => $cdnProvider->name,
+                'cdns'              => [$defaultCDN->cname],
+            ],
+            'changed_to'   => [
+                'cdn_provider_name' => $domain->cdns()->where('cdns.id',
+                    $cdn->id)->first()->cdnProvider()->first()->name,
+                'cdns'              => [$cdn->cname],
+            ],
+        ];
+
+        $this->forPortalLog = $forPortalLog;
+    }
+
+    public function setPortalLogByGroup(DomainGroup $domainGroup, $cdnProviderId)
+    {
+        $cdnProviderName = null;
+        $domains         = [];
+        $cdns            = [];
+        $cdns2           = [];
+
+        foreach ($domainGroup->domains as $domain) {
+            $cdnProviderName = $cdnProviderName ? $cdnProviderName : $domain->getDefaultCdnProvider()->name;
+            $domains[]       = $domain->name;
+
+            $cdns[]  = $domain->cdns()->where('default', 1)->first()->cname;
+            $cdns2[] = $domain->cdns()->where('cdn_provider_id', $cdnProviderId)->first()->cname;
+        }
+
+        $forPortalLog = [
+            'domains'      => $domains,
+            'changed_from' => [
+                'cdn_provider_name' => $cdnProviderName,
+                'cdns'              => $cdns,
+            ],
+            'changed_to'   => [
+                'cdn_provider_name' => CdnProvider::find($cdnProviderId)->name,
+                'cdns'              => $cdns2,
+            ],
+        ];
+
+        $this->forPortalLog = $forPortalLog;
+    }
+
+    public function saveForPortalLog()
+    {
+        foreach ($this->forPortalLog as $key => $value) {
+            $this->forPortalLog[$key] = json_encode($value);
+        }
+
+        ChangeLogForPortal::create($this->forPortalLog);
     }
 
     protected function getMappingChangeType()

@@ -3,22 +3,32 @@
 namespace App\Http\Controllers\Api\v1;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\TimestampRequest;
+use Carbon\Carbon;
+use Hiero7\Models\ChangeLogForPortal;
+use Hiero7\Repositories\ChangeLogForPortalRepository;
 use Hiero7\Services\OperationLogService;
 use Hiero7\Traits\OperationLogTrait;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Redis;
 
 class OperationLogController extends Controller
 {
     use OperationLogTrait;
+
     protected $operationLogService;
 
     /**
      * OperationLogController constructor.
      * @param $operationLogService
      */
-    public function __construct(OperationLogService $operationLogService)
-    {
+    public function __construct(
+        OperationLogService $operationLogService,
+        ChangeLogForPortalRepository $changeLogForPortalRepository
+    ) {
         $this->operationLogService = $operationLogService;
+
+        $this->changeLogForPortalRepository = $changeLogForPortalRepository;
     }
 
     public function index()
@@ -43,5 +53,17 @@ class OperationLogController extends Controller
     {
         $categoryList = collect(config('logging.category'))->values();
         return $this->response('', null, $categoryList);
+    }
+
+    public function getForPortalLog(TimestampRequest $request)
+    {
+        $startTime = $request->get('start_time');
+        $endTime   = $request->get('end_time');
+        $lastCount = $request->get('lastCount', 0);
+
+        $changeLog = $lastCount ? $this->changeLogForPortalRepository->latestLogByCount($lastCount) :
+            $this->changeLogForPortalRepository->getLogByTime($startTime, $endTime);
+
+        return $this->response('', null, $changeLog);
     }
 }

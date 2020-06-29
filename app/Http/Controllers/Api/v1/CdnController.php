@@ -8,6 +8,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\CdnCreateRequest;
 use App\Http\Requests\CdnDeleteRequest;
 use App\Http\Requests\CdnUpdateRequest;
+use Carbon\Carbon;
 use DB;
 use Hiero7\Enums\InternalError;
 use Hiero7\Models\Cdn;
@@ -15,6 +16,7 @@ use Hiero7\Models\Domain;
 use Hiero7\Services\CdnService;
 use Hiero7\Traits\OperationLogTrait;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Redis;
 
 class CdnController extends Controller
 {
@@ -47,7 +49,7 @@ class CdnController extends Controller
 
     /**
      * @param \App\Http\Requests\CdnCreateRequest $request
-     * @param \Hiero7\Models\Domain         $domain
+     * @param \Hiero7\Models\Domain $domain
      *
      * @return \App\Http\Controllers\Api\v1\CdnController
      */
@@ -89,13 +91,14 @@ class CdnController extends Controller
 
     /**
      * @param \App\Http\Requests\CdnUpdateRequest $request
-     * @param \Hiero7\Models\Domain         $domain
-     * @param \Hiero7\Models\Cdn            $cdn
+     * @param \Hiero7\Models\Domain $domain
+     * @param \Hiero7\Models\Cdn $cdn
      *
      * @return \App\Http\Controllers\Api\v1\CdnController
      */
     public function updateDefault(CdnUpdateRequest $request, Domain $domain, Cdn $cdn)
     {
+        $this->setPortalLogByDomain($domain,  $cdn);
         $this->setChangeFrom($cdn->saveLog());
 
         $error = $this->cdnService->changeDefaultToTrue($domain, $cdn, $request->edited_by);
@@ -108,13 +111,14 @@ class CdnController extends Controller
         }
 
         $this->setChangeTo($cdn->saveLog())->createOperationLog();
+        $this->saveForPortalLog();
         return $this->response('', null, $cdn);
     }
 
     /**
      * @param \App\Http\Requests\CdnUpdateRequest $request
-     * @param \Hiero7\Models\Domain         $domain
-     * @param \Hiero7\Models\Cdn            $cdn
+     * @param \Hiero7\Models\Domain $domain
+     * @param \Hiero7\Models\Cdn $cdn
      *
      * @return \App\Http\Controllers\Api\v1\CdnController
      */
@@ -139,13 +143,15 @@ class CdnController extends Controller
 
         $this->setChangeTo($cdn->saveLog())->createOperationLog();
 
+//        Redis::
+
         return $this->setStatusCode(200)->response('success', null, $cdn);
     }
 
     /**
      * @param \App\Http\Requests\CdnDeleteRequest $request
-     * @param \Hiero7\Models\Domain               $domain
-     * @param \Hiero7\Models\Cdn                  $cdn
+     * @param \Hiero7\Models\Domain $domain
+     * @param \Hiero7\Models\Cdn $cdn
      *
      * @return \App\Http\Controllers\Api\v1\CdnController
      */
