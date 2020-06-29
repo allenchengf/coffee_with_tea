@@ -11,6 +11,7 @@ namespace Hiero7\Traits;
 use Carbon\Carbon;
 use Hiero7\Models\Cdn;
 use Hiero7\Models\CdnProvider;
+use Hiero7\Models\ChangeLogForPortal;
 use Hiero7\Models\Domain;
 use Hiero7\Models\DomainGroup;
 use Illuminate\Support\Facades\Log;
@@ -107,8 +108,6 @@ trait OperationLogTrait
 
     public function setPortalLogByDomain(Domain $domain, Cdn $cdn)
     {
-        $this->timestamp = Carbon::now();
-
         $defaultCDN = $domain->cdns()->where('default', 1)->first();
 
         $cdnProvider = $defaultCDN->cdnProvider()->first();
@@ -117,14 +116,13 @@ trait OperationLogTrait
             'domains'      => [$domain->name],
             'changed_from' => [
                 'cdn_provider_name' => $cdnProvider->name,
-//                'cdn_cname'         => $defaultCDN->cname,
+                'cdns'              => [$defaultCDN->cname],
             ],
             'changed_to'   => [
                 'cdn_provider_name' => $domain->cdns()->where('cdns.id',
                     $cdn->id)->first()->cdnProvider()->first()->name,
-//                'cdn_cname'         => $cdn->cname,
+                'cdns'              => [$cdn->cname],
             ],
-            'timestamp'    => $this->timestamp->format('Y-m-d H:i:s'),
         ];
 
         $this->forPortalLog = $forPortalLog;
@@ -132,28 +130,29 @@ trait OperationLogTrait
 
     public function setPortalLogByGroup(DomainGroup $domainGroup, $cdnProviderId)
     {
-        $this->timestamp = Carbon::now();
         $cdnProviderName = null;
         $domains         = [];
-//        $cdns            = [];
+        $cdns            = [];
+        $cdns2           = [];
 
         foreach ($domainGroup->domains as $domain) {
-            $domains[] = $domain->name;
-//            $cdns[]    = $domain->cdns()->where('default', 1)->first()->cname;
-
             $cdnProviderName = $cdnProviderName ? $cdnProviderName : $domain->getDefaultCdnProvider()->name;
+            $domains[]       = $domain->name;
+
+            $cdns[]  = $domain->cdns()->where('default', 1)->first()->cname;
+            $cdns2[] = $domain->cdns()->where('cdn_provider_id', $cdnProviderId)->first()->cname;
         }
 
         $forPortalLog = [
-            'domain'       => $domains,
+            'domains'      => $domains,
             'changed_from' => [
                 'cdn_provider_name' => $cdnProviderName,
-//                'cdns'              => $cdns
+                'cdns'              => $cdns,
             ],
             'changed_to'   => [
                 'cdn_provider_name' => CdnProvider::find($cdnProviderId)->name,
+                'cdns'              => $cdns2,
             ],
-            'timestampe'   => $this->timestamp->format('Y-m-d H:i:s'),
         ];
 
         $this->forPortalLog = $forPortalLog;
@@ -161,9 +160,11 @@ trait OperationLogTrait
 
     public function saveForPortalLog()
     {
-        $redisKey = 'changeCDNLog_' . $this->timestamp->format('Y_m_d');
-        Redis::lpush($redisKey, json_encode($this->forPortalLog));
-        Redis::expire($redisKey, 60 * 60 * 24);
+        foreach ($this->forPortalLog as $key => $value) {
+            $this->forPortalLog[$key] = json_encode($value);
+        }
+
+        ChangeLogForPortal::create($this->forPortalLog);
     }
 
     protected function getMappingChangeType()

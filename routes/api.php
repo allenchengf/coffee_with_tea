@@ -1,5 +1,9 @@
 <?php
-Route::group(['middleware' => ['api', 'check.role.permission', 'check.config'], 'namespace' => 'Api\v1', 'prefix' => 'v1'], function () {
+Route::group([
+    'middleware' => ['api', 'auth.jwt', 'check.role.permission', 'check.config'],
+    'namespace'  => 'Api\v1',
+    'prefix'     => 'v1',
+], function () {
 
     Route::group(['prefix' => 'domains'], function () {
 
@@ -26,17 +30,26 @@ Route::group(['middleware' => ['api', 'check.role.permission', 'check.config'], 
 
                 Route::get('/cdn', 'CdnController@index')->name('cdn.index');
                 Route::resource('/cdn', 'CdnController', ['only' => ['store', 'destroy']])->middleware('check.dnspod');
-                Route::patch('cdn/{cdn}/default', 'CdnController@updateDefault')->name('cdn.default')->middleware('check.dnspod');
-                Route::patch('cdn/{cdn}/cname', 'CdnController@updateCname')->name('cdn.cname')->middleware('check.dnspod');
+                Route::patch('cdn/{cdn}/default',
+                    'CdnController@updateDefault')->name('cdn.default')->middleware('check.dnspod');
+                Route::patch('cdn/{cdn}/cname',
+                    'CdnController@updateCname')->name('cdn.cname')->middleware('check.dnspod');
 
                 Route::group(['prefix' => '/routing-rules'], function () {
                     Route::get('', 'LocationDnsSettingController@indexByDomain')->name('iRoute.indexByDomain');
-                    Route::put('/{locationNetwork}', 'LocationDnsSettingController@editSetting')->name('iRoute.edit')->middleware('check.dnspod');
+                    Route::put('/{locationNetwork}',
+                        'LocationDnsSettingController@editSetting')->name('iRoute.edit')->middleware('check.dnspod');
                 });
             });
 
-            Route::post('batch', 'BatchController@store')->name('domains.batch')->middleware(['check.dnspod', 'auth.user.module']);
-            Route::post('oldBatch', 'BatchController@oldStore')->name('domains.batch')->middleware(['check.dnspod', 'auth.user.module']);
+            Route::post('batch', 'BatchController@store')->name('domains.batch')->middleware([
+                'check.dnspod',
+                'auth.user.module',
+            ]);
+            Route::post('oldBatch', 'BatchController@oldStore')->name('domains.batch')->middleware([
+                'check.dnspod',
+                'auth.user.module',
+            ]);
         });
 
         Route::middleware(['domain.permission'])->group(function () {
@@ -59,7 +72,8 @@ Route::group(['middleware' => ['api', 'check.role.permission', 'check.config'], 
             Route::get('', 'LineController@index')->name('lines.index');
             Route::post('', 'LineController@create')->name('lines.create');
             Route::put('{line}', 'LineController@edit')->name('lines.edit');
-            Route::patch('{line}/status', 'LineController@changeStatus')->name('lines.status')->middleware('check.dnspod');
+            Route::patch('{line}/status',
+                'LineController@changeStatus')->name('lines.status')->middleware('check.dnspod');
             Route::delete('{line}', 'LineController@destroy')->name('lines.destroy')->middleware('check.dnspod');
         });
 
@@ -82,26 +96,38 @@ Route::group(['middleware' => ['api', 'check.role.permission', 'check.config'], 
     Route::group(['prefix' => 'cdn_providers'], function () {
         Route::get('', 'CdnProviderController@index')->name('cdn_providers.index');
         Route::post('', 'CdnProviderController@store')->name('cdn_providers.store');
-        Route::patch('{cdn_provider}', 'CdnProviderController@update')->name('cdn_providers.update')->middleware('check.dnspod');
-        Route::patch('{cdn_provider}/status', 'CdnProviderController@changeStatus')->name('cdn_providers.status')->middleware('check.dnspod');
-        Route::patch('{cdn_provider}/scannable', 'CdnProviderController@changeScannable')->name('cdn_providers.scannable');
+        Route::patch('{cdn_provider}',
+            'CdnProviderController@update')->name('cdn_providers.update')->middleware('check.dnspod');
+        Route::patch('{cdn_provider}/status',
+            'CdnProviderController@changeStatus')->name('cdn_providers.status')->middleware('check.dnspod');
+        Route::patch('{cdn_provider}/scannable',
+            'CdnProviderController@changeScannable')->name('cdn_providers.scannable');
         Route::get('{cdn_provider}/check', 'CdnProviderController@checkDefault')->name('cdn_providers.check');
-        Route::delete('{cdn_provider}', 'CdnProviderController@destroy')->name('cdn_providers.destroy')->middleware('check.dnspod');
+        Route::delete('{cdn_provider}',
+            'CdnProviderController@destroy')->name('cdn_providers.destroy')->middleware('check.dnspod');
         Route::get('detailed-info', 'CdnProviderController@detailedInfo')->name('cdn_providers.detailedInfo');
     });
 
     Route::group(['prefix' => 'groups'], function () {
         Route::get('', 'DomainGroupController@index')->name('groups.index');
-        Route::get('{domainGroup}/routing-rules', 'DomainGroupController@indexGroupIroute')->name('groups.indexGroupIroute');
+        Route::get('{domainGroup}/routing-rules',
+            'DomainGroupController@indexGroupIroute')->name('groups.indexGroupIroute');
         Route::get('{domainGroup}', 'DomainGroupController@indexByDomainGroupId')->name('groups.indexByDomainGroupId');
         Route::post('', 'DomainGroupController@create')->name('groups.create');
-        Route::post('{domainGroup}', 'DomainGroupController@createDomainToGroup')->name('groups.createDomainToGroup')->middleware('check.dnspod');
+        Route::post('{domainGroup}',
+            'DomainGroupController@createDomainToGroup')->name('groups.createDomainToGroup')->middleware('check.dnspod');
         Route::put('{domainGroup}', 'DomainGroupController@edit')->name('groups.edit');
-        Route::put('{domainGroup}/defaultCdn', 'DomainGroupController@changeDefaultCdn')->name('groups.changeDefaultCdn');
-        Route::put('{domainGroup}/routing-rules/{locationNetwork}', 'DomainGroupController@updateRouteCdn')->name('groups.updateRouteCdn')->middleware('check.dnspod');
+        Route::put('{domainGroup}/defaultCdn',
+            'DomainGroupController@changeDefaultCdn')->name('groups.changeDefaultCdn');
+        Route::put('{domainGroup}/routing-rules/{locationNetwork}',
+            'DomainGroupController@updateRouteCdn')->name('groups.updateRouteCdn')->middleware('check.dnspod');
         Route::delete('{domainGroup}', 'DomainGroupController@destroy')->name('groups.destroy');
-        Route::delete('{domainGroup}/domain/{domain}', 'DomainGroupController@destroyByDomainId')->name('groups.destroyByDomainId');
-        Route::post('{domainGroup}/batch', 'BatchController@storeDomainToGroup')->name('groups.batch')->middleware(['check.dnspod', 'auth.user.module']);
+        Route::delete('{domainGroup}/domain/{domain}',
+            'DomainGroupController@destroyByDomainId')->name('groups.destroyByDomainId');
+        Route::post('{domainGroup}/batch', 'BatchController@storeDomainToGroup')->name('groups.batch')->middleware([
+            'check.dnspod',
+            'auth.user.module',
+        ]);
     });
 
     Route::group(['prefix' => 'routing-rules'], function () {
@@ -141,7 +167,8 @@ Route::group(['middleware' => ['api', 'check.role.permission', 'check.config'], 
         Route::delete('{scanPlatform}', 'ScanPlatformController@destroy')->name('scanPlatform.destroy');
 
         Route::post('{scanPlatform}/scanned-data', 'ScanProviderController@creatScannedData')->name('scan.create');
-        Route::get('{scanPlatform}/scanned-data', 'ScanProviderController@indexScannedDataByPlatform')->name('scan.show');
+        Route::get('{scanPlatform}/scanned-data',
+            'ScanProviderController@indexScannedDataByPlatform')->name('scan.show');
         Route::get('scanned-data', 'ScanProviderController@indexScannedData')->name('scan.index');
 
         Route::put('change-all', 'ScanProviderController@changeRegion')->middleware('check.dnspod');
@@ -158,10 +185,14 @@ Route::group(['middleware' => ['api', 'check.role.permission', 'check.config'], 
     });
 
     Route::group(['prefix' => 'roles'], function () {
-        Route::get('self/permissions', 'RolePermissionMappingController@indexSelf')->name('role_permission_mapping.indexSelf');
-        Route::get('{roleId}/permissions', 'RolePermissionMappingController@indexByRoleId')->name('role_permission_mapping.indexByRoleId');
-        Route::post('{roleId}/permissions', 'RolePermissionMappingController@upsert')->name('role_permission_mapping.upsert');
-        Route::delete('{roleId}/permissions', 'RolePermissionMappingController@destroy')->name('role_permission_mapping.destroy');
+        Route::get('self/permissions',
+            'RolePermissionMappingController@indexSelf')->name('role_permission_mapping.indexSelf');
+        Route::get('{roleId}/permissions',
+            'RolePermissionMappingController@indexByRoleId')->name('role_permission_mapping.indexByRoleId');
+        Route::post('{roleId}/permissions',
+            'RolePermissionMappingController@upsert')->name('role_permission_mapping.upsert');
+        Route::delete('{roleId}/permissions',
+            'RolePermissionMappingController@destroy')->name('role_permission_mapping.destroy');
     });
 
     Route::group(['prefix' => 'permissions'], function () {
