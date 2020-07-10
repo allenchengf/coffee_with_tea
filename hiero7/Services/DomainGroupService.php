@@ -8,6 +8,7 @@ use Hiero7\Repositories\{DomainGroupRepository, CdnRepository};
 use Hiero7\Services\{CdnService, LocationDnsSettingService};
 use Illuminate\Database\Eloquent\Collection;
 use Hiero7\Enums\InputError;
+use Illuminate\Support\Facades\Redis;
 
 class DomainGroupService
 {
@@ -38,6 +39,10 @@ class DomainGroupService
                 return false;
             }
 
+            $change_status = Redis::get("changeCDNStatusByGroupId_$item->id");
+
+            $item->setAttribute('change_status', $change_status);
+
             $item->setAttribute('default_cdn_name', $domainModel->getDefaultCdnProvider()->name);
         });
 
@@ -67,6 +72,11 @@ class DomainGroupService
         foreach ($domainGroup->domains as $key => $domain) {
             $domain->cdnProvider;
         }
+
+        $change_status = Redis::get("changeCDNStatusByGroupId_$domainGroup->id");
+
+        $domainGroup->setAttribute('change_status', $change_status);
+
         $domainGroup->setAttribute('default_cdn_name', $domain->getDefaultCdnProvider()->name);
         return $domainGroup;
     }
@@ -131,9 +141,9 @@ class DomainGroupService
 
     /**
      * 純 update Group function
-     *  
+     *
      *  判斷使用者和要修改的 Group 是否為相同 user_group_id。
-     *  
+     *
      * @param DomainGroupRequest $request
      * @param DomainGroup $domainGroup
      * @return void
@@ -147,7 +157,7 @@ class DomainGroupService
 
     /**
      * 純 刪除 Group function
-     * 
+     *
      * 判斷使用者和要修改的 Group 是否為相同 user_group_id。
      *
      * @param integer $domainGroupId
@@ -156,7 +166,7 @@ class DomainGroupService
     public function destroy(DomainGroupRequest $request, DomainGroup $domainGroup)
     {
         $result = $this->checkUserGroupId($request, $domainGroup);
-        
+
         return $result ? $this->domainGroupRepository->destroy($domainGroup->id) : $result;
     }
 
@@ -164,7 +174,7 @@ class DomainGroupService
      * 從 Group 移除某個 Domain
      *
      * 先判斷是否為該 Group 內最後一個 Domain，
-     * 
+     *
      * @param DomainGroup $domainGroup
      * @param Domain $domain
      * @return void
@@ -172,7 +182,7 @@ class DomainGroupService
     public function destroyByDomainId(DomainGroupRequest $request, DomainGroup $domainGroup, Domain $domain)
     {
         $result = $this->checkUserGroupId($request, $domainGroup);
-        
+
         $domainCollection = $domainGroup->domains;
 
         if ($domainCollection->count() == 1) {
@@ -185,7 +195,7 @@ class DomainGroupService
     /**
      * 比較 domainGroup 的 cdn 是否和 要被加進去的 domain 的 cdn 設定相同
      *
-     * 此 function 也有用在 BatchGroupService 的 checkDomain() 
+     * 此 function 也有用在 BatchGroupService 的 checkDomain()
      * @param DomainGroup $domainGroup
      * @param [type] $targetDomainId
      * @return void
@@ -231,12 +241,12 @@ class DomainGroupService
 
     /**
      * 修改 要被加入 domainGroup 的 domain 的 iRoute 設定。
-     * 
+     *
      * 拿 Group 內的 Domain 為底 做比較
      * 可分兩大類 「Group 內的 Domain 沒有 iRoute 」、「Group 內的 Domain 有 iRoute 」
-     * 
+     *
      * 「Group 內的 Domain 沒有 iRoute 」=> 單純刪掉 目標 Domain 的 iRoute 設定
-     *  
+     *
      * @param DomainGroup $domainGroup
      * @param integer $domainId
      * @param string $editedBy
@@ -247,21 +257,21 @@ class DomainGroupService
         //取 Group 內的第一個 domain 下的 all cdn 設定
         $originCdnSetting = $domainGroup->domains->get(0)->cdns;
         // 取該 cdn 下的所有 iRoute 設定，拿到 有設定的(originIrouteSetting) 和 沒有設定的 CDN (nonSettingCdn)
-        list($originIrouteSetting, $hasSettingCdn, $nonSettingCdn) = $this->getLocationSetting($originCdnSetting);
+        [$originIrouteSetting, $hasSettingCdn, $nonSettingCdn] = $this->getLocationSetting($originCdnSetting);
 
         $targetDomain = Domain::find($domainId);
 
         //情境一： Group 內的 Domain 沒有 iRoute
         if (($originIrouteSetting)->isEmpty()) {
-            
+
             // 刪除 targetDomain 的 iRoute 設定
-            empty($this->destroyTargetIrouteSetting($targetDomain)) ? 
+            empty($this->destroyTargetIrouteSetting($targetDomain)) ?
             $result = true : $result = false;
 
-            return $result; 
+            return $result;
         }
 
-        $errors = []; 
+        $errors = [];
 
         //情境二： Group 內的 Domain 有 iRoute
 
@@ -295,7 +305,7 @@ class DomainGroupService
             if($targetLocationSetting->isEmpty()){
                 continue;
             }
-            
+
             // 如果 目標 Domain 有 iRoute 設定 就刪掉
             foreach($targetLocationSetting as $locationDnsSetting){
                 $this->locationDnsSettingService->destroy($locationDnsSetting);
@@ -377,7 +387,7 @@ class DomainGroupService
 
     /**
      * 刪除 Domain 內的所以有 iRoute Setting
-     * 
+     *
      * 如果 刪除失敗 會 回傳 ['locationDnsSetting 的 ID'=> false ]
      * 如果 都成功的話 或是 沒有iRoute設定 都 回傳 []
      * @param Domain $targetDomain
@@ -391,7 +401,7 @@ class DomainGroupService
 
         foreach($locationDnsSettingCollection as $locationDnsSetting){
 
-            $this->locationDnsSettingService->destroy($locationDnsSetting) ?? 
+            $this->locationDnsSettingService->destroy($locationDnsSetting) ??
             $result[$locationDnsSetting->id] = false;
         }
 
@@ -400,12 +410,12 @@ class DomainGroupService
 
     /**
      * 依照 cdn 的設定分辨，哪些 cdn 是有存在  locationDnsSetting table 內，有哪些 cdn 是沒有設定的。
-     * 
+     *
      * 會回傳 targetIrouteSetting 和 nonSettingCdn 兩個參數。
-     * 
+     *
      *  targetIrouteSetting 是有設定的 locationDnsSetting 物件
-     *  nonSettingCdn 是 cdn 沒有被設定的 cdn_provider_id 
-     * 
+     *  nonSettingCdn 是 cdn 沒有被設定的 cdn_provider_id
+     *
      * @param Collection $cdnSetting
      * @return void
      */
