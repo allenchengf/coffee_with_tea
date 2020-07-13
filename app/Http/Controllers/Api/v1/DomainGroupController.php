@@ -245,7 +245,13 @@ class DomainGroupController extends Controller
 
         $domainModel = $domainGroup->domains;
 
+        $redisKey = "changeCDNStatusByGroupId_$domainGroup->id";
+
         foreach ($domainModel as $domain) {
+
+            // 暫存 Change CDN 的狀態
+            Redis::set($redisKey, true, 'EX', 60);
+
             $cdn    = $domain->cdns()->where('cdns.cdn_provider_id', $request->cdn_provider_id)->first();
             $result = $this->cdnService->changeDefaultToTrue($domain, $cdn, $this->getJWTPayload()['uuid']);
         }
@@ -261,6 +267,9 @@ class DomainGroupController extends Controller
 
             $this->setChangeTo($log)->createOperationLog();
         }
+
+        // 移除 Change CDN 的狀態
+        Redis::del($redisKey);
 
         return $this->setStatusCode($this->error ? 409 : 200)->response($this->message, $this->error, $result);
     }
