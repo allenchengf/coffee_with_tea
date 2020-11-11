@@ -113,6 +113,7 @@ class LocationDnsSettingService
      */
     public function decideAction(Int $cdnProviderId, Domain $domain, LocationNetwork $locationNetwork)
     {
+
         //使用 目標 Domain 和 預期 cdnProviderId 取得 CDN 的 id
         $cdnModel = $this->getTargetCdn($cdnProviderId, $domain);
 

@@ -44,6 +44,7 @@ class DomainGroupService
             $item->setAttribute('change_status', $change_status);
 
             $item->setAttribute('default_cdn_name', $domainModel->getDefaultCdnProvider()->name);
+            $item->setAttribute('domain_count', $item->domains()->count());
         });
 
         return $groupLists;
